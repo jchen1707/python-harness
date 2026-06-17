@@ -103,8 +103,11 @@ A change is done only when ALL pass:
 To plan with one model and implement with another (e.g. plan on a Claude Pro terminal,
 implement on an API-key terminal), split the loop across two terminals with an explicit
 plan file as the handoff:
-1. **Terminal 1 (planning model) — `/plan <feature>`**: research + plan as a task list,
-   then write `.claude/plans/plan.md` (Goal · Context · Approach · numbered Steps ·
+1. **Terminal 1 (planning model) — `/plan <feature>`**: **first pick the base branch** —
+   `/plan` asks which branch to build off of (defaulting to `main`), checks it out, pulls
+   the latest, and creates the feature branch off it, so work never starts from a stale
+   branch. Then research + plan as a task list, and write `.claude/plans/plan.md`
+   (Goal · Context · Approach · numbered Steps ·
    Verification · Open questions) **and** `.claude/plans/test-plan.md` (Scope · unit
    tests · integration tests · edge cases · how to run). Then **get explicit user
    sign-off on both plans** (a required checkpoint — `/plan` asks and waits, even in
