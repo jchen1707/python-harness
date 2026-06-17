@@ -128,7 +128,11 @@ plan mode's own auto-saved file uses a random slug name and isn't a reliable han
   choice + applicable design patterns in `docs/architecture.md` before building.
 - **Layering (Controller → Service → Repository)**: `api` (controllers/entrypoint) →
   `services` (business logic) → `repositories` (data access) → `config`. No reverse deps.
-- **Async-first**: all I/O async (`async def`, `httpx.AsyncClient`, async DB drivers).
+- **Async by default for I/O, sync where simpler**: default to async for I/O paths
+  (FastAPI handlers, `httpx.AsyncClient`, async DB drivers, LLM/embeddings calls), but
+  async is for concurrency, not a blanket rule — keep pure CPU/in-memory logic plain
+  `def`, and offload blocking calls with `asyncio.to_thread` rather than fake-async. The
+  plan must justify the sync/async boundary (see §3).
 - **Interfaces over concrete deps**: define `Embedder`, `VectorStore`, `Tool` protocols
   in repositories; services depend on protocols, not classes. Inject; don't hardcode.
 - **Concurrency**: never block the event loop; structured concurrency (`TaskGroup`);

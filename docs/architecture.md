@@ -69,11 +69,22 @@ Define a `Protocol` for each external capability; write at least one impl; injec
 Depend on the protocol, not the class. Wire concrete impls at composition time (app
 factory or a `providers`/`services` wiring module), never at call sites.
 
-## 3. Async-first
-- All I/O is `async def`: HTTP (`httpx.AsyncClient`), DB (asyncpg / psycopg async),
-  embeddings API calls.
-- FastAPI handlers are `async def`. Run CPU-bound work in `asyncio.to_thread`.
-- `pytest-asyncio` with `asyncio_mode=auto`; write async tests as `async def`.
+## 3. Async by default for I/O, sync where simpler
+This workload (FastAPI web + RAG + agents) is I/O-bound, so **async is the default for
+request handling and I/O** — but async is a tool for concurrency, **not a blanket rule**.
+Apply judgment; the `/plan` Approach must state and justify the sync/async boundary for
+non-trivial features.
+- **Default to async for I/O paths**: FastAPI handlers, HTTP (`httpx.AsyncClient`), DB
+  (asyncpg / psycopg async), and embeddings/LLM calls are `async def` so concurrent
+  requests don't serialize.
+- **Use plain `def` where async buys nothing**: pure CPU-bound or in-memory business
+  logic, simple transforms, and helpers with no I/O stay synchronous. Don't write
+  `async def` that never `await`s concurrent work — function-coloring has a real cost.
+- **Don't fake-async blocking code**: a sync-only library or CPU-bound work called from an
+  async path is offloaded with `await asyncio.to_thread(fn, ...)` (see §13), never wrapped
+  in an `async def` that blocks the event loop.
+- `pytest-asyncio` with `asyncio_mode=auto`; write async tests as `async def`, sync tests
+  as plain `def`.
 
 ## 4. Pydantic for all I/O
 - FastAPI request/response bodies, agent tool inputs, and external service DTOs are
