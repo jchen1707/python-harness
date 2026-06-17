@@ -13,7 +13,10 @@ Assess context/memory management for the current session and report:
    (`C:\Users\jchen\.claude\projects\C--Users-jchen-Documents-python-harness\memory\`)?
    Propose 1–3 concrete memory entries with their `type`
    (user / feedback / project / reference).
-4. **File hygiene**: Any files re-read unnecessarily, or file state you should trust
+4. **Friction write-back**: Did this session hit a bug that took real effort or a
+   tool difficulty whose lesson isn't yet captured? If so, suggest `/retro` to record
+   it (a `feedback`/`reference` lesson memory) so it doesn't recur.
+5. **File hygiene**: Any files re-read unnecessarily, or file state you should trust
    from prior edits rather than re-checking?
 
 Do not write memory or compact without confirmation. Report findings and let the
