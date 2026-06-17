@@ -1,0 +1,25 @@
+# Dev infrastructure for the standard vector store (Postgres + pgvector).
+# This is harness dev infra, not application code. Start the DB with:
+#   docker compose up -d db
+# The application service is added here when the app is containerized
+# (see docs/architecture.md -> Containerization).
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: python-harness-db
+    environment:
+      POSTGRES_USER: harness
+      POSTGRES_PASSWORD: harness
+      POSTGRES_DB: harness
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U harness -d harness"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

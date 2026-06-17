@@ -1,0 +1,17 @@
+# Normalize line endings to LF in the repo and working tree (cross-platform).
+# Keeps pre-commit's mixed-line-ending (--fix=lf) from fighting the working copy
+# on Windows checkouts.
+* text=auto eol=lf
+
+# Generated lockfile — stays committed for reproducibility, but kept out of diffs and
+# line counts: linguist-generated collapses it + excludes it from language stats; -diff
+# makes git/GitHub treat it as binary so it doesn't contribute to +/- line totals.
+uv.lock linguist-generated=true -diff
+
+# Binary assets — never normalize.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary

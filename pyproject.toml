@@ -1,0 +1,89 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "python-harness"
+version = "0.1.0"
+description = "Guardrails, workflow, and standards for Python development (FastAPI + RAG + LangGraph agents). A harness, not an application implementation."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "jchen" }]
+# No runtime dependencies: this is a harness (guardrails + tooling), not an app.
+# The approved application stack is the opt-in `app` extra below — install it
+# with `uv sync --extra app` when you start writing application code.
+dependencies = []
+
+[project.optional-dependencies]
+# Approved application stack. Declared as an extra (not in `dependencies`) to keep
+# the harness lightweight and make the standard explicit/opt-in. See
+# docs/architecture.md for the rationale behind each choice. Adding a library
+# outside this set requires updating CLAUDE.md first.
+app = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.5",
+    "httpx>=0.27",
+    "structlog>=24.4",
+    "langgraph>=0.2",
+    "langchain-anthropic>=0.3",
+    "voyageai>=0.2",
+    "numpy>=1.26",
+    "psycopg[binary]>=3.2",
+    "pgvector>=0.3",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=5.0",
+    "testcontainers>=4.8",
+    "pre-commit>=3.8",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/app"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC", "RUF", "C4", "PIE", "PT", "S"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.mypy]
+python_version = "3.12"
+disallow_untyped_defs = true
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = false
+ignore_missing_imports = true
+files = ["src", "tests"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "integration: tests that spin up a real DB via testcontainers (run with: uv run pytest -m integration)",
+]
+# Exclude integration tests from the default run (they need Docker + the app extra);
+# run them explicitly with `uv run pytest -m integration`.
+addopts = "-q -m 'not integration'"
+# Coverage is opt-in: run `uv run pytest --cov=app --cov-report=term-missing` once
+# application code exists under src/app.
+
+[tool.uv]
+package = true
