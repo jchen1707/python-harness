@@ -18,6 +18,8 @@ Everything runs through `uv` (cross-platform; Windows/PowerShell-friendly).
 | Run integration tests | `uv run pytest -m integration` (needs Docker + `uv sync --extra app`) | — |
 | Lint + format-check + type | `uv run ruff check .` · `uv run ruff format --check .` · `uv run mypy` | `/lint` |
 | Dev server (needs `src/app/main.py`) | `uv run uvicorn app.main:app --reload` | `/run` |
+| Plan a feature (terminal 1) | — | `/plan` |
+| Implement from plan (terminal 2) | — | `/implement` |
 | Standards review of changes | — | `/review` |
 | Load architecture standards | — | `/arch` |
 | Context/memory hygiene | — | `/context` |
@@ -26,7 +28,7 @@ Everything runs through `uv` (cross-platform; Windows/PowerShell-friendly).
 - **Python 3.12** managed by **uv**. **Web**: FastAPI + `uvicorn[standard]`.
 - **Schemas/config**: Pydantic v2 + `pydantic-settings` (`.env`-driven).
 - **HTTP**: `httpx` (async). **Logging**: `structlog`.
-- **Agents**: **LangGraph** + `langchain-anthropic` (`ChatAnthropic`), orchestrated in
+- **Agents**: **LangGraph** + `langchain-anthropic** (`ChatAnthropic`), orchestrated in
   `services/agents/`. Default model `claude-opus-4-8`. Adaptive thinking for complex
   steps; prompt-cache static system prompts; stream long outputs.
 - **RAG embeddings**: **Voyage AI** (`voyageai`, model `voyage-3`) behind an `Embedder`
@@ -60,7 +62,9 @@ docs/architecture.md  # full architectural standards (load with /arch)
 
 ## Development workflow (the loop)
 1. **Understand** — read the relevant code + `docs/architecture.md` (or `/arch`).
-2. **Plan** — for non-trivial work, enter plan mode; agree the approach first.
+2. **Plan** — for non-trivial work, agree the approach first: use `/plan` (writes
+   `.claude/plans/plan.md`) or enter plan mode. To plan with one model and implement
+   with another, see "Two-terminal plan→implement workflow" below.
 3. **Implement** — write code in the correct layer; types on every public function.
 4. **Sync** — `uv sync` (tooling) + `uv sync --extra app` (approved stack) as needed.
 5. **Verify** — `/lint` then `/test` (and `uv run pytest -m integration` for DB-backed
@@ -73,6 +77,22 @@ A change is done only when ALL pass:
 - `uv run pytest` green (and `uv run pytest -m integration` green for DB-backed changes)
 - `/review` finds no standards violations
 - No secrets in code; no `print()` (use structlog); new behavior has tests
+
+## Two-terminal plan→implement workflow (model switching)
+To plan with one model and implement with another (e.g. plan on a Claude Pro terminal,
+implement on an API-key terminal), split the loop across two terminals with an explicit
+plan file as the handoff:
+1. **Terminal 1 (planning model) — `/plan <feature>`**: research + plan as a task list,
+   then write `.claude/plans/plan.md` (Goal · Context · Approach · numbered Steps ·
+   Verification · Open questions). Do not implement.
+2. **Terminal 2 (implementation model) — `/implement`**: read `.claude/plans/plan.md`,
+   build a fresh task list from its Steps, and implement each to the Definition of Done
+   (`/lint` → `/test` → `/review`); update the plan as steps complete.
+
+`plan.md` is gitignored — a local handoff artifact, not committed. Plans live in
+`.claude/plans/` (pinned via `plansDirectory` in `.claude/settings.json`); plan mode's
+own auto-saved file uses a random slug name and isn't a reliable handoff, so `/plan`
+writes a stable `plan.md` instead.
 
 ## Architectural standards (summary — full detail in docs/architecture.md)
 - **Layering (Controller → Service → Repository)**: `api` (controllers/entrypoint) →
@@ -109,8 +129,9 @@ Keep context lean and store durable facts outside it.
 - **When context grows large**, proactively summarize what's still relevant and drop the
   rest; consider `/context` to audit. Don't wrap up early or hand off mid-task — the
   harness preserves a summary across compaction.
-- **Plans** for non-trivial work go in `.claude/plans/` (gitignored); update or discard
-  when the work is done.
+- **Plans** for non-trivial work go in `.claude/plans/` (gitignored; pinned via
+  `plansDirectory`). For cross-model handoffs use the `/plan` → `/implement` loop with a
+  stable `.claude/plans/plan.md`; update or discard when the work is done.
 
 ## Model guidance (for agent code built in `services/agents/`)
 - Default model **`claude-opus-4-8`** unless the user names another. For high-volume
