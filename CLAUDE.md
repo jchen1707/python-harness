@@ -68,8 +68,11 @@ docs/architecture.md  # full architectural standards (load with /arch)
    that fit the problem during this step and update `docs/architecture.md` accordingly
    (see its "Choosing an architecture & design patterns" section).
 2. **Plan** — for non-trivial work, agree the approach first: use `/plan` (writes
-   `.claude/plans/plan.md`) or enter plan mode. To plan with one model and implement
-   with another, see "Two-terminal plan→implement workflow" below.
+   `.claude/plans/plan.md` **and** `.claude/plans/test-plan.md`) or enter plan mode.
+   Planning always ends with an explicit **user sign-off** checkpoint and then **stops**
+   — it does not roll straight into implementing, even in a single terminal or
+   autonomous mode. To plan with one model and implement with another, see "Two-terminal
+   plan→implement workflow" below.
 3. **Implement** — write code in the correct layer; types on every public function.
 4. **Sync** — `uv sync` (tooling) + `uv sync --extra app` (approved stack) as needed.
 5. **Verify** — `/lint` then `/test` (and `uv run pytest -m integration` for DB-backed
@@ -95,15 +98,19 @@ implement on an API-key terminal), split the loop across two terminals with an e
 plan file as the handoff:
 1. **Terminal 1 (planning model) — `/plan <feature>`**: research + plan as a task list,
    then write `.claude/plans/plan.md` (Goal · Context · Approach · numbered Steps ·
-   Verification · Open questions). Do not implement.
-2. **Terminal 2 (implementation model) — `/implement`**: read `.claude/plans/plan.md`,
-   build a fresh task list from its Steps, and implement each to the Definition of Done
-   (`/lint` → `/test` → `/review`); update the plan as steps complete.
+   Verification · Open questions) **and** `.claude/plans/test-plan.md` (Scope · unit
+   tests · integration tests · edge cases · how to run). Then **get explicit user
+   sign-off on both plans** (a required checkpoint — `/plan` asks and waits, even in
+   autonomous mode) and **STOP**. Do not implement.
+2. **Terminal 2 (implementation model) — `/implement`**: read `.claude/plans/plan.md`
+   and `test-plan.md`, build a fresh task list from the Steps + test cases, and
+   implement each to the Definition of Done (`/lint` → `/test` → `/review`); update the
+   plans as items complete.
 
-`plan.md` is gitignored — a local handoff artifact, not committed. Plans live in
-`.claude/plans/` (pinned via `plansDirectory` in `.claude/settings.json`); plan mode's
-own auto-saved file uses a random slug name and isn't a reliable handoff, so `/plan`
-writes a stable `plan.md` instead.
+`plan.md` and `test-plan.md` are gitignored — local handoff artifacts, not committed.
+Plans live in `.claude/plans/` (pinned via `plansDirectory` in `.claude/settings.json`);
+plan mode's own auto-saved file uses a random slug name and isn't a reliable handoff, so
+`/plan` writes the stable `plan.md` / `test-plan.md` instead.
 
 ## Architectural standards (summary — full detail in docs/architecture.md)
 - **Choose the architecture during research**: default is layered + repository, but
