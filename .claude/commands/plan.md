@@ -32,12 +32,15 @@ The argument is the feature/task to plan: `$ARGUMENTS`.
 3. **Understand** — read the relevant existing code and `docs/architecture.md` (or
    `/arch`). Note the layers, interfaces, and files this work touches.
 4. **Design approach** — decide the design (Controller → Service → Repository), where
-   each piece lives, which protocols to define/extend, dependencies, risks, and the
-   verification steps.
+   each piece lives, which protocols to define/extend, dependencies, the
+   **sync/async boundary** (async for I/O paths, sync for pure CPU/in-memory logic — not
+   blanket `async def`; see architecture.md §3), risks, and the verification steps.
 5. **Write the implementation plan** — overwrite `.claude/plans/plan.md` with:
    - **Goal** — what this change delivers.
-   - **Context** — findings from step 2 (current state, constraints, files).
-   - **Approach** — the design from step 3 (layer placement + interfaces).
+   - **Context** — findings from step 3 (current state, constraints, files).
+   - **Approach** — the design from step 4 (layer placement + interfaces); state and
+     justify the sync/async boundary (which pieces are `async def` and why; what stays
+     sync).
    - **Steps** — numbered, concrete, ordered implementation tasks; each names its
      file(s) and layer and is small enough to verify independently. Terminal 2 turns
      this list into its task list.
