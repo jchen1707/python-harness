@@ -23,6 +23,7 @@ Everything runs through `uv` (cross-platform; Windows/PowerShell-friendly).
 | Standards review of changes | — | `/review` |
 | Load architecture standards | — | `/arch` |
 | Context/memory hygiene | — | `/context` |
+| Capture a lesson from friction | — | `/retro` |
 
 ## Standard stack (approved — do not introduce alternatives without updating this file)
 - **Python 3.12** managed by **uv**. **Web**: FastAPI + `uvicorn[standard]`.
@@ -75,6 +76,10 @@ docs/architecture.md  # full architectural standards (load with /arch)
 5. **Verify** — `/lint` then `/test` (and `uv run pytest -m integration` for DB-backed
    work) then `/review`. Fix root causes; don't paper over.
 6. **Commit** — only when asked; keep changes minimal and per-layer.
+7. **Improve (write-back)** — when a step involved non-obvious friction (a bug that
+   took real effort, or difficulty using a tool), run `/retro` to capture the lesson
+   to memory so it doesn't recur; promote recurring/procedural ones to a command or a
+   `CLAUDE.md` / `docs/architecture.md` edit. See "Context & memory management".
 
 ### Definition of Done
 A change is done only when ALL pass:
@@ -82,6 +87,8 @@ A change is done only when ALL pass:
 - `uv run pytest` green (and `uv run pytest -m integration` green for DB-backed changes)
 - `/review` finds no standards violations
 - No secrets in code; no `print()` (use structlog); new behavior has tests
+- If the change involved non-obvious friction (a tricky bug or tool difficulty), the
+  lesson is captured via `/retro`
 
 ## Guardrails
 - **Image / visual inputs require explicit permission.** Before starting any task that
@@ -136,6 +143,11 @@ Keep context lean and store durable facts outside it.
   `C:\Users\jchen\.claude\projects\C--Users-jchen-Documents-python-harness\memory\` — one
   fact per file with frontmatter; add a pointer line in its `MEMORY.md`. Prefer
   `project`/`feedback` types; don't save what the repo already records.
+- **Lessons from friction (write-back loop)** — when a bug or tool difficulty took
+  real effort, capture it with `/retro`: a `feedback`/`reference` memory (symptom ·
+  root cause · how to avoid) so future sessions skip the trap. Recurring or procedural
+  lessons get promoted to a slash command or a `CLAUDE.md` / `docs/architecture.md`
+  edit. `/context` flags friction you haven't captured yet.
 - **Don't re-read files you've already read or edited** — trust file state; the harness
   tracks it. Re-fetch only if the file may have changed externally.
 - **Prefer dedicated tools** (Grep/Glob/Read/Edit) over shell for file work; batch
