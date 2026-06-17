@@ -27,7 +27,9 @@ jobs:
         run: uv python install 3.12
 
       - name: Sync dependencies (dev tooling + approved app stack)
-        run: uv sync --extra app --extra dev
+        # `dev` is a dependency-group (installed by default), not an optional-dependency
+        # extra — so `--extra dev` would error. `--extra app` pulls in the approved stack.
+        run: uv sync --extra app
 
       - name: Lint (ruff)
         run: uv run ruff check .
