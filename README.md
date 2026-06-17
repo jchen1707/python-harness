@@ -16,7 +16,8 @@ Postgres + pgvector).
 - `pyproject.toml` — tool config (ruff, mypy, pytest) + the approved app stack as the
   opt-in `app` extra (no runtime deps by default).
 - `.claude/` — shared Claude Code config: `settings.json` (pre-approved safe commands)
-  + `commands/` (`/test`, `/lint`, `/run`, `/review`, `/arch`, `/context`).
+  + `commands/` (`/plan`, `/implement`, `/test`, `/lint`, `/run`, `/review`, `/arch`,
+  `/context`).
 - `.github/workflows/ci.yml` — CI gates (ruff, mypy, pytest).
 - `.pre-commit-config.yaml` — pre-commit hooks (ruff + mypy + hygiene).
 - `docker-compose.yml` — dev infra: Postgres + pgvector (`docker compose up -d db`).
@@ -47,6 +48,8 @@ the right layer → `uv run ruff check .` → `uv run ruff format --check .` →
 ## Commands
 | Slash | Does |
 | --- | --- |
+| `/plan` | research + plan a feature, write `.claude/plans/plan.md` (terminal 1) |
+| `/implement` | implement from `.claude/plans/plan.md` to the Definition of Done (terminal 2) |
 | `/test` | `uv run pytest` |
 | `/lint` | ruff check + format-check + mypy |
 | `/run` | uvicorn dev server (needs `src/app/main.py`) |

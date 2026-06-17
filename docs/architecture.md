@@ -3,6 +3,34 @@
 Detailed standards for code in `src/app/`. CLAUDE.md has the summary; this is the
 authoritative reference (load with `/arch`; checked by `/review`).
 
+## Choosing an architecture & design patterns (do this during research)
+This document is living, not fixed. Before building a non-trivial feature, select — during
+the research phase — the architectural style that best fits the problem, then update this
+file to codify the chosen style's standards. The repo defaults to a **layered**
+architecture with the **repository** pattern (Controller → Service → Repository, §1),
+which suits backend web + RAG + agent work, but evaluate alternatives per feature and
+adopt or blend where they fit better:
+- **Layered** — default; separates transport, business logic, and data access. Use for
+  request/response APIs and most services.
+- **Repository** — data access behind interfaces (§2); already baked in for the
+  vector/embeddings stores. Use whenever logic must stay storage-agnostic.
+- **Pipe–filter** — compose independent stages over a stream/batch. Natural fit for RAG
+  ingestion (load → chunk → embed → upsert) and ETL-style transforms; model each stage as
+  a pure, independently testable filter.
+- **Implicit invocation (event-driven / pub-sub)** — decouple producers from consumers via
+  events. Use for reactive flows, background processing, and fan-out where the caller
+  should not know its handlers.
+
+After selecting a style, **update this file**: document the chosen style's boundaries and
+the **design patterns** you will apply, grouped GoF-style —
+- *Creational* — e.g. factory for app/agent construction, builder for graph assembly.
+- *Structural* — e.g. adapter for external SDKs behind our protocols (§2), facade for
+  service entrypoints.
+- *Behavioral* — e.g. strategy for swappable `Embedder`/`VectorStore` impls, observer for
+  the event-driven flows above.
+
+Keep §1's layering invariant unless a specific feature justifies a documented exception.
+
 ## 1. Layering — Controller → Service → Repository
 Three layers, one direction:
 ```
@@ -87,6 +115,9 @@ factory or a `providers`/`services` wiring module), never at call sites.
   and `tests/integration/` for a worked example.
 - Integration tests are marked `integration` and excluded from the default run so CI
   stays fast and doesn't require Docker. Run them locally after `uv sync --extra app`.
+- Test fixtures may use **synchronous** DB drivers (e.g. sync `psycopg`) for
+  setup/seed/teardown — the async-first rule (§3) governs application I/O paths, not
+  test-harness code. Keep such imports lazy so the default offline run stays import-free.
 - Naming: `tests/<layer>/test_<thing>.py`; integration tests under `tests/integration/`.
 - Coverage is opt-in: `uv run pytest --cov=app --cov-report=term-missing`.
 
@@ -162,3 +193,23 @@ The app is async-first (FastAPI + asyncio). Follow these to stay correct under l
 - **Logging under concurrency.** Bind a `request_id`/`task_id` at the handler and
   propagate via `contextvars` (not thread-local) so concurrent log lines are
   attributable; structlog reads `contextvars` automatically.
+
+### Threading (`threading` module) — best practices
+asyncio is the default for I/O concurrency; reach for OS threads only for blocking work you
+cannot avoid (sync-only SDKs, blocking file I/O) or to bridge sync↔async. When you do:
+- **Offload from async code via `asyncio.to_thread(fn, ...)`** (or
+  `loop.run_in_executor(pool, ...)`) instead of spawning raw `Thread`s inside a handler —
+  it integrates with the event loop and cancellation.
+- **Use a bounded `ThreadPoolExecutor`**, not unbounded `Thread()` spawning; size it for
+  the backing resource (e.g. a DB pool), create it at startup, and shut it down on exit.
+- **Guard shared mutable state** with `threading.Lock`/`RLock`. The GIL prevents data
+  races on a single bytecode but NOT on compound read-modify-write — lock those. Prefer
+  immutable messages and `queue.Queue` for thread-to-thread handoff over shared globals.
+- **Don't expect CPU parallelism from threads** — the GIL serializes Python bytecode; use
+  `ProcessPoolExecutor`/`multiprocessing` for CPU-bound work. Threads help only when work
+  releases the GIL (most blocking I/O, many C extensions).
+- **Never touch the event loop or asyncio objects from a worker thread** except via
+  `loop.call_soon_threadsafe(...)` or `asyncio.run_coroutine_threadsafe(...)`.
+- **Join threads / use daemon threads on shutdown** and propagate exceptions back to the
+  caller — a bare `Thread` swallows them, whereas `Future.result()` from an executor
+  re-raises.

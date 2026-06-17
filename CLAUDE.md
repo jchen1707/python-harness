@@ -36,6 +36,8 @@ Everything runs through `uv` (cross-platform; Windows/PowerShell-friendly).
 - **Vector store**: **Postgres + pgvector** behind a `VectorStore` interface in
   `repositories/vector.py` (dev DB via `docker compose up -d db`). Keep an in-memory
   impl for unit tests.
+- **Numerics**: `numpy` for vector math / embedding arrays (used by the embeddings and
+  vector-store layers).
 - **Testing**: `pytest` + `pytest-asyncio` + `pytest-cov`; **testcontainers** for
   integration tests against a real ephemeral pgvector DB.
 - **Lint/format**: `ruff`. **Types**: `mypy` (`disallow_untyped_defs`).
@@ -61,7 +63,10 @@ docs/architecture.md  # full architectural standards (load with /arch)
 ```
 
 ## Development workflow (the loop)
-1. **Understand** — read the relevant code + `docs/architecture.md` (or `/arch`).
+1. **Understand / research** — read the relevant code + `docs/architecture.md` (or
+   `/arch`). For non-trivial features, select the architectural style and design patterns
+   that fit the problem during this step and update `docs/architecture.md` accordingly
+   (see its "Choosing an architecture & design patterns" section).
 2. **Plan** — for non-trivial work, agree the approach first: use `/plan` (writes
    `.claude/plans/plan.md`) or enter plan mode. To plan with one model and implement
    with another, see "Two-terminal plan→implement workflow" below.
@@ -77,6 +82,12 @@ A change is done only when ALL pass:
 - `uv run pytest` green (and `uv run pytest -m integration` green for DB-backed changes)
 - `/review` finds no standards violations
 - No secrets in code; no `print()` (use structlog); new behavior has tests
+
+## Guardrails
+- **Image / visual inputs require explicit permission.** Before starting any task that
+  takes an image as input — screenshots, diagrams, photos, scanned or image-based PDFs,
+  OCR, or any vision/multimodal model call — STOP and ask the user for explicit
+  confirmation before proceeding. Do not begin such work on assumption.
 
 ## Two-terminal plan→implement workflow (model switching)
 To plan with one model and implement with another (e.g. plan on a Claude Pro terminal,
@@ -95,6 +106,9 @@ own auto-saved file uses a random slug name and isn't a reliable handoff, so `/p
 writes a stable `plan.md` instead.
 
 ## Architectural standards (summary — full detail in docs/architecture.md)
+- **Choose the architecture during research**: default is layered + repository, but
+  evaluate alternatives (pipe–filter, implicit invocation, …) per feature and record the
+  choice + applicable design patterns in `docs/architecture.md` before building.
 - **Layering (Controller → Service → Repository)**: `api` (controllers/entrypoint) →
   `services` (business logic) → `repositories` (data access) → `config`. No reverse deps.
 - **Async-first**: all I/O async (`async def`, `httpx.AsyncClient`, async DB drivers).
@@ -143,6 +157,10 @@ Keep context lean and store durable facts outside it.
 - **Stream** long outputs; use the SDK's `.get_final_message()` if you don't need
   per-event handling.
 - Configure the model via `app.config.Settings.anthropic_model`, not inline strings.
+- **Agents & subagents**: build multi-agent systems as a supervisor graph that delegates
+  to specialized subagent graphs (`services/agents/<role>.py`), each owning its own tools,
+  prompt, and optionally model; the supervisor routes and aggregates. Keep subagents
+  single-responsibility and injected behind interfaces. See architecture.md §9.
 
 ## Env & secrets
 Copy `.env.example` → `.env` and fill in. `.env` is gitignored — never commit it. All
