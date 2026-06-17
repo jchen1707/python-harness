@@ -147,6 +147,22 @@ Keep context lean and store durable facts outside it.
   `plansDirectory`). For cross-model handoffs use the `/plan` → `/implement` loop with a
   stable `.claude/plans/plan.md`; update or discard when the work is done.
 
+## Agents & subagents (Claude Code dev workflow)
+Claude Code subagents that drive development here — distinct from the LangGraph
+*application* agents you build in `services/agents/` (see Model guidance below).
+- **When to spawn one**: only when the user asks, or for read-heavy fan-out that pays for a
+  fresh context — broad codebase exploration, parallel research across many files. Each
+  subagent starts cold and re-derives context, so don't spawn for routine edits or
+  multi-step builds that the `/plan` → `/implement` loop already covers.
+- **Pick the right type**: `Explore`/`general-purpose` for search and research (read-only
+  fan-out), `Plan` for design. Give a focused task and the search breadth ("medium" vs
+  "thorough"); relay only the conclusion back into the main context.
+- **Reusable subagents**: define custom agent types in `.claude/agents/` (name,
+  description, least-privilege tool access, optional model) so they're shareable and
+  scoped — prefer the narrowest tool set the task needs.
+- **Keep context lean**: subagents return summaries, not file dumps; continue an existing
+  subagent rather than re-spawning when you need its accumulated context.
+
 ## Model guidance (for agent code built in `services/agents/`)
 - Default model **`claude-opus-4-8`** unless the user names another. For high-volume
   routine work, `claude-sonnet-4-6` is a cost-conscious override (set `ANTHROPIC_MODEL`).
@@ -157,10 +173,6 @@ Keep context lean and store durable facts outside it.
 - **Stream** long outputs; use the SDK's `.get_final_message()` if you don't need
   per-event handling.
 - Configure the model via `app.config.Settings.anthropic_model`, not inline strings.
-- **Agents & subagents**: build multi-agent systems as a supervisor graph that delegates
-  to specialized subagent graphs (`services/agents/<role>.py`), each owning its own tools,
-  prompt, and optionally model; the supervisor routes and aggregates. Keep subagents
-  single-responsibility and injected behind interfaces. See architecture.md §9.
 
 ## Env & secrets
 Copy `.env.example` → `.env` and fill in. `.env` is gitignored — never commit it. All
