@@ -17,7 +17,7 @@ Postgres + pgvector).
   opt-in `app` extra (no runtime deps by default).
 - `.claude/` — shared Claude Code config: `settings.json` (pre-approved safe commands)
   + `commands/` (`/plan`, `/implement`, `/test`, `/lint`, `/run`, `/review`, `/arch`,
-  `/context`).
+  `/context`, `/retro`).
 - `.github/workflows/ci.yml` — CI gates (ruff, mypy, pytest).
 - `.pre-commit-config.yaml` — pre-commit hooks (ruff + mypy + hygiene).
 - `docker-compose.yml` — dev infra: Postgres + pgvector (`docker compose up -d db`).
@@ -56,6 +56,7 @@ the right layer → `uv run ruff check .` → `uv run ruff format --check .` →
 | `/review` | standards-adherence review of your changes |
 | `/arch` | load `docs/architecture.md` into context |
 | `/context` | context/memory hygiene audit |
+| `/retro` | capture a lesson from a bug/tool-friction to memory so future sessions go smoother |
 
 ## Notes
 - On Windows/PowerShell, use `uv run` for everything; no `cd` prefix.
