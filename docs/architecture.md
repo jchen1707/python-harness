@@ -38,7 +38,11 @@ controller (api)  ──▶  service (services)  ──▶  repository (reposito
 ```
 - **Controller layer** — `api/`: the entrypoint. FastAPI routers + route functions +
   Pydantic request/response models. Transport only: parse/validate input, call one
-  service, shape the response. No business logic, no direct DB/SDK calls.
+  service, shape the response. No business logic, no direct DB/SDK calls. Declare
+  injected dependencies with `Annotated[T, Depends(...)]` rather than `= Depends(...)`
+  defaults — ruff's `B008` forbids calls in argument defaults, and `Annotated`
+  (FastAPI ≥0.95) keeps `uv run ruff check .` clean with no per-file ignores;
+  `dependency_overrides` still target the `Depends(...)` callable.
 - **Service layer** — `services/`: business logic. Orchestrates repositories and
   external capabilities, applies domain rules, drives agent/RAG workflows. Agent
   orchestration (LangGraph) lives in `services/agents/`; RAG retrieval orchestration
