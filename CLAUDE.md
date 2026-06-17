@@ -78,7 +78,10 @@ docs/architecture.md  # full architectural standards (load with /arch)
 4. **Sync** — `uv sync` (tooling) + `uv sync --extra app` (approved stack) as needed.
 5. **Verify** — `/lint` then `/test` (and `uv run pytest -m integration` for DB-backed
    work) then `/review`. Fix root causes; don't paper over.
-6. **Commit** — only when asked; keep changes minimal and per-layer.
+6. **Commit / PR** — committing to a feature branch and opening a PR is fine without
+   asking; only **direct commits to `main`** require explicit user request. Keep changes
+   minimal and per-layer. `/implement` auto-commits to its branch and opens a PR once the
+   gates pass (see `.claude/commands/implement.md`).
 7. **Improve (write-back)** — when a step involved non-obvious friction (a bug that
    took real effort, or difficulty using a tool), run `/retro` to capture the lesson
    to memory so it doesn't recur; promote recurring/procedural ones to a command or a
