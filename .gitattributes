@@ -3,8 +3,10 @@
 # on Windows checkouts.
 * text=auto eol=lf
 
-# Generated lockfile — collapse in GitHub diffs; stays committed for reproducibility.
-uv.lock linguist-generated=true
+# Generated lockfile — stays committed for reproducibility, but kept out of diffs and
+# line counts: linguist-generated collapses it + excludes it from language stats; -diff
+# makes git/GitHub treat it as binary so it doesn't contribute to +/- line totals.
+uv.lock linguist-generated=true -diff
 
 # Binary assets — never normalize.
 *.png   binary
