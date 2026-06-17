@@ -20,7 +20,7 @@ For each durable, non-obvious lesson:
 2. **Check for an existing memory** first — scan `MEMORY.md`. Update that file
    rather than duplicating it; delete one that turns out to be wrong.
 3. **Write the lesson to the memory store** at
-   `C:\Users\jchen\.claude\projects\C--Users-jchen-Documents-python-harness\memory\`
+   `~/.claude/projects/<project-slug>/memory/`
    as one file with frontmatter, then add a one-line pointer to `MEMORY.md`:
    - `name`: `lesson-<short-kebab-slug>`.
    - `type`: `feedback` for a "how to work here" lesson; `reference` for an

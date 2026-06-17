@@ -10,7 +10,7 @@ Assess context/memory management for the current session and report:
    work? Is anything duplicated between CLAUDE.md and the memory store?
 3. **Memory write-back**: Are there durable facts from this session (decisions,
    preferences, non-obvious constraints) that belong in the memory store
-   (`C:\Users\jchen\.claude\projects\C--Users-jchen-Documents-python-harness\memory\`)?
+   (`~/.claude/projects/<project-slug>/memory/`)?
    Propose 1–3 concrete memory entries with their `type`
    (user / feedback / project / reference).
 4. **Friction write-back**: Did this session hit a bug that took real effort or a

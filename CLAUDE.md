@@ -156,8 +156,9 @@ Keep context lean and store durable facts outside it.
 - **Detailed standards live in `docs/architecture.md`** (load via `/arch` on demand, not
   every session) to keep the always-loaded context small.
 - **Durable, non-obvious facts** (decisions, preferences, constraints not in code or git)
-  go in the memory store at
-  `C:\Users\jchen\.claude\projects\C--Users-jchen-Documents-python-harness\memory\` — one
+  go in the per-project memory store at
+  `~/.claude/projects/<project-slug>/memory/` (the slug is this repo's absolute path
+  with separators replaced by `-`) — one
   fact per file with frontmatter; add a pointer line in its `MEMORY.md`. Prefer
   `project`/`feedback` types; don't save what the repo already records.
 - **Lessons from friction (write-back loop)** — when a bug or tool difficulty took
