@@ -53,6 +53,7 @@ Repo-owned (`.claude/commands/`):
 | Slash | Does |
 | --- | --- |
 | `/plan` | research + plan a feature, write `.claude/plans/plan.md` (terminal 1) |
+| `/implement-from-plan` | feed the plan + test plan to `/implement` with the `uv` gates pinned (terminal 2) |
 | `/test` | `uv run pytest` |
 | `/lint` | ruff check + format-check + mypy |
 | `/run` | uvicorn dev server (needs `src/app/main.py`) |
@@ -64,7 +65,7 @@ Vendored from `mattpocock/skills` (`.agents/skills/`, 41 total — highlights):
 
 | Slash | Does |
 | --- | --- |
-| `/implement` | implement from a spec or set of tickets, then commit (terminal 2) |
+| `/implement` | implement from a spec or set of tickets, then commit (prefer `/implement-from-plan` here) |
 | `/code-review` | two-axis review since a fixed point: Standards + Spec |
 | `/tdd` | red-green-refactor loop |
 | `/diagnosing-bugs` | diagnosis loop for hard bugs and perf regressions |

@@ -64,9 +64,9 @@ The argument is the feature/task to plan: `$ARGUMENTS`.
    and re-ask until the user approves. Do NOT proceed past this checkpoint on your own —
    even in autonomous/auto mode, planning requires this explicit user verification.
 8. **STOP — do not implement.** After sign-off, mark the planning tasks complete and
-   stop. Tell the user to open terminal 2 (implementation model) and run `/implement`,
-   naming the plan files as the spec (`.claude/plans/plan.md` + `test-plan.md`) — the
-   `/implement` skill works from a spec/tickets and won't find them on its own.
+   stop. Tell the user to open terminal 2 (implementation model) and run
+   `/implement-from-plan`, which feeds `.claude/plans/plan.md` + `test-plan.md` to the
+   `/implement` skill as its spec (that skill won't find them on its own).
    Implementing is a separate, explicit step — never roll straight from planning into
    writing code, even in a single terminal.
 
