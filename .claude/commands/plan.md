@@ -46,7 +46,7 @@ The argument is the feature/task to plan: `$ARGUMENTS`.
      this list into its task list.
    - **Verification** — gates to pass (CLAUDE.md Definition of Done: `uv run ruff
      check .`, `ruff format --check .`, `mypy`, `pytest`; `pytest -m integration` if
-     DB-backed; then `/review`) and any DB/container setup.
+     DB-backed; then `/code-review`) and any DB/container setup.
    - **Open questions** — anything terminal 2 should confirm before/while implementing.
 6. **Write the test plan** — overwrite `.claude/plans/test-plan.md` with:
    - **Scope** — the behaviors that must be covered (tie each back to a plan Step).
@@ -64,7 +64,9 @@ The argument is the feature/task to plan: `$ARGUMENTS`.
    and re-ask until the user approves. Do NOT proceed past this checkpoint on your own —
    even in autonomous/auto mode, planning requires this explicit user verification.
 8. **STOP — do not implement.** After sign-off, mark the planning tasks complete and
-   stop. Tell the user to open terminal 2 (implementation model) and run `/implement`.
+   stop. Tell the user to open terminal 2 (implementation model) and run
+   `/implement-from-plan`, which feeds `.claude/plans/plan.md` + `test-plan.md` to the
+   `/implement` skill as its spec (that skill won't find them on its own).
    Implementing is a separate, explicit step — never roll straight from planning into
    writing code, even in a single terminal.
 

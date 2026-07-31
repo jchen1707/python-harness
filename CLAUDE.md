@@ -19,11 +19,46 @@ Everything runs through `uv` (cross-platform; Windows/PowerShell-friendly).
 | Lint + format-check + type | `uv run ruff check .` · `uv run ruff format --check .` · `uv run mypy` | `/lint` |
 | Dev server (needs `src/app/main.py`) | `uv run uvicorn app.main:app --reload` | `/run` |
 | Plan a feature (terminal 1) | — | `/plan` |
-| Implement from plan (terminal 2) | — | `/implement` |
-| Standards review of changes | — | `/review` |
+| Implement from the plan (terminal 2) | — | `/implement-from-plan` |
+| Implement from a spec/tickets | — | `/implement` (skill) |
+| Review changes (standards + spec) | — | `/code-review` (skill) |
 | Load architecture standards | — | `/arch` |
 | Context/memory hygiene | — | `/context` |
 | Capture a lesson from friction | — | `/retro` |
+
+### Where slash commands come from
+Two sources, and the split matters when you add or change one:
+- **Repo commands** (`.claude/commands/`) — harness-specific, Python/`uv`-aware: `/plan`,
+  `/implement-from-plan`, `/lint`, `/test`, `/run`, `/arch`, `/context`, `/retro`.
+  Owned here; edit freely.
+- **Vendored skills** (`.agents/skills/`, symlinked into `.claude/skills/`) — installed
+  from `mattpocock/skills` via `npx skills add`, pinned in `skills-lock.json`. Update
+  with `npx skills update <name>`. **Don't hand-edit them** — an update overwrites
+  local changes. To diverge, copy it into `.claude/commands/` under a new name.
+- `/implement` and `/code-review` come from the vendored set; the repo's older
+  `implement.md` / `review.md` were removed in favour of them.
+  `/implement-from-plan` is the thin repo-owned adapter that feeds the plan files to
+  `/implement` — the pattern to copy when a vendored skill needs harness context. Note the vendored skills
+  are TypeScript-flavoured — `/setup-pre-commit` (Husky/Prettier) and
+  `/setup-ts-deep-modules` do not apply to this repo; use `.pre-commit-config.yaml`.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on `jchen1707/python-harness`, via the `gh` CLI (`GH_TOKEN` from `.env`).
+See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical roles, label string equal to the role name (`needs-triage`,
+`needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) — **not yet created in the
+repo**; see the `gh label create` block in `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context. `docs/architecture.md` is the architectural decision record (not
+`docs/adr/`, which is empty); `CONTEXT.md` is not yet created. See `docs/agents/domain.md`.
 
 ## Standard stack (approved — do not introduce alternatives without updating this file)
 - **Python 3.12** managed by **uv**. **Web**: FastAPI + `uvicorn[standard]`.
@@ -60,7 +95,10 @@ tests/
   test_smoke.py      # harness self-check
   integration/        # testcontainers integration tests (marked `integration`)
 docs/architecture.md  # full architectural standards (load with /arch)
+docs/agents/          # config the installed skills read (issue-tracker.md, ...)
 .claude/              # shared Claude Code config (settings.json + commands/)
+.claude/skills/       # symlinks into .agents/skills (managed by `npx skills`)
+.agents/skills/       # vendored third-party skills — edit upstream, not here
 ```
 
 ## Development workflow (the loop)
@@ -77,11 +115,11 @@ docs/architecture.md  # full architectural standards (load with /arch)
 3. **Implement** — write code in the correct layer; types on every public function.
 4. **Sync** — `uv sync` (tooling) + `uv sync --extra app` (approved stack) as needed.
 5. **Verify** — `/lint` then `/test` (and `uv run pytest -m integration` for DB-backed
-   work) then `/review`. Fix root causes; don't paper over.
+   work) then `/code-review`. Fix root causes; don't paper over.
 6. **Commit / PR** — committing to a feature branch and opening a PR is fine without
    asking; only **direct commits to `main`** require explicit user request. Keep changes
-   minimal and per-layer. `/implement` auto-commits to its branch and opens a PR once the
-   gates pass (see `.claude/commands/implement.md`).
+   minimal and per-layer. `/implement` commits to the current branch when it finishes;
+   opening the PR is a separate step (`gh pr create`).
 7. **Improve (write-back)** — when a step involved non-obvious friction (a bug that
    took real effort, or difficulty using a tool), run `/retro` to capture the lesson
    to memory so it doesn't recur; promote recurring/procedural ones to a command or a
@@ -91,7 +129,8 @@ docs/architecture.md  # full architectural standards (load with /arch)
 A change is done only when ALL pass:
 - `uv run ruff check .` clean · `uv run ruff format --check .` clean · `uv run mypy` clean
 - `uv run pytest` green (and `uv run pytest -m integration` green for DB-backed changes)
-- `/review` finds no standards violations
+- `/code-review` finds no standards violations (Standards axis clean; Spec axis clean
+  when the work has an originating issue/spec)
 - No secrets in code; no `print()` (use structlog); new behavior has tests
 - If the change involved non-obvious friction (a tricky bug or tool difficulty), the
   lesson is captured via `/retro`
@@ -115,10 +154,13 @@ plan file as the handoff:
    tests · integration tests · edge cases · how to run). Then **get explicit user
    sign-off on both plans** (a required checkpoint — `/plan` asks and waits, even in
    autonomous mode) and **STOP**. Do not implement.
-2. **Terminal 2 (implementation model) — `/implement`**: read `.claude/plans/plan.md`
-   and `test-plan.md`, build a fresh task list from the Steps + test cases, and
-   implement each to the Definition of Done (`/lint` → `/test` → `/review`); update the
-   plans as items complete.
+2. **Terminal 2 (implementation model) — `/implement-from-plan`**: reads
+   `.claude/plans/plan.md` + `test-plan.md`, builds a task list from the Steps, and
+   hands them to the vendored `/implement` skill as its spec with this repo's `uv`
+   gates pinned (`/lint` → `/test` → `/code-review`); updates the plans as items
+   complete. Use it rather than bare `/implement` — that skill works from "a spec or
+   set of tickets", doesn't find the plan files on its own, and its generic
+   "run typechecking / the test suite" steps are TypeScript-flavoured.
 
 `plan.md` and `test-plan.md` are gitignored — local handoff artifacts, not committed.
 Plans live in `.claude/plans/` (pinned via `plansDirectory` in `.claude/settings.json`);

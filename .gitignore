@@ -42,3 +42,9 @@ Thumbs.db
 .claude/scheduled_tasks.json
 .claude/plans/
 .claude/todos/
+
+# Vendored skills: .agents/skills + skills-lock.json ARE committed, but
+# .claude/skills/ is machine-local — `npx skills` writes absolute-path symlinks
+# (/c/Users/<you>/...) and core.symlinks=false on Windows would commit them as
+# broken text stubs. Regenerate after clone with:  npx skills add mattpocock/skills
+.claude/skills/

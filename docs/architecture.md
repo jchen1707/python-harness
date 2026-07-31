@@ -1,7 +1,8 @@
 # Architectural standards — python-harness
 
 Detailed standards for code in `src/app/`. CLAUDE.md has the summary; this is the
-authoritative reference (load with `/arch`; checked by `/review`).
+authoritative reference (load with `/arch`; checked by `/code-review`, which reads this
+file as the repo's documented standards).
 
 ## Choosing an architecture & design patterns (do this during research)
 This document is living, not fixed. Before building a non-trivial feature, select — during
