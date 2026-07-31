@@ -16,8 +16,10 @@ Postgres + pgvector).
 - `pyproject.toml` — tool config (ruff, mypy, pytest) + the approved app stack as the
   opt-in `app` extra (no runtime deps by default).
 - `.claude/` — shared Claude Code config: `settings.json` (pre-approved safe commands)
-  + `commands/` (`/plan`, `/implement`, `/test`, `/lint`, `/run`, `/review`, `/arch`,
-  `/context`, `/retro`).
+  + `commands/` (`/plan`, `/test`, `/lint`, `/run`, `/arch`, `/context`, `/retro`).
+- `.agents/skills/` + `skills-lock.json` — third-party skills vendored from
+  `mattpocock/skills` (`npx skills add`/`update`), symlinked into `.claude/skills/`.
+  Supplies `/implement` and `/code-review`, among others.
 - `.github/workflows/ci.yml` — CI gates (ruff, mypy, pytest).
 - `.pre-commit-config.yaml` — pre-commit hooks (ruff + mypy + hygiene).
 - `docker-compose.yml` — dev infra: Postgres + pgvector (`docker compose up -d db`).
@@ -43,20 +45,30 @@ Copy `.env.example` → `.env` and fill in keys (never commit `.env`).
 ## Workflow
 See `CLAUDE.md` → "Development workflow" + "Definition of Done". In short: implement in
 the right layer → `uv run ruff check .` → `uv run ruff format --check .` → `uv run mypy`
-→ `uv run pytest` → `/review` against standards → commit.
+→ `uv run pytest` → `/code-review` against standards → commit.
 
 ## Commands
+Repo-owned (`.claude/commands/`):
+
 | Slash | Does |
 | --- | --- |
 | `/plan` | research + plan a feature, write `.claude/plans/plan.md` (terminal 1) |
-| `/implement` | implement from `.claude/plans/plan.md` to the Definition of Done (terminal 2) |
 | `/test` | `uv run pytest` |
 | `/lint` | ruff check + format-check + mypy |
 | `/run` | uvicorn dev server (needs `src/app/main.py`) |
-| `/review` | standards-adherence review of your changes |
 | `/arch` | load `docs/architecture.md` into context |
 | `/context` | context/memory hygiene audit |
 | `/retro` | capture a lesson from a bug/tool-friction to memory so future sessions go smoother |
+
+Vendored from `mattpocock/skills` (`.agents/skills/`, 41 total — highlights):
+
+| Slash | Does |
+| --- | --- |
+| `/implement` | implement from a spec or set of tickets, then commit (terminal 2) |
+| `/code-review` | two-axis review since a fixed point: Standards + Spec |
+| `/tdd` | red-green-refactor loop |
+| `/diagnosing-bugs` | diagnosis loop for hard bugs and perf regressions |
+| `/research` | investigate a question against primary sources, write findings to a file |
 
 ## Notes
 - On Windows/PowerShell, use `uv run` for everything; no `cd` prefix.
