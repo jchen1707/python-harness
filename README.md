@@ -156,8 +156,9 @@ that can edit will fix things instead of reporting them, and the independent sig
 point.
 
 For a change that warrants more than two axes, `.claude/workflows/full-review.js` fans the
-same diff out to **six** independent reviewers — standards, spec, security, tests,
-async, simplicity — then fans in to a single synthesiser that merges duplicates, drops
+same diff out to **nine** independent reviewers — standards, spec, security, tests,
+async, simplicity, design, speed, cost — then fans in to a single synthesiser that merges
+duplicates, drops
 anything ruff or mypy already enforces, and ranks by severity and by how many axes agreed
 independently. The synthesiser never reads the diff itself; it only reconciles what came
 back, because a reviewer that also ranks tends to rank its own findings first.
@@ -245,7 +246,7 @@ alias) and broadened to cover any agent-read document. Use the new name.
 | --- | --- |
 | `.claude/agents/` | Subagents: `explorer`, `spec-checker`, `security-reviewer`, `test-writer` (worktree-isolated) |
 | `.claude/hooks/` | `protect_paths` (block protected edits), `format_edited` (auto-format), `verify` (Stop gate on the Definition of Done) |
-| `.claude/workflows/` | `full-review.js` — six reviewers fanned out, one ranked report fanned in |
+| `.claude/workflows/` | `full-review.js` — nine reviewers fanned out, one ranked report fanned in |
 Issues live in **Linear** via the claude.ai account connector — check `/mcp` for
 *claude.ai Linear*, and note MCP tools only load at session start
 (`docs/agents/issue-tracker.md`). PRs stay on GitHub.
