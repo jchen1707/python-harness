@@ -136,8 +136,10 @@ Fixed in `pyproject.toml` (`app` extra) — read it there. What the file doesn't
 
 ## Issue tracker
 
-**Linear**, via the MCP server in `.mcp.json`. Run `/mcp` and authenticate once per machine.
-Conventions and wayfinding operations: `docs/agents/issue-tracker.md`. PRs stay on GitHub.
+**Linear**, via the claude.ai account connector — check with `/mcp`, where it shows as
+*claude.ai Linear*. MCP tools load at session start, so connecting mid-session needs a
+restart. Conventions, tool discovery and wayfinding: `docs/agents/issue-tracker.md`.
+PRs stay on GitHub.
 
 Branch as `<type>/<TEAM-NUM>-<slug>` (e.g. `feat/ENG-412-vector-store`) so `/code-review`
 can resolve the originating ticket mechanically.

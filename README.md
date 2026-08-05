@@ -92,9 +92,9 @@ alias) and broadened to cover any agent-read document. Use the new name.
 | `.claude/agents/` | Subagents: `explorer`, `spec-checker`, `security-reviewer`, `test-writer` (worktree-isolated) |
 | `.claude/hooks/` | `protect_paths` (block protected edits), `format_edited` (auto-format), `verify` (Stop gate on the Definition of Done) |
 | `.claude/workflows/` | `full-review.js` — six reviewers fanned out, one ranked report fanned in |
-| `.mcp.json` | Linear MCP server; run `/mcp` once to authenticate |
-
-Issues live in **Linear** (`docs/agents/issue-tracker.md`); PRs stay on GitHub.
+Issues live in **Linear** via the claude.ai account connector — check `/mcp` for
+*claude.ai Linear*, and note MCP tools only load at session start
+(`docs/agents/issue-tracker.md`). PRs stay on GitHub.
 
 ## Notes
 - On Windows/PowerShell, use `uv run` for everything; no `cd` prefix.

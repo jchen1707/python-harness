@@ -1,32 +1,38 @@
 # Issue tracker: Linear
 
-Issues, specs and tickets for this repo live in **Linear**, reached through the Linear MCP
-server declared in `.mcp.json` (`https://mcp.linear.app/mcp`). **Pull requests stay on
-GitHub** — Linear holds the work item, GitHub holds the diff.
+Issues, specs and tickets for this repo live in **Linear**, reached over MCP. **Pull
+requests stay on GitHub** — Linear holds the work item, GitHub holds the diff.
 
-> **First run:** the MCP server uses OAuth. Run `/mcp` and authenticate `linear` once per
-> machine before any skill that writes to the tracker. Until then every operation below
-> fails with an auth error.
+## Connecting
+
+Linear comes from the **claude.ai account connector**, not from a repo-level `.mcp.json`.
+It follows the account, so it is already available in every project once connected — there
+is nothing to approve per repo.
+
+- Check it with `/mcp`; it appears as **claude.ai Linear**.
+- MCP servers load at **session start**. Connecting mid-session does not make the tools
+  available until you restart.
+- If it is absent, connect Linear in your claude.ai connector settings.
 
 ## Discovering the tools
 
-Linear's MCP tools are exposed as `mcp__linear__<tool>`. **List them before first use**
-rather than assuming names — the server's surface changes between releases:
+**List the tools before first use rather than assuming names.** The prefix depends on how
+Linear is connected — an account connector and a project server expose the same service
+under different names — and the surface changes between releases.
 
-- In session: `/mcp` shows the connected servers and their tools.
-- The names below are the expected ones; if a call fails with "unknown tool", re-check
-  against `/mcp` and use what's actually offered.
+`/mcp` shows the connected servers and their tools. Match the operation you need from the
+table below to what is actually offered.
 
 ## Conventions
 
-| Operation | How |
+| Operation | What to call |
 | --- | --- |
-| **Create an issue** | `mcp__linear__create_issue` — needs `team`; set `title`, `description` (markdown), optional `labels`, `project` |
-| **Read an issue** | `mcp__linear__get_issue` with the identifier (`ENG-123`) |
-| **List issues** | `mcp__linear__list_issues` — filter by `team`, `state`, `assignee`, `label` |
-| **Comment** | `mcp__linear__create_comment` with the issue id and markdown `body` |
-| **Apply/remove labels** | `mcp__linear__update_issue`, setting the `labels` array |
-| **Change state** | `mcp__linear__update_issue` with the target workflow state |
+| **Create an issue** | the create-issue tool — needs `team`; set `title`, `description` (markdown), optional `labels`, `project` |
+| **Read an issue** | the get-issue tool, with the identifier (`ENG-123`) |
+| **List issues** | the list-issues tool — filter by `team`, `state`, `assignee`, `label` |
+| **Comment** | the create-comment tool, with the issue id and markdown `body` |
+| **Apply/remove labels** | the update-issue tool, setting the `labels` array |
+| **Change state** | the update-issue tool, with the target workflow state |
 | **Close** | move to the team's Done/Cancelled state — Linear has no separate close verb |
 
 Issue identifiers are `TEAM-NUMBER` (e.g. `ENG-4521`), not bare integers. A reference like
@@ -48,8 +54,7 @@ and acceptance criteria in the description and link the full document.
 
 ## When a skill says "fetch the relevant ticket"
 
-`mcp__linear__get_issue` with the identifier, then `mcp__linear__list_comments` (or the
-comments included in the issue payload) for the discussion.
+Get the issue by identifier, then read its comments for the discussion.
 
 ## Wayfinding operations
 
