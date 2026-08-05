@@ -216,6 +216,7 @@ Repo-owned (`.claude/commands/` + `.claude/skills/`):
 | `/arch` | load `docs/architecture.md` into context |
 | `/context` | context/memory hygiene audit |
 | `/retro` | capture a lesson from a bug/tool-friction to memory so future sessions go smoother |
+| `/search-second-brain` | search past sessions' learnings and report the pattern across them |
 
 From the `mattpocock-skills` plugin (v1.2.1, 25 skills — highlights):
 
@@ -245,7 +246,7 @@ alias) and broadened to cover any agent-read document. Use the new name.
 | Path | What |
 | --- | --- |
 | `.claude/agents/` | Subagents. Workers: `explorer`, `test-writer` (worktree-isolated). Reviewers, one per `full-review` axis and each invokable standalone: `standards-reviewer`, `spec-checker`, `security-reviewer`, `test-reviewer`, `async-reviewer`, `simplicity-reviewer`, `design-reviewer`, `perf-reviewer`, `cost-reviewer` |
-| `.claude/hooks/` | `protect_paths` (block protected edits), `format_edited` (auto-format), `verify` (Stop gate on the Definition of Done) |
+| `.claude/hooks/` | `protect_paths` (block protected edits), `format_edited` (auto-format), `verify` (Stop gate on the Definition of Done), `session_learnings` (SessionEnd: distils lessons to the second brain) |
 | `.claude/workflows/` | `full-review.js` — nine reviewers fanned out, one ranked report fanned in. Each axis reads its prompt from the matching `.claude/agents/` definition, so the two forms cannot drift |
 Issues live in **Linear** via the claude.ai account connector — check `/mcp` for
 *claude.ai Linear*, and note MCP tools only load at session start

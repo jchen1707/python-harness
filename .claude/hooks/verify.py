@@ -70,7 +70,10 @@ def gated_change(cwd: str) -> bool:
             ["git", "status", "--porcelain", "--", *GATED_PATHS, *sorted(GATED_FILES)],
             cwd=cwd or None,
             capture_output=True,
-            text=True,
+            # Explicit, not text=True: that decodes with the locale codec (cp1252 on
+            # Windows), mangling any non-ASCII path git reports back.
+            encoding="utf-8",
+            errors="replace",
             timeout=30,
             check=False,
         )
@@ -108,7 +111,10 @@ def main() -> int:
                 args,
                 cwd=cwd or None,
                 capture_output=True,
-                text=True,
+                # ruff and mypy emit em-dashes and curly quotes in diagnostics; decoding
+                # them with the locale codec corrupts the very message we echo back.
+                encoding="utf-8",
+                errors="replace",
                 timeout=600,
                 check=False,
             )

@@ -118,6 +118,27 @@ def test_git_is_asked_about_every_gated_path(
         assert expected in argv, f"{expected} missing from the git pathspec"
 
 
+def test_subprocess_decodes_as_utf8(hook: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Subprocess output must be decoded explicitly, never via `text=True`.
+
+    `text=True` decodes with the locale codec — cp1252 on Windows — so an em-dash in
+    ruff or mypy output comes back as mojibake in the very message the gate echoes
+    back when it blocks. Caught in the wild; this pins the fix.
+    """
+    captured: list[dict[str, Any]] = []
+
+    def _run(_cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        captured.append(kwargs)
+        return subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(hook.subprocess, "run", _run)
+    hook.gated_change("")
+
+    kwargs = captured[0]
+    assert kwargs.get("encoding") == "utf-8"
+    assert "text" not in kwargs, "text=True re-introduces locale decoding"
+
+
 def test_git_failure_does_not_block(hook: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
     """If we cannot tell what changed, end the turn rather than block it forever."""
 
