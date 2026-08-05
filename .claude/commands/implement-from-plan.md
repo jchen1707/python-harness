@@ -29,15 +29,11 @@ supplies both.
      **seams** it names as the pre-agreed seams (`/tdd` requires seams be confirmed
      before any test is written — the test plan is that confirmation);
    - the **Open questions** from `plan.md`, to raise with the user rather than guess.
-5. **Pin the gates — this repo is Python, not TypeScript.** The vendored skills say
-   "run typechecking" and "run the test suite" generically. Here that means:
-   - typecheck: `uv run mypy` · lint: `uv run ruff check .` · format:
-     `uv run ruff format --check .`
-   - a single test file: `uv run pytest tests/test_<name>.py`
-   - full suite: `uv run pytest` (and `uv run pytest -m integration` for DB-backed
-     work, which needs Docker + `uv sync --extra app`)
-   - Where a skill says "run typechecking" or "the test suite", use the `uv` commands
-     above. `npm`, `tsc`, `vitest`, Husky and `lint-staged` have no equivalent here.
+5. **Pin the gates — this repo is Python, not TypeScript.** The plugin skills say "run
+   typechecking" and "run the test suite" generically, and reach for `npm`, `tsc`,
+   `vitest`, Husky and `lint-staged`, none of which exist here. Wherever a skill says
+   that, substitute the `uv` commands from **CLAUDE.md → Commands** (the authoritative
+   list, loaded every session); for a single file, `uv run pytest tests/test_<name>.py`.
 6. **Finish to the Definition of Done** (CLAUDE.md). Run `/verify` for the evidence —
    paste the real output rather than asserting the gates passed. Then `/code-review`
    with the merge-base as the fixed point (`git merge-base HEAD main`) and no Standards
