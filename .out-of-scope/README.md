@@ -1,5 +1,10 @@
 # Out-of-Scope
 
+> **This file documents the directory. It is not a rejection record.** `/triage` reads
+> `.out-of-scope/*.md` when checking for prior rejections, and this file matches that glob —
+> skip it during that scan. The Dark Mode block below is an illustrative example, not a
+> decision this project has made.
+
 Persistent records of **rejected** feature requests. `/triage` reads every file here during
 step 1 (gather context) to check whether a new request was already turned down, so a
 rejection doesn't get re-litigated from scratch each time it resurfaces.

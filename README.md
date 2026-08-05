@@ -20,7 +20,12 @@ Postgres + pgvector).
 - `.claude/settings.json` → `enabledPlugins` — declares the `mattpocock-skills` plugin
   (25 skills incl. `/implement`, `/code-review`, `/tdd`), so a clone picks it up
   automatically and it self-updates. `.claude/skills/` holds repo-owned skills only.
-- `.github/workflows/ci.yml` — CI gates (ruff, mypy, pytest).
+- `docs/agents/` — how agents work with this repo: `issue-tracker.md` (Linear conventions),
+  `triage-labels.md` (canonical triage roles → real label strings), `domain.md`.
+- `.out-of-scope/` — rejected feature requests, read by `/triage` to avoid re-litigating a
+  decision that was already made.
+- `.github/workflows/ci.yml` — CI gates (ruff, format, mypy, pytest; not the integration
+  suite, which needs Docker).
 - `.pre-commit-config.yaml` — pre-commit hooks (ruff + mypy + hygiene).
 - `docker-compose.yml` — dev infra: Postgres + pgvector (`docker compose up -d db`).
 - `src/app/` — empty package scaffold (the standard layout; populate per
@@ -51,32 +56,40 @@ How a request travels from landing in the tracker to meeting the Definition of D
    Linear issue
         │
         ▼
-   /triage ───────────▶ ready-for-human · needs-info · wontfix   ← ends here
-        │ ready-for-agent
-        ▼
+   /triage ─┬─▶ needs-triage ⇄ needs-info      evaluation loop, not terminal
+            │
+            ├─▶ ready-for-human · wontfix      leaves the pipeline
+            │
+            └─▶ ready-for-agent
+                     │
+                     ▼
    ┌── ALIGNMENT — one unbroken context ──────────────┐
    │  /grill-with-docs → /to-spec → /to-tickets       │
    └──────────────────────────────────────────────────┘
-        │ one ticket at a time
-        ▼
-   ┌── EXECUTION — fresh context per ticket ──────────┐
+                     │ one ticket at a time
+                     ▼
+   ┌── EXECUTION — branch first, fresh context each ──┐
    │  /implement → /verify → /code-review             │
    └──────────────────────────────────────────────────┘
-        │
-        ▼
-   branch → PR → Definition of Done
+                     │
+                     ▼
+              PR → Definition of Done
 ```
 
 ### 1. Triage — decide if it's real and whose it is
 
-A raw report lands in Linear. `/triage` categorises it (`Bug` / `Feature`), **verifies the
-claim before briefing** — reproduces the bug, checks whether it's already implemented,
-checks `.out-of-scope/` for a prior rejection — then recommends a state and *waits* for
-your call. It never labels blind.
+A raw report lands in Linear. `/triage` gathers context first — exploring the codebase,
+checking whether the thing is already implemented, reading `.out-of-scope/` for a prior
+rejection — then **recommends a category and state with reasoning, and waits** for your
+call. It never labels blind. Only once you've directed it does it verify the claim,
+reproducing the bug (or checking out and running a PR) before writing any agent brief.
 
-Exit: exactly one category label and one state label. `ready-for-agent` (a written agent
-brief is attached) sends it down the pipeline; `ready-for-human`, `needs-info` and
-`wontfix` end here. Roles map to real label strings in `docs/agents/triage-labels.md`.
+Exit: exactly one category label (`Bug` / `Feature`) and one state label.
+`ready-for-agent`, with an agent brief attached, sends it down the pipeline.
+`ready-for-human` and `wontfix` leave the pipeline. Neither `needs-triage` nor
+`needs-info` is terminal — the first means evaluation is still in progress, and the second
+returns to it once the reporter replies. Roles map to real label strings in
+`docs/agents/triage-labels.md`.
 
 ### 2. Alignment — turn a request into tickets
 
@@ -96,19 +109,22 @@ Pick the architectural style here, during research — not while coding — and 
 
 **Start each `/implement` in a fresh context, working only from its ticket.** Alignment
 needs continuity; execution needs a clean slate. Branch as `<type>/<TEAM-NUM>-<slug>`
-(e.g. `feat/PYT-12-vector-store`) so `/code-review` can resolve the originating ticket
+(e.g. `feat/ENG-412-vector-store`) so `/code-review` can resolve the originating ticket
 mechanically.
 
 While you work, the hooks enforce themselves regardless of instructions: `protect_paths`
 blocks edits to `.env`, `migrations/`, `generated/` and `uv.lock`; `format_edited` runs
-ruff on every edited `.py`; `verify` blocks the turn while the gates fail. That Stop gate
-is what makes a session walk-away-able.
+ruff on every edited `.py`; `verify` blocks the turn while the gates fail — but **only**
+when the turn changed Python under the gated paths, so prose work ends freely. That Stop
+gate is what makes a session walk-away-able.
 
 ### 4. Verification and review
 
-`/verify` runs the five gates and prints their output as evidence. `/code-review` then
-reads the diff on two independent axes — **Standards** (against `docs/architecture.md`)
-and **Spec** (against the originating ticket). Reviewers get read-only tools by design: one
+`/verify` runs the four fast gates and prints their output as evidence; pass
+`--integration` to add the DB-backed suite, which needs Docker and `uv sync --extra app`.
+`/code-review` then reads the diff on two independent axes — **Standards** (against
+`docs/architecture.md` plus the summary in `CLAUDE.md`) and **Spec** (against the
+originating ticket). Reviewers get read-only tools by design: one
 that can edit will fix things instead of reporting them, and the independent signal is the
 point.
 
