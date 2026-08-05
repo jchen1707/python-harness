@@ -79,9 +79,20 @@ Subagents in `.claude/agents/` — each defines its own tools and model:
 | Agent | For |
 | --- | --- |
 | `explorer` | "Where is X handled?" — findings reach you, file contents don't |
+| `test-writer` | Writes tests, never touches `src/` |
+| `standards-reviewer` | Diff vs. `docs/architecture.md` + this file |
 | `spec-checker` | Diff vs. ticket; reports gaps only |
 | `security-reviewer` | Fresh-context security pass |
-| `test-writer` | Writes tests, never touches `src/` |
+| `test-reviewer` | Would a test fail if the behaviour regressed? |
+| `async-reviewer` | Sync/async boundary; blocking on the loop, unbounded fan-out |
+| `simplicity-reviewer` | Cuts only — speculative abstraction, dead code |
+| `design-reviewer` | Module depth, seam placement, leaky interfaces |
+| `perf-reviewer` | What scales badly, and at what input size |
+| `cost-reviewer` | Avoidable token spend — caching, model choice, re-embedding |
+
+The nine reviewers are also the nine axes of `full-review.js`, which reads each prompt from
+the definition above rather than restating it. Add an axis by writing the agent file and
+adding one entry to `AXES`; there is no second copy to keep in step.
 
 **Fork for breadth, stay inline for depth.** Scanning and summarising belong in a subagent;
 reasoning you need to steer belongs in the main context. Reviewers get read-only tools by
@@ -93,9 +104,11 @@ signal is the whole point.
 - **`/loop-goal <goal>`** — standing goals that run until a stop condition holds (docs,
   architecture, logging, tests, deps). Progress lives in `.claude/plans/loop-<goal>.md` so it
   survives compaction.
-- **`.claude/workflows/full-review.js`** — dynamic workflow fanning a diff out to six
+- **`.claude/workflows/full-review.js`** — dynamic workflow fanning a diff out to nine
   independent reviewers and fanning in to one ranked report. Run it with `/workflows`, or
-  trigger workflow mode with the `ultracode` keyword.
+  trigger workflow mode with the `ultracode` keyword. Reviews against `main` unless
+  `REVIEW_BASE` says otherwise (`$env:REVIEW_BASE = "..."`). Nine agents is real spend —
+  reach for `/code-review` (two axes) by default and this when the diff warrants it.
 
 ## Standards
 
