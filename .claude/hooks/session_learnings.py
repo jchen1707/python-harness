@@ -86,10 +86,21 @@ Output GitHub-flavoured Markdown. Do not include front matter; it is added for y
 
 
 def run(args: list[str], cwd: str | None = None, timeout: int = 30) -> str:
-    """Run a command and return stdout, or an empty string on any failure."""
+    """Run a command and return stdout, or an empty string on any failure.
+
+    `encoding` is explicit on purpose: `text=True` alone decodes with the *locale*
+    codec, which is cp1252 on Windows, so any UTF-8 the child emits comes back as
+    mojibake (`—` arriving as `â€"`).
+    """
     try:
         result = subprocess.run(
-            args, cwd=cwd or None, capture_output=True, text=True, timeout=timeout, check=False
+            args,
+            cwd=cwd or None,
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+            check=False,
         )
     except (OSError, subprocess.TimeoutExpired):
         return ""
@@ -157,7 +168,8 @@ def distil(transcript: str, context: str) -> str:
             ["claude", "-p", "--model", MODEL],
             input=payload,
             capture_output=True,
-            text=True,
+            encoding="utf-8",  # Not text=True: see run(). The model emits em-dashes.
+            errors="replace",
             timeout=DISTILL_TIMEOUT,
             check=False,
             env=child_env,
