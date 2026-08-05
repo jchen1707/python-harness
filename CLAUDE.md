@@ -61,11 +61,16 @@ Hooks run in the harness, so they hold regardless of what any instruction here s
 | --- | --- |
 | `protect_paths.py` (PreToolUse) | Blocks edits to `.env`, `migrations/`, `generated/`, `uv.lock` |
 | `format_edited.py` (PostToolUse) | Runs `ruff format` + `ruff check --fix` on each edited `.py` |
-| `verify.py` (Stop) | Blocks the turn while the gates fail — **only** when `src/` or `tests/` Python changed |
+| `verify.py` (Stop) | Blocks the turn while the gates fail — **only** when the turn changed `.py` under `src/`, `tests/` or `.claude/hooks/`, or changed `pyproject.toml` |
 
 The Stop gate is what makes a session walk-away-able. `CLAUDE_SKIP_VERIFY=1` disables it.
 The harness overrides a Stop hook after 8 consecutive blocks; if you hit that, the loop is
 stuck on something it cannot fix.
+
+The gated set is *code the gates check, plus the config that defines them* — so prose,
+plans and docs still end freely and never burn override budget. Widen it by editing
+`GATED_PATHS` / `GATED_FILES` in `verify.py`; `tests/test_verify_hook.py` pins the
+pathspec, so dropping an entry fails the suite rather than silently going quiet.
 
 ## Parallel development
 
