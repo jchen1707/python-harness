@@ -27,20 +27,30 @@ Everything runs through `uv` (cross-platform; Windows/PowerShell-friendly).
 | Capture a lesson from friction | — | `/retro` |
 
 ### Where slash commands come from
-Two sources, and the split matters when you add or change one:
+Three sources, and the split matters when you add or change one:
 - **Repo commands** (`.claude/commands/`) — harness-specific, Python/`uv`-aware: `/plan`,
   `/implement-from-plan`, `/lint`, `/test`, `/run`, `/arch`, `/context`, `/retro`.
   Owned here; edit freely.
-- **Vendored skills** (`.agents/skills/`, symlinked into `.claude/skills/`) — installed
-  from `mattpocock/skills` via `npx skills add`, pinned in `skills-lock.json`. Update
-  with `npx skills update <name>`. **Don't hand-edit them** — an update overwrites
-  local changes. To diverge, copy it into `.claude/commands/` under a new name.
-- `/implement` and `/code-review` come from the vendored set; the repo's older
-  `implement.md` / `review.md` were removed in favour of them.
-  `/implement-from-plan` is the thin repo-owned adapter that feeds the plan files to
-  `/implement` — the pattern to copy when a vendored skill needs harness context. Note the vendored skills
-  are TypeScript-flavoured — `/setup-pre-commit` (Husky/Prettier) and
-  `/setup-ts-deep-modules` do not apply to this repo; use `.pre-commit-config.yaml`.
+- **Repo skills** (`.claude/skills/`) — repo-owned skills as real files. Currently only
+  `writing-great-skills`, kept because upstream deleted it. Edit freely; nothing
+  overwrites them.
+- **The `mattpocock-skills` plugin** — 25 skills (`/implement`, `/code-review`, `/tdd`,
+  `/wait-what`, `/writing-for-agents`, …), declared in `.claude/settings.json` →
+  `enabledPlugins` so a clone gets them automatically. Files live outside the repo under
+  `~/.claude/plugins/`; **never vendor them back in.** Manage with `claude plugin
+  list|details|update mattpocock-skills`.
+
+Installed from **mattpocock's own marketplace**, not Anthropic's official one:
+`claude plugin marketplace add mattpocock/skills` then `claude plugin install
+mattpocock-skills@mattpocock --scope project`. The official marketplace mirrors upstream
+on a lag (it served 1.2.0, without `/wait-what`, when upstream was already 1.2.1), so
+track upstream directly and accept that it is less vetted.
+
+`/implement` and `/code-review` come from the plugin; the repo's older `implement.md` /
+`review.md` were removed in favour of them. `/implement-from-plan` is the thin repo-owned
+adapter that feeds the plan files to `/implement` — the pattern to copy when a plugin
+skill needs harness context. Some plugin skills are TypeScript-flavoured and don't apply
+here (there is no `/setup-pre-commit` in the plugin set; use `.pre-commit-config.yaml`).
 
 ## Agent skills
 
@@ -97,8 +107,7 @@ tests/
 docs/architecture.md  # full architectural standards (load with /arch)
 docs/agents/          # config the installed skills read (issue-tracker.md, ...)
 .claude/              # shared Claude Code config (settings.json + commands/)
-.claude/skills/       # symlinks into .agents/skills (managed by `npx skills`)
-.agents/skills/       # vendored third-party skills — edit upstream, not here
+.claude/skills/       # repo-owned skills (real files); third-party come from the plugin
 ```
 
 ## Development workflow (the loop)
