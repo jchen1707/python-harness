@@ -27,5 +27,60 @@
   "enabledPlugins": {
     "mattpocock-skills@mattpocock": true
   },
-  "plansDirectory": ".claude/plans"
+  "plansDirectory": ".claude/plans",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv",
+            "args": [
+              "run",
+              "python",
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/protect_paths.py"
+            ],
+            "timeout": 30,
+            "statusMessage": "Checking protected paths…"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv",
+            "args": [
+              "run",
+              "python",
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/format_edited.py"
+            ],
+            "timeout": 90,
+            "statusMessage": "Formatting…"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv",
+            "args": [
+              "run",
+              "python",
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/verify.py"
+            ],
+            "timeout": 600,
+            "statusMessage": "Verifying Definition of Done…"
+          }
+        ]
+      }
+    ]
+  }
 }

@@ -36,11 +36,13 @@ supplies both.
    - a single test file: `uv run pytest tests/test_<name>.py`
    - full suite: `uv run pytest` (and `uv run pytest -m integration` for DB-backed
      work, which needs Docker + `uv sync --extra app`)
-   - Ignore any instruction to use `npm`, `tsc`, `vitest`, Husky, or `lint-staged`.
-     `/setup-pre-commit` and `/setup-ts-deep-modules` do not apply to this repo.
-6. **Finish to the Definition of Done** (CLAUDE.md): all gates clean, no secrets, no
-   `print()`, new behavior tested, then `/code-review` with the merge-base as the fixed
-   point (`git merge-base HEAD main`) and no Standards findings outstanding.
+   - Where a skill says "run typechecking" or "the test suite", use the `uv` commands
+     above. `npm`, `tsc`, `vitest`, Husky and `lint-staged` have no equivalent here.
+6. **Finish to the Definition of Done** (CLAUDE.md). Run `/verify` for the evidence —
+   paste the real output rather than asserting the gates passed. Then `/code-review`
+   with the merge-base as the fixed point (`git merge-base HEAD main`) and no Standards
+   findings outstanding. The `Stop` hook re-runs the gates independently, so a turn
+   cannot end on failing Python under `src/` or `tests/`.
 7. **Update the plans as you go** — tick off Steps in `plan.md` and cases in
    `test-plan.md` as they land, so an interrupted session can resume from the files.
 8. **Commit and stop.** `/implement` commits to the current branch. Opening the PR is a

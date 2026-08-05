@@ -16,14 +16,21 @@ Edit the right-hand column to match whatever vocabulary you actually use.
 
 ## Note for this repo
 
-These labels do **not** yet exist in `jchen1707/python-harness` — the defaults were kept
-because there was no existing vocabulary to map around, not because the labels are
-already set up. `/triage` will need them created before it can apply them:
+The tracker is **Linear** (see `issue-tracker.md`). These five are **labels**, not workflow
+states — applying one does not move the issue across the board.
 
-```sh
-gh label create needs-triage    --description "Maintainer needs to evaluate this issue"
-gh label create needs-info      --description "Waiting on reporter for more information"
-gh label create ready-for-agent --description "Fully specified, ready for an AFK agent"
-gh label create ready-for-human --description "Requires human implementation"
-# `wontfix` ships with new GitHub repos by default — check before creating.
-```
+They do **not** yet exist in the Linear workspace; the defaults were kept because there was
+no existing vocabulary to map around. Labels can't be created over the MCP server in every
+Linear plan, so create them once in the Linear UI (Settings → Labels), or let `/triage`
+create them on first use if your workspace permits it:
+
+| Label | Description |
+| --- | --- |
+| `needs-triage` | Maintainer needs to evaluate this issue |
+| `needs-info` | Waiting on reporter for more information |
+| `ready-for-agent` | Fully specified, ready for an AFK agent |
+| `ready-for-human` | Requires human implementation |
+| `wontfix` | Will not be actioned |
+
+If your team already uses different names, edit the right-hand column in the table above
+rather than creating duplicates.
