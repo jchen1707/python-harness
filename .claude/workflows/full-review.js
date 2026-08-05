@@ -1,3 +1,7 @@
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 export const meta = {
   name: 'full-review',
   description:
@@ -11,6 +15,28 @@ export const meta = {
 
 const BASE = process.env.REVIEW_BASE || 'main'
 
+// Two axes also exist as standalone subagents in `.claude/agents/`. Those definitions
+// are the single source of truth — this workflow reads their bodies rather than
+// restating them, so `/security-reviewer` and the `security` axis cannot drift apart.
+// Resolved relative to this file, not the cwd, so it holds wherever the runner starts.
+const AGENT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'agents')
+
+/**
+ * Body of a subagent definition, with its YAML frontmatter stripped.
+ *
+ * Falls back to a one-line brief if the definition is missing or unreadable — a deleted
+ * agent file should degrade this axis, not take down the whole review.
+ */
+function agentPrompt(name, fallback) {
+  try {
+    const raw = readFileSync(join(AGENT_DIR, `${name}.md`), 'utf8')
+    const body = raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '').trim()
+    return body || fallback
+  } catch {
+    return fallback
+  }
+}
+
 const AXES = [
   {
     label: 'standards',
@@ -18,11 +44,27 @@ const AXES = [
   },
   {
     label: 'spec',
-    prompt: `Identify the originating Linear ticket from the branch name or commit trailers (see docs/agents/issue-tracker.md). Check the diff against its acceptance criteria. Report unmet or partially met criteria, and anything implemented that was never asked for. If no ticket can be resolved, report "no spec available" and stop.`,
+    // Shared with the `spec-checker` subagent. It expects the caller to name the diff
+    // range and the spec source, so both are supplied below.
+    prompt:
+      agentPrompt(
+        'spec-checker',
+        `Check the diff against the acceptance criteria of its originating ticket. Report unmet or partially met criteria, and anything implemented that was never asked for.`,
+      ) +
+      `\n\n---\n\nThe diff range is \`${BASE}...HEAD\`. Resolve the spec source yourself: ` +
+      `take the Linear ticket id from the branch name or commit trailers and fetch the ` +
+      `ticket, per docs/agents/issue-tracker.md. Do not accept a summary of the ticket ` +
+      `from anyone — read it from the tracker, so the criteria you check against are the ` +
+      `ones actually filed. If no ticket resolves, report "no spec available" and stop.`,
   },
   {
     label: 'security',
-    prompt: `Security pass over the diff: secrets outside Settings, injection (SQL, command, prompt), unvalidated input bypassing Pydantic, missing authz, unsafe deserialization, missing timeouts on outbound httpx. Only reachable issues. Give the attack path for each.`,
+    // Shared with the `security-reviewer` subagent.
+    prompt:
+      agentPrompt(
+        'security-reviewer',
+        `Security pass over the diff: secrets outside Settings, injection (SQL, command, prompt), unvalidated input bypassing Pydantic, missing authz, unsafe deserialization, missing timeouts on outbound httpx. Only reachable issues. Give the attack path for each.`,
+      ) + `\n\n---\n\nThe diff range is \`${BASE}...HEAD\`.`,
   },
   {
     label: 'tests',
