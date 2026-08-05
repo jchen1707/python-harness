@@ -74,7 +74,10 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 warn_return_any = false
 ignore_missing_imports = true
-files = ["src", "tests"]
+# `.claude/hooks` is listed explicitly: mypy skips dot-directories during its own
+# recursive discovery, so a bare "." would never reach them. The hooks enforce every
+# other gate, so they are held to the same strictness as `src`.
+files = ["src", "tests", ".claude/hooks"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
