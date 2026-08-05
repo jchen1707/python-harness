@@ -81,6 +81,23 @@
           }
         ]
       }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv",
+            "args": [
+              "run",
+              "python",
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/session_learnings.py"
+            ],
+            "timeout": 300,
+            "statusMessage": "Distilling session learnings…"
+          }
+        ]
+      }
     ]
   }
 }

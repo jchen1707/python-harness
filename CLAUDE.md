@@ -62,6 +62,7 @@ Hooks run in the harness, so they hold regardless of what any instruction here s
 | `protect_paths.py` (PreToolUse) | Blocks edits to `.env`, `migrations/`, `generated/`, `uv.lock` |
 | `format_edited.py` (PostToolUse) | Runs `ruff format` + `ruff check --fix` on each edited `.py` |
 | `verify.py` (Stop) | Blocks the turn while the gates fail — **only** when the turn changed `.py` under `src/`, `tests/` or `.claude/hooks/`, or changed `pyproject.toml` |
+| `session_learnings.py` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain. Off unless `CLAUDE_LEARNINGS_DIR` is set |
 
 The Stop gate is what makes a session walk-away-able. `CLAUDE_SKIP_VERIFY=1` disables it.
 The harness overrides a Stop hook after 8 consecutive blocks; if you hit that, the loop is
@@ -188,3 +189,20 @@ file, pointer line in `MEMORY.md`. Save decisions, constraints and friction less
 anything the repo already records to the repo. `/retro` captures a lesson; `/context` audits.
 
 When compacting, preserve the list of modified files and the commands needed to verify them.
+
+### Second brain
+
+A layer above memory, in the user's own notes rather than the agent's:
+
+- **Write** — `session_learnings.py` (SessionEnd) distils the session's mistakes and their
+  fixes into a dated note under `CLAUDE_LEARNINGS_DIR`, split into *Implementation* and
+  *Architecture & design* learnings. It writes **nothing** when a session taught nothing.
+- **Read** — `/search-second-brain <topic>` searches those notes plus the wider vault and
+  reports the pattern across them, with citations. Read-only by design.
+
+Set `CLAUDE_LEARNINGS_DIR` in **user** settings, never in this repo's committed
+`.claude/settings.json` — a clone must not inherit a path to somebody else's vault.
+
+Three tiers, deliberately: memory is for this project's facts, the second brain is for
+transferable lessons across projects, and `CLAUDE.md` / `docs/architecture.md` are for
+what has hardened into a rule. A lesson recurring across sessions should be promoted up.
