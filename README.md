@@ -68,9 +68,10 @@ How a request travels from landing in the tracker to meeting the Definition of D
    └──────────────────────────────────────────────────┘
                      │ one ticket at a time
                      ▼
-   ┌── EXECUTION — branch first, fresh context each ──┐
-   │  /implement → /verify → /code-review             │
-   └──────────────────────────────────────────────────┘
+   ┌── EXECUTION — branch first, fresh context per ticket ─┐
+   │  /plan → sign-off → /implement-from-plan              │
+   │                       → /verify → /code-review        │
+   └───────────────────────────────────────────────────────┘
                      │
                      ▼
               PR → Definition of Done
@@ -105,12 +106,38 @@ Each builds on the thinking of the last, and that continuity is the whole point.
 Pick the architectural style here, during research — not while coding — and record it in
 `docs/architecture.md`.
 
+Note what alignment deliberately does **not** produce: an implementation plan. A spec
+states behaviour, a ticket states a slice of it. Neither says how to build it — that is
+step 3's job, per ticket.
+
 ### 3. Execution — one ticket, one clean slate
 
-**Start each `/implement` in a fresh context, working only from its ticket.** Alignment
-needs continuity; execution needs a clean slate. Branch as `<type>/<TEAM-NUM>-<slug>`
+**Start each ticket in a fresh context, working only from that ticket.** Alignment needs
+continuity; execution needs a clean slate. Branch as `<type>/<TEAM-NUM>-<slug>`
 (e.g. `feat/ENG-412-vector-store`) so `/code-review` can resolve the originating ticket
 mechanically.
+
+**Then plan the ticket before building it — `/plan` first, not `/implement` first.**
+
+`/implement` is deliberately thin: implement the spec, use `/tdd` at pre-agreed seams,
+typecheck, review, commit. It contains no design step. Handing it a ticket directly means
+the approach — layer placement, which protocols to extend, the sync/async boundary — gets
+decided while typing, which is exactly what `docs/architecture.md` says not to do.
+
+`/plan` fills that gap per ticket. It researches the ticket, settles the design, and writes
+`.claude/plans/plan.md` + `test-plan.md` for your explicit sign-off, then stops.
+
+The test plan earns its place twice over. `/tdd` will not write a test at an unconfirmed
+seam — *"No test is written at an unconfirmed seam"* — and `test-plan.md` **is** that
+confirmation. Skip planning and `/implement` must either stop to ask you mid-flight or
+choose seams on its own.
+
+Then `/implement-from-plan` takes over: it feeds both plans to `/implement` as the spec,
+turns the numbered Steps into the task list, hands the test cases over as the pre-agreed
+seams, and pins this repo's `uv` gates in place of the skills' generic TypeScript phrasing.
+
+This is why both paths share an ending — the small-work path below is the same two steps
+without alignment in front of them.
 
 While you work, the hooks enforce themselves regardless of instructions: `protect_paths`
 blocks edits to `.env`, `migrations/`, `generated/` and `uv.lock`; `format_edited` runs
@@ -128,6 +155,20 @@ originating ticket). Reviewers get read-only tools by design: one
 that can edit will fix things instead of reporting them, and the independent signal is the
 point.
 
+For a change that warrants more than two axes, `.claude/workflows/full-review.js` fans the
+same diff out to **six** independent reviewers — standards, spec, security, tests,
+async, simplicity — then fans in to a single synthesiser that merges duplicates, drops
+anything ruff or mypy already enforces, and ranks by severity and by how many axes agreed
+independently. The synthesiser never reads the diff itself; it only reconciles what came
+back, because a reviewer that also ranks tends to rank its own findings first.
+
+Run it with `/workflows`, or trigger workflow mode with the `ultracode` keyword. It reviews
+against `main` unless `REVIEW_BASE` says otherwise (`$env:REVIEW_BASE = "..."` in
+PowerShell).
+
+Reach for `/code-review` by default and `full-review` when the diff touches security,
+concurrency, or anything you would not want to be wrong about.
+
 ### 5. Done
 
 Commit, push the branch, open the PR. A feature branch and PR need no permission;
@@ -143,9 +184,12 @@ built by another — skips alignment entirely:
 /plan  →  (new terminal)  →  /implement-from-plan
 ```
 
-`/plan` writes `.claude/plans/plan.md` + `test-plan.md`, gets explicit sign-off, and stops.
-`/implement-from-plan` feeds those to `/implement` with this repo's gates pinned. Both
-paths converge on step 4.
+This is step 3 with nothing in front of it. Same two commands, same sign-off, same gates —
+the only difference is that no grilling, spec or tickets preceded them, because the work
+was small enough not to need them. Both paths converge on step 4.
+
+The new terminal is optional but useful: `/plan` and `/implement-from-plan` are a clean
+model-switching seam, so you can plan with one model and build with another.
 
 ### Definition of Done
 
