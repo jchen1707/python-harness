@@ -17,9 +17,9 @@ Postgres + pgvector).
   opt-in `app` extra (no runtime deps by default).
 - `.claude/` — shared Claude Code config: `settings.json` (pre-approved safe commands)
   + `commands/` (`/plan`, `/test`, `/lint`, `/run`, `/arch`, `/context`, `/retro`).
-- `.agents/skills/` + `skills-lock.json` — third-party skills vendored from
-  `mattpocock/skills` (`npx skills add`/`update`), symlinked into `.claude/skills/`.
-  Supplies `/implement` and `/code-review`, among others.
+- `.claude/settings.json` → `enabledPlugins` — declares the `mattpocock-skills` plugin
+  (25 skills incl. `/implement`, `/code-review`, `/tdd`), so a clone picks it up
+  automatically and it self-updates. `.claude/skills/` holds repo-owned skills only.
 - `.github/workflows/ci.yml` — CI gates (ruff, mypy, pytest).
 - `.pre-commit-config.yaml` — pre-commit hooks (ruff + mypy + hygiene).
 - `docker-compose.yml` — dev infra: Postgres + pgvector (`docker compose up -d db`).
@@ -61,7 +61,7 @@ Repo-owned (`.claude/commands/`):
 | `/context` | context/memory hygiene audit |
 | `/retro` | capture a lesson from a bug/tool-friction to memory so future sessions go smoother |
 
-Vendored from `mattpocock/skills` (`.agents/skills/`, 41 total — highlights):
+From the `mattpocock-skills` plugin (v1.2.1, 25 skills — highlights):
 
 | Slash | Does |
 | --- | --- |
@@ -70,6 +70,18 @@ Vendored from `mattpocock/skills` (`.agents/skills/`, 41 total — highlights):
 | `/tdd` | red-green-refactor loop |
 | `/diagnosing-bugs` | diagnosis loop for hard bugs and perf regressions |
 | `/research` | investigate a question against primary sources, write findings to a file |
+| `/wait-what` | re-pitch a message that didn't land, in plain English |
+| `/writing-for-agents` | write docs and prompts that agents actually follow |
+
+Install (already declared in `.claude/settings.json`, so a clone needs only this once):
+```sh
+claude plugin marketplace add mattpocock/skills
+claude plugin install mattpocock-skills@mattpocock --scope project
+```
+Upstream's own marketplace is used rather than Anthropic's official mirror, which lags.
+
+Repo-owned skill in `.claude/skills/`: `writing-great-skills` — kept because upstream
+deleted it, so nothing will ever update it.
 
 ## Notes
 - On Windows/PowerShell, use `uv run` for everything; no `cd` prefix.

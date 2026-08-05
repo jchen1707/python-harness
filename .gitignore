@@ -43,8 +43,7 @@ Thumbs.db
 .claude/plans/
 .claude/todos/
 
-# Vendored skills: .agents/skills + skills-lock.json ARE committed, but
-# .claude/skills/ is machine-local — `npx skills` writes absolute-path symlinks
-# (/c/Users/<you>/...) and core.symlinks=false on Windows would commit them as
-# broken text stubs. Regenerate after clone with:  npx skills add mattpocock/skills
-.claude/skills/
+# .claude/skills/ IS committed — it holds repo-owned skills only (real files, no
+# symlinks). Third-party skills come from the mattpocock-skills plugin, declared in
+# .claude/settings.json → enabledPlugins; the plugin's own files live outside the repo
+# under ~/.claude/plugins/ and must never be vendored back in here.
