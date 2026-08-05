@@ -158,7 +158,7 @@ can resolve the originating ticket mechanically.
   `/implement-from-plan`, `/verify`, `/loop-goal`, `/lint`, `/test`, `/run`, `/arch`,
   `/context`, `/retro`. Edit freely.
 - **`mattpocock-skills` plugin** (v1.2.1, 25 skills) — `/implement`, `/code-review`, `/tdd`,
-  `/grill-with-docs`, `/to-spec`, `/to-tickets`, `/wait-what`. Declared in
+  `/grill-with-docs`, `/to-spec`, `/to-tickets`, `/triage`, `/wait-what`. Declared in
   `.claude/settings.json`; files live under `~/.claude/plugins/`. Installed from upstream's
   marketplace (`mattpocock/skills`), not Anthropic's mirror, which lags. Never vendor them
   into the repo.

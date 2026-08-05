@@ -42,10 +42,103 @@ docker compose up -d db
 ```
 Copy `.env.example` → `.env` and fill in keys (never commit `.env`).
 
-## Workflow
-See `CLAUDE.md` → "Development workflow" + "Definition of Done". In short: implement in
-the right layer → `uv run ruff check .` → `uv run ruff format --check .` → `uv run mypy`
-→ `uv run pytest` → `/code-review` against standards → commit.
+## The SDLC
+
+How a request travels from landing in the tracker to meeting the Definition of Done.
+`CLAUDE.md` is the authority; this is the map.
+
+```
+   Linear issue
+        │
+        ▼
+   /triage ───────────▶ ready-for-human · needs-info · wontfix   ← ends here
+        │ ready-for-agent
+        ▼
+   ┌── ALIGNMENT — one unbroken context ──────────────┐
+   │  /grill-with-docs → /to-spec → /to-tickets       │
+   └──────────────────────────────────────────────────┘
+        │ one ticket at a time
+        ▼
+   ┌── EXECUTION — fresh context per ticket ──────────┐
+   │  /implement → /verify → /code-review             │
+   └──────────────────────────────────────────────────┘
+        │
+        ▼
+   branch → PR → Definition of Done
+```
+
+### 1. Triage — decide if it's real and whose it is
+
+A raw report lands in Linear. `/triage` categorises it (`Bug` / `Feature`), **verifies the
+claim before briefing** — reproduces the bug, checks whether it's already implemented,
+checks `.out-of-scope/` for a prior rejection — then recommends a state and *waits* for
+your call. It never labels blind.
+
+Exit: exactly one category label and one state label. `ready-for-agent` (a written agent
+brief is attached) sends it down the pipeline; `ready-for-human`, `needs-info` and
+`wontfix` end here. Roles map to real label strings in `docs/agents/triage-labels.md`.
+
+### 2. Alignment — turn a request into tickets
+
+**Keep these three steps in one unbroken context window — no `/compact`, no `/clear`.**
+Each builds on the thinking of the last, and that continuity is the whole point.
+
+| Step | Produces |
+| --- | --- |
+| `/grill-with-docs` | assumptions stress-tested against real docs, not model priors |
+| `/to-spec` | a spec — behaviour and acceptance criteria, not implementation |
+| `/to-tickets` | the spec split into independently implementable tickets |
+
+Pick the architectural style here, during research — not while coding — and record it in
+`docs/architecture.md`.
+
+### 3. Execution — one ticket, one clean slate
+
+**Start each `/implement` in a fresh context, working only from its ticket.** Alignment
+needs continuity; execution needs a clean slate. Branch as `<type>/<TEAM-NUM>-<slug>`
+(e.g. `feat/PYT-12-vector-store`) so `/code-review` can resolve the originating ticket
+mechanically.
+
+While you work, the hooks enforce themselves regardless of instructions: `protect_paths`
+blocks edits to `.env`, `migrations/`, `generated/` and `uv.lock`; `format_edited` runs
+ruff on every edited `.py`; `verify` blocks the turn while the gates fail. That Stop gate
+is what makes a session walk-away-able.
+
+### 4. Verification and review
+
+`/verify` runs the five gates and prints their output as evidence. `/code-review` then
+reads the diff on two independent axes — **Standards** (against `docs/architecture.md`)
+and **Spec** (against the originating ticket). Reviewers get read-only tools by design: one
+that can edit will fix things instead of reporting them, and the independent signal is the
+point.
+
+### 5. Done
+
+Commit, push the branch, open the PR. A feature branch and PR need no permission;
+committing to `main` does. Capture any friction with `/retro` so the next session starts
+smarter.
+
+### The small-work path
+
+Anything you could describe in one sentence — or work you want planned by one model and
+built by another — skips alignment entirely:
+
+```
+/plan  →  (new terminal)  →  /implement-from-plan
+```
+
+`/plan` writes `.claude/plans/plan.md` + `test-plan.md`, gets explicit sign-off, and stops.
+`/implement-from-plan` feeds those to `/implement` with this repo's gates pinned. Both
+paths converge on step 4.
+
+### Definition of Done
+
+- All five gates pass: `ruff check` · `ruff format --check` · `mypy` · `pytest` ·
+  `pytest -m integration`
+- New behaviour has a test that would fail if the behaviour regressed
+- `/code-review` clean on Standards; clean on Spec when there's an originating ticket
+- Config and secrets read only through `app.config.Settings`
+- Friction worth remembering captured via `/retro`
 
 ## Commands
 Repo-owned (`.claude/commands/` + `.claude/skills/`):
@@ -72,6 +165,7 @@ From the `mattpocock-skills` plugin (v1.2.1, 25 skills — highlights):
 | `/tdd` | red-green-refactor loop |
 | `/diagnosing-bugs` | diagnosis loop for hard bugs and perf regressions |
 | `/research` | investigate a question against primary sources, write findings to a file |
+| `/triage` | move tracker issues through the triage state machine (see `docs/agents/triage-labels.md`) |
 | `/wait-what` | re-pitch a message that didn't land, in plain English |
 | `/writing-for-agents` | write docs and prompts that agents actually follow |
 
