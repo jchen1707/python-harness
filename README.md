@@ -48,12 +48,14 @@ the right layer → `uv run ruff check .` → `uv run ruff format --check .` →
 → `uv run pytest` → `/code-review` against standards → commit.
 
 ## Commands
-Repo-owned (`.claude/commands/`):
+Repo-owned (`.claude/commands/` + `.claude/skills/`):
 
 | Slash | Does |
 | --- | --- |
 | `/plan` | research + plan a feature, write `.claude/plans/plan.md` (terminal 1) |
 | `/implement-from-plan` | feed the plan + test plan to `/implement` with the `uv` gates pinned (terminal 2) |
+| `/verify` | run the Definition of Done gates and print the output as evidence |
+| `/loop-goal` | run a standing goal (docs, architecture, logging, tests, deps) until its stop condition holds |
 | `/test` | `uv run pytest` |
 | `/lint` | ruff check + format-check + mypy |
 | `/run` | uvicorn dev server (needs `src/app/main.py`) |
@@ -80,8 +82,19 @@ claude plugin install mattpocock-skills@mattpocock --scope project
 ```
 Upstream's own marketplace is used rather than Anthropic's official mirror, which lags.
 
-Repo-owned skill in `.claude/skills/`: `writing-great-skills` — kept because upstream
-deleted it, so nothing will ever update it.
+`/writing-great-skills` was **renamed** to `/writing-for-agents` upstream (breaking, no
+alias) and broadened to cover any agent-read document. Use the new name.
+
+## Agentic setup
+
+| Path | What |
+| --- | --- |
+| `.claude/agents/` | Subagents: `explorer`, `spec-checker`, `security-reviewer`, `test-writer` (worktree-isolated) |
+| `.claude/hooks/` | `protect_paths` (block protected edits), `format_edited` (auto-format), `verify` (Stop gate on the Definition of Done) |
+| `.claude/workflows/` | `full-review.js` — six reviewers fanned out, one ranked report fanned in |
+Issues live in **Linear** via the claude.ai account connector — check `/mcp` for
+*claude.ai Linear*, and note MCP tools only load at session start
+(`docs/agents/issue-tracker.md`). PRs stay on GitHub.
 
 ## Notes
 - On Windows/PowerShell, use `uv run` for everything; no `cd` prefix.

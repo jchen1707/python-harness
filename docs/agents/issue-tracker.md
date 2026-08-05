@@ -1,43 +1,82 @@
-# Issue tracker: GitHub
+# Issue tracker: Linear
 
-Issues and PRDs for this repo live as GitHub issues in
-[`jchen1707/python-harness`](https://github.com/jchen1707/python-harness). Use the `gh`
-CLI for all operations (`GH_TOKEN` is read from `.env` — see CLAUDE.md → "Env & secrets").
+Issues, specs and tickets for this repo live in **Linear**, reached over MCP. **Pull
+requests stay on GitHub** — Linear holds the work item, GitHub holds the diff.
+
+## Connecting
+
+Linear comes from the **claude.ai account connector**, not from a repo-level `.mcp.json`.
+It follows the account, so it is already available in every project once connected — there
+is nothing to approve per repo.
+
+- Check it with `/mcp`; it appears as **claude.ai Linear**.
+- MCP servers load at **session start**. Connecting mid-session does not make the tools
+  available until you restart.
+- If it is absent, connect Linear in your claude.ai connector settings.
+
+## Discovering the tools
+
+**List the tools before first use rather than assuming names.** The prefix depends on how
+Linear is connected — an account connector and a project server expose the same service
+under different names — and the surface changes between releases.
+
+`/mcp` shows the connected servers and their tools. Match the operation you need from the
+table below to what is actually offered.
 
 ## Conventions
 
-- **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
-- **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
-- **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
-- **Comment on an issue**: `gh issue comment <number> --body "..."`
-- **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
-- **Close**: `gh issue close <number> --comment "..."`
+| Operation | What to call |
+| --- | --- |
+| **Create an issue** | the create-issue tool — needs `team`; set `title`, `description` (markdown), optional `labels`, `project` |
+| **Read an issue** | the get-issue tool, with the identifier (`ENG-123`) |
+| **List issues** | the list-issues tool — filter by `team`, `state`, `assignee`, `label` |
+| **Comment** | the create-comment tool, with the issue id and markdown `body` |
+| **Apply/remove labels** | the update-issue tool, setting the `labels` array |
+| **Change state** | the update-issue tool, with the target workflow state |
+| **Close** | move to the team's Done/Cancelled state — Linear has no separate close verb |
 
-Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
+Issue identifiers are `TEAM-NUMBER` (e.g. `ENG-4521`), not bare integers. A reference like
+`#42` in conversation is **not** a Linear id — ask which team it belongs to rather than
+guessing.
 
-## Pull requests as a triage surface
+## Labels vs workflow states
 
-**PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
-
-When set to `yes`, PRs run through the same labels and states as issues, using the `gh pr` equivalents:
-
-- **Read a PR**: `gh pr view <number> --comments` and `gh pr diff <number>` for the diff.
-- **List external PRs for triage**: `gh pr list --state open --json number,title,body,labels,author,authorAssociation,comments` then keep only `authorAssociation` of `CONTRIBUTOR`, `FIRST_TIME_CONTRIBUTOR`, or `NONE` (drop `OWNER`/`MEMBER`/`COLLABORATOR`).
-- **Comment / label / close**: `gh pr comment`, `gh pr edit --add-label`/`--remove-label`, `gh pr close`.
-
-GitHub shares one number space across issues and PRs, so a bare `#42` may be either — resolve with `gh pr view 42` and fall back to `gh issue view 42`.
+Linear separates **workflow state** (Backlog / Todo / In Progress / Done — a single value
+that drives the board) from **labels** (many per issue). The five canonical triage roles in
+`triage-labels.md` are **labels**, not states. Applying `ready-for-agent` does not move the
+issue across the board; set the state explicitly when the role implies one.
 
 ## When a skill says "publish to the issue tracker"
 
-Create a GitHub issue.
+Create a Linear issue in the default team. Put the spec in the issue `description` as
+markdown. If the skill produced a document longer than fits comfortably, put the summary
+and acceptance criteria in the description and link the full document.
 
 ## When a skill says "fetch the relevant ticket"
 
-Run `gh issue view <number> --comments`.
+Get the issue by identifier, then read its comments for the discussion.
+
+## Wayfinding operations
+
+Used by `/wayfinder`. The **map** is one issue; **tickets** are its children.
+
+- **Map** — an issue labelled `wayfinder:map` holding the Notes / Decisions-so-far / Fog body.
+- **Child ticket** — a Linear **sub-issue** of the map (`parent` field), labelled
+  `wayfinder:<type>` (`research` / `prototype` / `grilling` / `task`).
+- **Blocking** — Linear has native issue relations: use the **blocks / blocked-by**
+  relation rather than a text convention. A ticket is unblocked when every blocker
+  reaches a completed state.
+- **Frontier query** — the map's sub-issues that are not Done, have no unresolved
+  blocked-by relation, and no assignee; first in map order wins.
+- **Claim** — assign the issue to the current user; this is the session's first write.
+- **Resolve** — comment the answer, move to Done, then append a pointer to the map's
+  Decisions-so-far.
 
 ## Repo-specific notes
 
 - The **Standards** axis of `/code-review` reads `docs/architecture.md` (authoritative)
   plus the summary in `CLAUDE.md`. Those override the skill's generic smell baseline.
-- The Definition of Done in `CLAUDE.md` is the gate list: `ruff check` · `ruff format
-  --check` · `mypy` · `pytest` (+ `pytest -m integration` for DB-backed work).
+- The **Spec** axis resolves the originating ticket from the Linear id in the branch name
+  or commit trailer. Name branches `<type>/<TEAM-NUM>-<slug>` (e.g.
+  `feat/ENG-412-vector-store`) so the link is mechanical.
+- Definition of Done lives in `CLAUDE.md`; `/verify` runs those gates and prints evidence.
