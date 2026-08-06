@@ -1,4 +1,6 @@
-"""HTTP layer (FastAPI): routers + route modules. Transport only — no business logic.
+"""HTTP layer (FastAPI): routers and route modules. Transport only, no business logic.
 
-See docs/architecture.md -> Layering.
+Calls `services/`. Must not import `repositories/` or touch a database session.
+
+Conventions: api/CLAUDE.md. Cross-cutting rules: docs/architecture.md.
 """
