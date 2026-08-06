@@ -83,6 +83,19 @@ docker compose up -d db
 ```
 Copy `.env.example` → `.env` and fill in keys (never commit `.env`).
 
+### Symbol navigation (optional, once per machine)
+
+`.mcp.json` declares a `pyright-lsp` server so agents can resolve Python **symbols**
+instead of grepping for text. Both binaries must be on `PATH`:
+
+```sh
+npm install -g pyright
+go install github.com/isaacphi/mcp-language-server@latest   # then add GOPATH/bin to PATH
+```
+
+MCP servers load at session start, so a fresh install needs a restart. Confirm with
+`/mcp`. When to prefer it over grep: `CLAUDE.md` → Symbol navigation.
+
 ## The SDLC
 
 How a request travels from landing in the tracker to meeting the Definition of Done.
