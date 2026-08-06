@@ -286,7 +286,9 @@ def rebuild_index(directory: Path) -> None:
         lines.append(f"| {date} | {project} | {clean} | [[{stem}]] |")
 
     try:
-        (directory / INDEX_NAME).write_text("\n".join(lines) + "\n", encoding="utf-8")
+        # newline="\n": see the note on the same call in vault_index.refresh(). Every
+        # writer of this vault must agree on the line ending or the file churns.
+        (directory / INDEX_NAME).write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     except OSError as exc:
         print(f"session_learnings: could not write index ({exc})", file=sys.stderr)
 
@@ -342,7 +344,7 @@ def main() -> int:
     )
 
     try:
-        target.write_text(front + body + "\n", encoding="utf-8")
+        target.write_text(front + body + "\n", encoding="utf-8", newline="\n")
     except OSError as exc:
         print(f"session_learnings: could not write {target} ({exc})", file=sys.stderr)
         return 0

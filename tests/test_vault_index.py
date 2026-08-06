@@ -186,6 +186,27 @@ def test_vault_dir_falls_back_to_the_parent_of_the_learnings_dir(
     assert hook.vault_dir() == tmp_path
 
 
+def test_index_is_written_with_lf_endings(
+    hook: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """More than one repo writes this vault now, and they must agree on line endings.
+
+    `write_text` translates every `\\n` to `os.linesep` unless told otherwise, so a
+    Windows writer emits CRLF and a Linux one LF. With a single writer that never
+    surfaced; with several, the whole file is rewritten whenever the platform changes,
+    and every line reads as modified to Obsidian, OneDrive and git alike.
+
+    Asserted on bytes: decoded text is exactly where the difference disappears.
+    """
+    (tmp_path / "Note.md").write_text("Prose long enough to describe a note.", encoding="utf-8")
+    monkeypatch.setenv("CLAUDE_VAULT_DIR", str(tmp_path))
+
+    written = hook.refresh()
+
+    assert written is not None
+    assert b"\r" not in written.read_bytes()
+
+
 def test_no_vault_configured_is_silent(hook: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
     """A clone with no second brain must not have its sessions disturbed by this."""
     monkeypatch.delenv("CLAUDE_VAULT_DIR", raising=False)
