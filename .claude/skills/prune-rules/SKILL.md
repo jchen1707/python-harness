@@ -18,10 +18,16 @@ all of them.
 | `CLAUDE.md` | Root. Loaded every session. |
 | `docs/architecture.md` | Cross-cutting standards only. |
 | `src/app/*/CLAUDE.md` | Per-layer conventions, path-scoped. |
-| `src/app/services/*/CLAUDE.md` | Retrieval, reranking, agents. |
+| `src/app/ai/CLAUDE.md` | Why AI is its own layer; rules covering all of it. |
+| `src/app/ai/*/CLAUDE.md` | Retrieval, reranking, agents, evals. |
 | `tests/CLAUDE.md` | Test conventions. |
 | `docs/agents/*.md` | Tracker and triage conventions. |
 | `.claude/agents/*.md` | Subagent definitions, also the `full-review` axes. |
+| `.claude/skills/*/SKILL.md` | Repo-owned skills — including this one. |
+
+**Glob the tree, do not trust this table.** It is itself a rule file and can go stale; an
+audit that reads only the paths listed here will miss whatever moved since it was written.
+That has already happened once, when the AI layers moved out of `services/`.
 
 ## What to look for
 
