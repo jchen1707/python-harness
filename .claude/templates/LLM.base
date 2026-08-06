@@ -1,0 +1,34 @@
+# Index over the session-learnings notes written by the SessionEnd hook.
+# Scoped by tag, not by folder, so it still works if the notes are reorganised.
+# The generated _INDEX.md carries `project-learnings-index` instead, so it is
+# excluded here — it is machinery, not a learning.
+filters:
+  and:
+    - file.hasTag("project-learnings")
+
+properties:
+  date:
+    displayName: Date
+  project:
+    displayName: Project
+  summary:
+    displayName: Summary
+
+views:
+  - type: table
+    name: Learnings
+    order:
+      - file.name
+      - date
+      - project
+      - summary
+
+  - type: table
+    name: By project
+    groupBy:
+      property: project
+      direction: ASC
+    order:
+      - date
+      - summary
+      - file.name
