@@ -45,7 +45,7 @@ Keep the layering invariant below unless a feature justifies a documented except
 
 ## 1. Layering
 
-Three layers, one direction:
+One direction, no exceptions but the one named below:
 
 ```
 api  ──▶  services  ──▶  ai  ──▶  repositories  ──▶  config

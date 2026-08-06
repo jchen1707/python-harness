@@ -78,6 +78,15 @@ ignore_missing_imports = true
 # recursive discovery, so a bare "." would never reach them. The hooks enforce every
 # other gate, so they are held to the same strictness as `src`.
 files = ["src", "tests", ".claude/hooks"]
+# The hooks import each other as top-level modules (`import vault_index`), which works at
+# runtime because Python puts the running script's directory on sys.path. Static analysis
+# gets no such favour and has to be told.
+mypy_path = ".claude/hooks"
+
+[tool.pyright]
+# Same reason as mypy_path above. Read by the `pyright-lsp` MCP server in .mcp.json and by
+# the editor plugin, so symbol navigation resolves the hooks instead of flagging them.
+extraPaths = [".claude/hooks"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

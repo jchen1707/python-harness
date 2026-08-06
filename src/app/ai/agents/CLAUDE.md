@@ -6,11 +6,12 @@ Agent orchestration, built on LangGraph with `langchain-anthropic`.
 
 - Read the model from `Settings.anthropic_model`. Never write a model id as a literal in
   a call site. One inline string makes the choice invisible to review.
-- Default to `claude-opus-4-8`. Use `claude-sonnet-4-6` for high-volume routine work such
+- Default to `claude-opus-5`. Use `claude-sonnet-5` for high-volume routine work such
   as classification, routing and short summaries.
 - Use adaptive thinking: `thinking: {"type": "adaptive"}`.
-- Do **not** pass `temperature`, `top_p`, `top_k` or `budget_tokens`. On Opus 4.8 and
-  Fable 5 these return a 400, which costs a failed call and a retry.
+- Do **not** pass `temperature`, `top_p`, `top_k` or `budget_tokens` with adaptive
+  thinking. The API rejects the combination with a 400, which costs a failed call and a
+  retry. Adaptive thinking is the supported control.
 - Cache static system prompts with `cache_control: {"type": "ephemeral"}`. The limit is 4
   breakpoints.
 - Stream long outputs. A buffered long generation holds a connection and a task for the

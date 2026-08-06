@@ -1,9 +1,18 @@
 #!/usr/bin/env python
-"""PreToolUse(Edit|Write) hook: refuse edits to human-owned paths.
+"""PreToolUse hook: refuse edits to human-owned paths.
 
 Exit 2 is the ONLY exit code that blocks a tool call; stderr becomes the reason
 Claude sees. Exit 1 would let the write through with a warning, which is the most
 common hook bug.
+
+**The matcher must cover every tool that can write a file, not just `Edit|Write`.**
+A hook matcher is a case-sensitive regex over the tool name, so `Edit|Write` misses
+`NotebookEdit` and every MCP write tool — including `mcp__pyright-lsp__edit_file`,
+which this repo enables in `.mcp.json`. A protected path is only protected on the
+tool surfaces the matcher names. See `.claude/settings.json`.
+
+This script no-ops on any payload without `tool_input.file_path`, so widening the
+matcher is always safe: a non-write tool that slips through simply exits 0.
 """
 
 from __future__ import annotations

@@ -34,7 +34,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "Edit|Write|NotebookEdit|mcp__.*(edit|write|create|apply).*",
         "hooks": [
           {
             "type": "command",
@@ -52,7 +52,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "Edit|Write|NotebookEdit|mcp__.*(edit|write|create|apply).*",
         "hooks": [
           {
             "type": "command",

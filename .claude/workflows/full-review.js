@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 export const meta = {
   name: 'full-review',
   description:
-    'Fan out a diff to independent reviewers (standards, spec, security, tests, async, simplicity), then fan in to one deduplicated ranked report.',
+    'Fan out a diff to nine independent reviewers (standards, spec, security, tests, async, simplicity, design, speed, cost), then fan in to one deduplicated ranked report.',
 }
 
 // Fan-in at a barrier: every axis reviews the SAME diff in its own context, then a
@@ -47,7 +47,7 @@ const AXES = [
   {
     label: 'standards',
     agent: 'standards-reviewer',
-    fallback: `Review the diff against this repo's documented standards in docs/architecture.md and CLAUDE.md. Layering (api -> services -> repositories -> config, no reverse deps), interfaces over concrete deps, Pydantic for all I/O, secrets only in app.config.Settings, structlog never print(), types on every public function. Report violations only.`,
+    fallback: `Review the diff against this repo's documented standards in docs/architecture.md and CLAUDE.md. Layering (api -> services -> ai -> repositories -> config, no reverse deps), interfaces over concrete deps, Pydantic for all I/O, secrets only in app.config.Settings, structlog never print(), types on every public function. Report violations only.`,
   },
   {
     label: 'spec',
@@ -95,7 +95,7 @@ const AXES = [
   {
     label: 'cost',
     agent: 'cost-reviewer',
-    fallback: `Find avoidable LLM and embedding spend per CLAUDE.md: static system prompts without cache_control, cache breakpoints placed after varying content, opus on routine high-volume work, model ids inline instead of Settings.anthropic_model, unbounded agent loops, re-embedding unchanged text, and params that 400 on Opus 4.8 (temperature, top_p, top_k, budget_tokens).`,
+    fallback: `Find avoidable LLM and embedding spend per CLAUDE.md: static system prompts without cache_control, cache breakpoints placed after varying content, opus on routine high-volume work, model ids inline instead of Settings.anthropic_model, unbounded agent loops, re-embedding unchanged text, and sampling params passed alongside adaptive thinking (temperature, top_p, top_k, budget_tokens).`,
   },
 ]
 

@@ -62,7 +62,7 @@ Hooks run in the harness, so they hold regardless of what any instruction here s
 | `protect_paths.py` (PreToolUse) | Blocks edits to `.env`, `migrations/`, `generated/`, `uv.lock` |
 | `format_edited.py` (PostToolUse) | Runs `ruff format` + `ruff check --fix` on each edited `.py` |
 | `verify.py` (Stop) | Blocks the turn while the gates fail — **only** when the turn changed `.py` under `src/`, `tests/` or `.claude/hooks/`, or changed `pyproject.toml` |
-| `session_learnings.py` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain. Off unless `CLAUDE_LEARNINGS_DIR` is set |
+| `session_learnings.py` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain, and rebuilds the vault indexes via `vault_index.py`. Off unless `CLAUDE_LEARNINGS_DIR` is set |
 
 The Stop gate is what makes a session walk-away-able. `CLAUDE_SKIP_VERIFY=1` disables it.
 The harness overrides a Stop hook after 8 consecutive blocks; if you hit that, the loop is
@@ -260,11 +260,22 @@ A layer above memory, in the user's own notes rather than the agent's:
 - **Write** — `session_learnings.py` (SessionEnd) distils the session's mistakes and their
   fixes into a dated note under `CLAUDE_LEARNINGS_DIR`, split into *Implementation* and
   *Architecture & design* learnings. It writes **nothing** when a session taught nothing.
-- **Read** — `/search-second-brain <topic>` searches those notes plus the wider vault and
-  reports the pattern across them, with citations. Read-only by design.
+- **Index** — the same hook rebuilds two Markdown indexes, and does so on every session
+  end whether or not a learning was written: `_VAULT_INDEX.md` at the vault root (one row
+  per note in the whole vault — path, tags, what it covers) and `Project
+  Learnings/_INDEX.md` (the session notes, with date and project). `vault_index.py` owns
+  both; run it standalone to refresh without ending a session.
+- **Read** — `/search-second-brain <topic>` reads the indexes, then opens only what
+  matches, and reports the pattern across them with citations. Read-only by design.
+
+An Obsidian `.base` file is a **query evaluated by Obsidian's UI**, so reading one returns
+the query, never any notes. Bases are for the human; the Markdown indexes are for the
+agent. Do not use `LLM.base` for retrieval.
 
 Set `CLAUDE_LEARNINGS_DIR` in **user** settings, never in this repo's committed
 `.claude/settings.json` — a clone must not inherit a path to somebody else's vault.
+`CLAUDE_VAULT_DIR` sets the vault root, and defaults to the parent of the learnings
+directory, so the usual layout needs no second variable.
 
 Three tiers, deliberately: memory is for this project's facts, the second brain is for
 transferable lessons across projects, and `CLAUDE.md` / `docs/architecture.md` are for
