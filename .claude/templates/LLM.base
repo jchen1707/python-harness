@@ -1,0 +1,16 @@
+views:
+  - type: table
+    name: Learnings
+    order:
+      - file.name
+      - date
+      - project
+      - summary
+      - file.mtime
+  - type: table
+    name: By project
+    order:
+      - project
+      - date
+      - summary
+      - file.name
