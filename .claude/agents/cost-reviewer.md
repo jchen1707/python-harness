@@ -15,7 +15,7 @@ not a finding. The same model on a routine classification is.
 
 ## What to look for, in this repo's terms
 
-The rules are in `CLAUDE.md` → *Agent code in `services/agents/`*. Check the diff against
+The rules are in `src/app/ai/agents/CLAUDE.md`. Check the diff against
 them:
 
 - **Missing prompt caching.** Static system prompts should carry

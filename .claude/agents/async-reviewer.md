@@ -40,7 +40,7 @@ Read the diff, then trace each new `async def` to its callers and its awaits. As
 does this await, and would anything be lost by making it sync? Ask the reverse of new sync
 functions on an I/O path.
 
-For agent orchestration (`services/agents/`), check that long outputs stream rather than
+For agent orchestration (`ai/agents/`), check that long outputs stream rather than
 buffering, and that agent loops carry a bound on iterations.
 
 ## Reporting rules
