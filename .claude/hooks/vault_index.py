@@ -183,9 +183,9 @@ def build(vault: Path) -> str:
         "",
         "# Vault index",
         "",
-        "Generated. Do not edit: it is rebuilt every time a Claude Code session ends in a",
-        "repo with the second brain configured. Refresh by hand with",
-        "`uv run python .claude/hooks/vault_index.py`.",
+        "Generated - do not edit. Rebuilt by `vault_index.py` whenever a Claude Code",
+        "session ends in any repo that installs it, so it is current to the last session",
+        "that ended in one of them. Run that hook directly to refresh sooner.",
         "",
         "One row per note. Read this first, then open only the notes whose row matches.",
         "Reading every note to answer one question is the cost this file exists to avoid.",
@@ -228,7 +228,10 @@ def refresh() -> Path | None:
         return None
     target = vault / INDEX_NAME
     try:
-        target.write_text(build(vault), encoding="utf-8")
+        # newline="\n": the default translates every \n to os.linesep, so a Windows
+        # writer emits CRLF and a Linux one LF. One writer never surfaced that; several
+        # repos sharing a vault rewrite the file end to end whenever the platform changes.
+        target.write_text(build(vault), encoding="utf-8", newline="\n")
     except OSError as exc:
         print(f"vault_index: could not write {target} ({exc})", file=sys.stderr)
         return None
