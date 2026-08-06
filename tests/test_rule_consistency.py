@@ -39,7 +39,13 @@ EXCLUDED = ("/.venv/", "/node_modules/", "/.claude/plugins/", "/.claude/plans/",
 
 
 def rule_files() -> list[Path]:
-    """Every Markdown file in the repo that states or restates a rule."""
+    """Every file in the repo that states or restates a rule.
+
+    Not only Markdown. `.claude/workflows/*.js` embeds fallback reviewer prompts, and
+    those restate the layering rule in prose. Leaving them out is how the `full-review`
+    standards fallback kept the pre-`ai/` chain after every Markdown copy was fixed —
+    the one copy that fires precisely when the good copy is missing.
+    """
     patterns = (
         "CLAUDE.md",
         "README.md",
@@ -49,6 +55,7 @@ def rule_files() -> list[Path]:
         ".claude/agents/*.md",
         ".claude/skills/*/SKILL.md",
         ".claude/commands/*.md",
+        ".claude/workflows/*.js",
         ".out-of-scope/*.md",
     )
     found: set[Path] = set()

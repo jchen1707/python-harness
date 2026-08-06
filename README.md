@@ -16,11 +16,11 @@ Postgres + pgvector).
   scaling, extensibility, concurrency, containers, dependency policy (load with `/arch`).
 - `pyproject.toml` — tool config (ruff, mypy, pytest) + the approved app stack as the
   opt-in `app` extra (no runtime deps by default).
-- `.claude/` — shared Claude Code config: `settings.json` (pre-approved safe commands)
-  + `commands/` (`/plan`, `/test`, `/lint`, `/run`, `/arch`, `/context`, `/retro`).
-- `.claude/settings.json` → `enabledPlugins` — declares the `mattpocock-skills` plugin
-  (25 skills incl. `/implement`, `/code-review`, `/tdd`), so a clone picks it up
-  automatically and it self-updates. `.claude/skills/` holds repo-owned skills only.
+- `.claude/` — shared Claude Code config: `settings.json` (pre-approved safe commands),
+  `commands/` and `skills/` (both tabled under [Commands](#commands) below).
+- `.claude/settings.json` → `enabledPlugins` — declares the `mattpocock-skills` plugin, so
+  a clone picks it up automatically and it self-updates. `.claude/skills/` holds
+  repo-owned skills only.
 - `docs/agents/` — how agents work with this repo: `issue-tracker.md` (Linear conventions),
   `triage-labels.md` (canonical triage roles → real label strings), `domain.md`.
 - `.out-of-scope/` — rejected feature requests, read by `/triage` to avoid re-litigating a
@@ -155,9 +155,15 @@ Each builds on the thinking of the last, and that continuity is the whole point.
 Pick the architectural style here, during research — not while coding — and record it in
 `docs/architecture.md`.
 
-Note what alignment deliberately does **not** produce: an implementation plan. A spec
-states behaviour, a ticket states a slice of it. Neither says how to build it — that is
-step 3's job, per ticket.
+Alignment does settle design, but at **spec** level. `/to-spec` records **Implementation
+Decisions** (modules, interfaces, schema changes, API contracts) and **Testing Decisions**,
+and its step 2 confirms the test seams with you before writing anything.
+
+Those decisions then stop at the ticket boundary on purpose: `/to-tickets` states each
+ticket as *"end-to-end behaviour, from the user's perspective — not a layer-by-layer
+implementation list."* Combine that with the fresh-context rule in step 3 and an
+implementing agent starts from a ticket that deliberately withholds the spec's design.
+That gap is real, and step 3 is where it gets closed — per ticket.
 
 ### 3. Execution — one ticket, one clean slate
 
@@ -176,10 +182,11 @@ decided while typing, which is exactly what `docs/architecture.md` says not to d
 `/plan` fills that gap per ticket. It researches the ticket, settles the design, and writes
 `.claude/plans/plan.md` + `test-plan.md` for your explicit sign-off, then stops.
 
-The test plan earns its place twice over. `/tdd` will not write a test at an unconfirmed
-seam — *"No test is written at an unconfirmed seam"* — and `test-plan.md` **is** that
-confirmation. Skip planning and `/implement` must either stop to ask you mid-flight or
-choose seams on its own.
+The test plan carries the seam confirmation across the context boundary. `/tdd` will not
+write a test at an unconfirmed seam — *"No test is written at an unconfirmed seam"* — and
+a fresh `/implement` context cannot see that `/to-spec` already confirmed them with you.
+`test-plan.md` is what re-supplies that confirmation. On the small-work path below, where
+no spec ran at all, it is the **only** thing that supplies it.
 
 Then `/implement-from-plan` takes over: it feeds both plans to `/implement` as the spec,
 turns the numbered Steps into the task list, hands the test cases over as the pre-agreed
@@ -268,7 +275,8 @@ Repo-owned (`.claude/commands/` + `.claude/skills/`):
 | `/prune-rules` | audit the rule files for drift, duplication and dead rules, then refine them |
 | `/search-second-brain` | search past sessions' learnings and report the pattern across them |
 
-From the `mattpocock-skills` plugin (v1.2.1, 25 skills — highlights):
+From the `mattpocock-skills` plugin — highlights only; the plugin self-updates, so run
+`/help` for the list it actually ships today:
 
 | Slash | Does |
 | --- | --- |
@@ -296,7 +304,7 @@ alias) and broadened to cover any agent-read document. Use the new name.
 | Path | What |
 | --- | --- |
 | `.claude/agents/` | Subagents. Workers: `explorer`, `test-writer` (worktree-isolated). Reviewers, one per `full-review` axis and each invokable standalone: `standards-reviewer`, `spec-checker`, `security-reviewer`, `test-reviewer`, `async-reviewer`, `simplicity-reviewer`, `design-reviewer`, `perf-reviewer`, `cost-reviewer` |
-| `.claude/hooks/` | `protect_paths` (block protected edits), `format_edited` (auto-format), `verify` (Stop gate on the Definition of Done), `session_learnings` (SessionEnd: distils lessons to the second brain) |
+| `.claude/hooks/` | `protect_paths` (block protected edits), `format_edited` (auto-format), `verify` (Stop gate on the Definition of Done), `session_learnings` (SessionEnd: distils lessons to the second brain), `vault_index` (rebuilds the vault's Markdown indexes) |
 | `.claude/workflows/` | `full-review.js` — nine reviewers fanned out, one ranked report fanned in. Each axis reads its prompt from the matching `.claude/agents/` definition, so the two forms cannot drift |
 Issues live in **Linear** via the claude.ai account connector — check `/mcp` for
 *claude.ai Linear*, and note MCP tools only load at session start

@@ -24,7 +24,7 @@ them:
 - **Cache breakpoints in the wrong place.** Caching is prefix-based: anything varying early
   in the prompt invalidates everything after it. A per-request timestamp or user id ahead
   of the static block defeats the cache entirely while looking correct.
-- **Model over-selection.** Default is `claude-opus-4-8`; `claude-sonnet-4-6` is for
+- **Model over-selection.** Default is `claude-opus-5`; `claude-sonnet-5` is for
   high-volume routine work. Opus on a classifier, a router, a summariser or a retry path is
   spend with no gain. Flag model ids written inline as strings too — they must come from
   `Settings.anthropic_model`, so the choice stays reviewable in one place.
@@ -39,8 +39,8 @@ them:
   on every ingest run, or per-document calls where the API takes a batch, is direct waste.
 - **Missing streaming on long outputs.** Not a token cost, but it holds a connection and a
   task for the full generation; `CLAUDE.md` requires it.
-- **Invalid params that force a retry.** On Opus 4.8 / Fable 5, passing `temperature`,
-  `top_p`, `top_k` or `budget_tokens` returns 400 — a failed call that is billed effort in
+- **Invalid params that force a retry.** Passing `temperature`, `top_p`, `top_k` or
+  `budget_tokens` alongside adaptive thinking returns 400 — a failed call that costs
   latency and retried spend. Adaptive thinking (`thinking: {"type": "adaptive"}`) is the
   supported control.
 

@@ -21,6 +21,12 @@ path to somebody else's vault. Set it in **user** settings, not this repo's comm
 | `CLAUDE_LEARNINGS_OFF=1` | Disable without unsetting the directory. |
 | `CLAUDE_LEARNINGS_MODEL` | Model for the distillation. Default `sonnet`. |
 | `CLAUDE_LEARNINGS_SKIP=1` | Recursion guard; set on the child, never set by hand. |
+| `CLAUDE_VAULT_DIR` | Vault root for the whole-vault index. Defaults to the parent
+of `CLAUDE_LEARNINGS_DIR`. See `vault_index.py`. |
+
+This hook also refreshes the whole-vault index, and does so **unconditionally** — notes
+written by hand in Obsidian between sessions need indexing whether or not this particular
+session produced a learning of its own.
 
 The recursion guard matters: the `claude -p` we spawn fires its own SessionEnd when it
 finishes. Without the guard that is an infinite regress of sessions distilling sessions.
@@ -38,6 +44,11 @@ import subprocess
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+
+# Sibling module in this directory. Hooks run as `python <abs path>/session_learnings.py`,
+# so `.claude/hooks` is sys.path[0] and this resolves wherever the harness starts. mypy and
+# pyright are told about the directory in pyproject.toml (`mypy_path` / `[tool.pyright]`).
+import vault_index
 
 MODEL = os.environ.get("CLAUDE_LEARNINGS_MODEL", "sonnet")
 NO_LEARNINGS = "NO_LEARNINGS"
@@ -218,25 +229,16 @@ def split_summary(body: str) -> tuple[str, str]:
 
 
 def read_front_matter(path: Path) -> dict[str, str]:
-    """Parse the small, flat front matter this hook writes.
+    """Front matter of one note, or an empty dict if it has none or cannot be read.
 
-    Deliberately not a YAML parser: the harness has no runtime dependencies, and the
-    only front matter here is `key: value` lines we wrote ourselves.
+    The parsing itself lives in `vault_index.front_matter` — one parser, so the index
+    this hook writes and the whole-vault index cannot disagree about what a note says.
     """
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return {}
-    if not text.startswith("---"):
-        return {}
-    _, _, after = text.partition("---\n")
-    block, _, _ = after.partition("\n---")
-    fields: dict[str, str] = {}
-    for line in block.splitlines():
-        key, sep, value = line.partition(":")
-        if sep:
-            fields[key.strip()] = value.strip()
-    return fields
+    return vault_index.front_matter(text)
 
 
 def rebuild_index(directory: Path) -> None:
@@ -294,6 +296,11 @@ def main() -> int:
         return 0  # We are the distiller's own session ending. Do not recurse.
     if os.environ.get("CLAUDE_LEARNINGS_OFF") == "1":
         return 0
+
+    # Unconditional, and before every early return below: the vault gains hand-written
+    # notes between sessions, and those need indexing even when this session distilled
+    # nothing. Returns None and stays quiet when no vault is configured.
+    vault_index.refresh()
 
     directory_raw = os.environ.get("CLAUDE_LEARNINGS_DIR", "").strip()
     if not directory_raw:
