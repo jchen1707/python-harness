@@ -80,25 +80,13 @@ on files. `.claude/agents/test-writer.md` sets `isolation: worktree`; add it to 
 that writes. Claude Code blocks a worktree agent from redirecting git back into the main
 checkout, so the isolation actually holds.
 
-Subagents in `.claude/agents/` — each defines its own tools and model:
-
-| Agent | For |
-| --- | --- |
-| `explorer` | "Where is X handled?" — findings reach you, file contents don't |
-| `test-writer` | Writes tests, never touches `src/` |
-| `standards-reviewer` | Diff vs. `docs/architecture.md` + this file |
-| `spec-checker` | Diff vs. ticket; reports gaps only |
-| `security-reviewer` | Fresh-context security pass |
-| `test-reviewer` | Would a test fail if the behaviour regressed? |
-| `async-reviewer` | Sync/async boundary; blocking on the loop, unbounded fan-out |
-| `simplicity-reviewer` | Cuts only — speculative abstraction, dead code |
-| `design-reviewer` | Module depth, seam placement, leaky interfaces |
-| `perf-reviewer` | What scales badly, and at what input size |
-| `cost-reviewer` | Avoidable token spend — caching, model choice, re-embedding |
+Subagents live in `.claude/agents/`, each defining its own tools and model. Their names and
+descriptions are loaded into every session automatically from that frontmatter — do not
+restate them here, or the copy drifts.
 
 The nine reviewers are also the nine axes of `full-review.js`, which reads each prompt from
-the definition above rather than restating it. Add an axis by writing the agent file and
-adding one entry to `AXES`; there is no second copy to keep in step.
+the agent file rather than restating it. Add an axis by writing the agent file and adding
+one entry to `AXES`; there is no second copy to keep in step.
 
 **Fork for breadth, stay inline for depth.** Scanning and summarising belong in a subagent;
 reasoning you need to steer belongs in the main context. Reviewers get read-only tools by
@@ -139,16 +127,9 @@ string. On a name like `run`, `get` or `Settings`, grep returns noise and you gu
 what it is good at — text that is not a symbol: config keys, log messages, TODO markers,
 strings in Markdown.
 
-Setup, once per machine (both must be on `PATH`):
-
-```sh
-npm install -g pyright
-go install github.com/isaacphi/mcp-language-server@latest   # then add GOPATH/bin to PATH
-```
-
 The server is declared with `--workspace .`, so it resolves to whatever clone it starts
 in. Check it with `/mcp`. MCP servers load at session start, so a fresh install needs a
-restart.
+restart. One-time machine setup is in the README.
 
 ## Standards
 
@@ -257,14 +238,12 @@ can resolve the originating ticket mechanically.
 
 ## Where commands come from
 
-- `.claude/commands/` and `.claude/skills/` — repo-owned, `uv`-aware: `/plan`,
-  `/implement-from-plan`, `/verify`, `/loop-goal`, `/lint`, `/test`, `/run`, `/arch`,
-  `/context`, `/retro`, `/prune-rules`, `/search-second-brain`. Edit freely.
-- **`mattpocock-skills` plugin** (v1.2.1, 25 skills) — `/implement`, `/code-review`, `/tdd`,
-  `/grill-with-docs`, `/to-spec`, `/to-tickets`, `/triage`, `/wait-what`. Declared in
-  `.claude/settings.json`; files live under `~/.claude/plugins/`. Installed from upstream's
-  marketplace (`mattpocock/skills`), not Anthropic's mirror, which lags. Never vendor them
-  into the repo.
+- `.claude/commands/` and `.claude/skills/` — repo-owned and `uv`-aware. Edit freely. The
+  names and descriptions are already in the session's skill listing; do not enumerate them
+  here.
+- **`mattpocock-skills` plugin** — declared in `.claude/settings.json`; files live under
+  `~/.claude/plugins/`. Installed from upstream's marketplace (`mattpocock/skills`), **not**
+  Anthropic's mirror, which lags a version behind. Never vendor them into the repo.
 
 ## Memory
 
