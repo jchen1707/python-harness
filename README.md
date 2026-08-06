@@ -216,6 +216,7 @@ Repo-owned (`.claude/commands/` + `.claude/skills/`):
 | `/arch` | load `docs/architecture.md` into context |
 | `/context` | context/memory hygiene audit |
 | `/retro` | capture a lesson from a bug/tool-friction to memory so future sessions go smoother |
+| `/prune-rules` | audit the rule files for drift, duplication and dead rules, then refine them |
 | `/search-second-brain` | search past sessions' learnings and report the pattern across them |
 
 From the `mattpocock-skills` plugin (v1.2.1, 25 skills — highlights):
