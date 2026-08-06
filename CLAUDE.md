@@ -175,7 +175,7 @@ can resolve the originating ticket mechanically.
 
 - `.claude/commands/` and `.claude/skills/` — repo-owned, `uv`-aware: `/plan`,
   `/implement-from-plan`, `/verify`, `/loop-goal`, `/lint`, `/test`, `/run`, `/arch`,
-  `/context`, `/retro`. Edit freely.
+  `/context`, `/retro`, `/prune-rules`, `/search-second-brain`. Edit freely.
 - **`mattpocock-skills` plugin** (v1.2.1, 25 skills) — `/implement`, `/code-review`, `/tdd`,
   `/grill-with-docs`, `/to-spec`, `/to-tickets`, `/triage`, `/wait-what`. Declared in
   `.claude/settings.json`; files live under `~/.claude/plugins/`. Installed from upstream's
