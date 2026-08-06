@@ -131,15 +131,29 @@ def test_every_convention_file_is_indexed() -> None:
     assert not orphans, "convention files not indexed:\n  " + "\n  ".join(orphans)
 
 
+# Generated at runtime and gitignored, so absent on a clean checkout. A doc naming one
+# is correct; the file simply is not committed. Checking these makes the test pass or
+# fail on local leftovers rather than on the repo — which is what happened: it was green
+# locally off a stale `/plan` artifact and red on CI.
+GENERATED_PREFIXES = (".claude/plans/",)
+
+
 @pytest.mark.parametrize("doc", ["CLAUDE.md", "README.md", "docs/architecture.md"])
 def test_referenced_markdown_paths_exist(doc: str) -> None:
     """A pointer to a moved file is worse than no pointer: it reads as authoritative.
 
-    Only `.md` targets are checked. These docs also name files that are deliberately
-    not written yet (`src/app/main.py`), and those are aspirational, not broken.
+    Only committed `.md` targets are checked. These docs also name files deliberately
+    not written yet (`src/app/main.py`) and files generated per session
+    (`.claude/plans/plan.md`); neither is broken.
     """
     text = (REPO_ROOT / doc).read_text(encoding="utf-8")
     pattern = re.compile(r"`((?:src/app|tests|docs|\.claude|\.out-of-scope)[\w/.\-]*?\.md)`")
 
-    missing = sorted({m for m in pattern.findall(text) if not (REPO_ROOT / m).exists()})
+    missing = sorted(
+        {
+            m
+            for m in pattern.findall(text)
+            if not m.startswith(GENERATED_PREFIXES) and not (REPO_ROOT / m).exists()
+        }
+    )
     assert not missing, f"{doc} points at files that do not exist:\n  " + "\n  ".join(missing)
