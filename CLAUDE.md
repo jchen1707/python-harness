@@ -118,22 +118,79 @@ signal is the whole point.
 
 ## Standards
 
-`docs/architecture.md` is authoritative — load it with `/arch` before non-trivial design work.
-The rules that apply to every change:
+Rules live **next to the code they govern**. Each directory below owns its own
+`CLAUDE.md`. Read the one for the directory you are changing.
 
-- **Layering**: `api` → `services` → `repositories` → `config`. Dependencies point one way.
-- **Depend on protocols**, not classes. `Embedder`, `VectorStore`, `Tool` live in
-  `repositories/`; inject implementations.
-- **Async for I/O, plain `def` for CPU and in-memory logic.** Async buys concurrency, not
-  virtue. Offload blocking calls with `asyncio.to_thread`. The plan justifies the boundary.
-- **Pydantic for every I/O surface** — requests, responses, tool inputs, config.
-- **Log through structlog** with bound context; let exceptions surface with their cause.
-- **Type every public function.**
-- **Unit tests stay offline** (fakes and stubs); integration tests use testcontainers against
-  ephemeral pgvector.
+| Directory | Owns |
+| --- | --- |
+| `src/app/api/` | HTTP edge, status codes, pagination, `Annotated[T, Depends(...)]` |
+| `src/app/core/` | `Settings`, structlog, Prometheus metrics, error types, retries |
+| `src/app/repositories/` | SQL, pgvector indexes, protocols, connection pools |
+| `src/app/services/` | Orchestration, transaction boundaries, bounded fan-out |
+| `src/app/services/retrieval/` | Chunking, embedding, hybrid search, filtering |
+| `src/app/services/reranking/` | Cross-encoders, fusion, diversity, fallback order |
+| `src/app/services/agents/` | LangGraph, prompt caching, tools, token budgets |
+| `src/app/evals/` | Datasets, metric per layer, when to run |
+| `tests/` | Unit vs integration, seams, fakes, determinism |
+
+Nested `CLAUDE.md` files are **path-scoped**: working in `api/` does not load
+`repositories/CLAUDE.md`. So `docs/architecture.md` keeps only what must hold everywhere —
+layering, protocols, types, scaling, extensibility, concurrency, containers, dependency
+policy. Load it with `/arch` before non-trivial design work.
+
+The four rules to know without reading anything:
+
+- **Layering**: `api` → `services` → `repositories` → `config`. One direction, no lateral
+  imports.
+- **Depend on protocols**, not classes. Inject implementations at the app factory.
+- **Type every public function.** Pydantic on every I/O surface.
+- **Unit tests stay offline.** Integration tests use testcontainers.
 
 Pick the architectural style during research, not while coding, and record the choice in
 `docs/architecture.md`.
+
+## Reference documentation — read before you write
+
+Load the row that matches the task. Reading the wrong file costs tokens; reading none
+costs a rewrite.
+
+| When you are… | Read first |
+| --- | --- |
+| Adding or changing an endpoint | `src/app/api/CLAUDE.md` |
+| Adding config or a secret | `src/app/core/CLAUDE.md` → Configuration |
+| Adding logging, a metric, or a dashboard | `src/app/core/CLAUDE.md` → Logging, Metrics |
+| Designing an error type, retry or timeout | `src/app/core/CLAUDE.md` → Errors, Retries |
+| Writing SQL or a migration | `src/app/repositories/CLAUDE.md` |
+| Adding a vector index or tuning pgvector | `src/app/repositories/CLAUDE.md` → pgvector |
+| Changing chunking, embedding or search | `src/app/services/retrieval/CLAUDE.md` |
+| Changing rank order or fusion | `src/app/services/reranking/CLAUDE.md` |
+| Building or changing an agent graph | `src/app/services/agents/CLAUDE.md` |
+| Touching a prompt, tool, or model choice | `src/app/services/agents/CLAUDE.md` |
+| Measuring whether an AI change helped | `src/app/evals/CLAUDE.md` |
+| Writing any test | `tests/CLAUDE.md` |
+| Choosing an architecture or a new library | `docs/architecture.md` |
+| Designing for load, or adding an extension point | `docs/architecture.md` → §4, §5 |
+| Working with Linear or branch names | `docs/agents/issue-tracker.md` |
+| Applying a triage label | `docs/agents/triage-labels.md` |
+
+## Writing style — ASD-STE100
+
+Write every **new** artifact in Simplified Technical English: plans, specs, tickets, pull
+request bodies, code comments, docstrings and rule files.
+
+- One instruction per sentence. Keep an instruction under 20 words.
+- Use the active voice. Write "the service validates the input", not "the input is
+  validated".
+- Use one word for one meaning. Do not alternate between "fetch", "get" and "retrieve" for
+  the same operation.
+- Say what to do, not what to avoid, where both are possible.
+- Use the simplest word that is accurate. Technical nouns stay as they are.
+- Do not use metaphor, idiom or humour. They do not translate, and an agent reads them
+  literally.
+- Keep a paragraph to one topic.
+
+This applies to new writing. Existing documents are rewritten only when they are edited
+for another reason.
 
 ## Stack
 
@@ -143,15 +200,6 @@ Fixed in `pyproject.toml` (`app` extra) — read it there. What the file doesn't
 - **Postgres + pgvector** over a dedicated vector DB — one datastore, one backup story.
 - **LangGraph** for agent orchestration in `services/agents/`.
 - Introducing an alternative to any of these means updating `docs/architecture.md` first.
-
-## Agent code in `services/agents/`
-
-- Default `claude-opus-4-8`; `claude-sonnet-4-6` for high-volume routine work. Configure via
-  `Settings.anthropic_model`, not inline strings.
-- Adaptive thinking: `thinking: {type: "adaptive"}`. Passing `temperature`, `top_p`, `top_k`
-  or `budget_tokens` returns 400 on Opus 4.8 / Fable 5.
-- Cache static system prompts (`cache_control: ephemeral`, max 4 breakpoints).
-- Stream long outputs.
 
 ## Issue tracker
 
