@@ -31,7 +31,8 @@ Single-context repo (this repo):
 │   ├── architecture.md        ← standards + the architectural decision record
 │   ├── adr/                   ← optional per-decision files (none yet)
 │   └── agents/                ← this file, issue-tracker.md, triage-labels.md
-└── src/app/                   ← api/ · services/ · repositories/ (layered)
+└── src/app/                   ← api/ · services/ · ai/ · repositories/ · core/ (layered,
+                                  each with its own CLAUDE.md)
 ```
 
 Multi-context layout (a root `CONTEXT-MAP.md` pointing at per-context `CONTEXT.md` files)
@@ -56,6 +57,6 @@ If your output contradicts a decision recorded in `docs/architecture.md` (or an 
 > _Contradicts docs/architecture.md §"Choosing an architecture" (layered + repository) —
 > but worth reopening because…_
 
-The layering rule (`api` → `services` → `repositories` → `config`, no reverse deps) and
+The layering rule (`api` → `services` → `ai` → `repositories` → `config`, no reverse deps) and
 the approved stack are the two most likely to be contradicted by generic advice. Neither
 changes without a `CLAUDE.md` edit first.

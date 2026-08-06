@@ -47,7 +47,7 @@ Each names its own stop condition. Use these verbatim unless the user overrides.
 | Goal | Stop condition |
 | --- | --- |
 | `docs` | Every claim in `CLAUDE.md`, `README.md` and `docs/architecture.md` matches the code; every documented command runs; no reference to a deleted file or command |
-| `architecture` | No layering violation (`api` → `services` → `repositories` → `config`, no reverse deps); every cross-layer dependency goes through a protocol in `repositories/`; `/verify` green |
+| `architecture` | No layering violation (`api` → `services` → `ai` → `repositories` → `config`, no reverse deps); every cross-layer dependency goes through a protocol in `repositories/`; `/verify` green |
 | `logging` | Every error path and every external call (DB, LLM, embeddings, HTTP) emits a structlog event with bound context; no bare `except: pass`; no `print()` |
 | `tests` | Every public function in `src/app/` has at least one test exercising a real behaviour; every test failure mode from the test plan is covered; `uv run pytest` green |
 | `deps` | Every dependency in `pyproject.toml` is used; nothing used is missing; the approved-stack list in `CLAUDE.md` matches what is installed |

@@ -12,9 +12,14 @@ part of both before judging — a rule you half-remember is not a rule.
 
 ## The standards that apply to every change
 
-- **Layering** — `api` → `services` → `repositories` → `config`. Dependencies point one
-  way. A repository importing from `services`, or a route reaching past the service layer
-  into a repository, is a violation.
+This list is a checklist of what to look for, not the authority. Where it and the source
+files disagree, **the source wins** — reread it rather than trusting this summary.
+
+- **Layering** — `api` → `services` → `ai` → `repositories` → `config`. Dependencies point
+  one way. A repository importing from `services`, or a route reaching past the service
+  layer into a repository, is a violation. So is `ai/` importing a service: services call
+  into `ai/`, never the reverse. `ai/evals/` is the documented exception — it may import
+  any layer, and nothing imports it.
 - **Depend on protocols, not classes** — `Embedder`, `VectorStore`, `Tool` live in
   `repositories/`; implementations are injected. A service constructing a concrete client
   itself is a violation.
