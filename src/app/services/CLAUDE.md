@@ -3,13 +3,16 @@
 Business logic and orchestration. A service decides what happens. It does not know about
 HTTP, and it does not write SQL.
 
-Subdirectories carry their own rules: `retrieval/`, `reranking/`, `agents/`. Read the file
-for the layer you are changing.
+AI capabilities are **not** here. Retrieval, reranking, agent orchestration and their
+evals live in `../ai/`, which is its own layer. See `../ai/CLAUDE.md` for why.
 
 ## Dependency rule
 
-`services` imports `repositories` and `core`. It must not import `api`. A service that
-imports `Request`, `HTTPException` or any FastAPI type is in the wrong layer.
+`services` imports `ai`, `repositories` and `core`. It must not import `api`. A service
+that imports `Request`, `HTTPException` or any FastAPI type is in the wrong layer.
+
+A service orchestrates a workflow and may call into `ai/` for a capability. The reverse is
+a defect: `ai/` must never import a service.
 
 ## Rules
 

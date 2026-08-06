@@ -1,4 +1,4 @@
-# Conventions — `evals/`
+# Conventions — `ai/evals/`
 
 Offline measurement of AI behaviour. An eval answers "did this change make the system
 better?" A test answers "does this code still work?" They are different, and they do not
@@ -6,8 +6,12 @@ replace each other.
 
 ## Dependency rule
 
-`evals` may import `services`, `repositories` and `core`. Nothing imports `evals`. It is
-not on the request path, and no runtime code may depend on it.
+`evals` may import **any** layer — `ai`, `services`, `repositories`, `core`. Nothing
+imports `evals`.
+
+This is the one documented exception to the dependency direction in `../CLAUDE.md`. It
+holds because `evals` is not on the request path: it measures the system from outside, so
+it cannot create a cycle at runtime. No runtime code may depend on it.
 
 ## Why evals exist here
 

@@ -1,4 +1,4 @@
-# Conventions — `services/retrieval/`
+# Conventions — `ai/retrieval/`
 
 Search and retrieval. This layer turns a question into a ranked candidate set. It
 orchestrates; `repositories/` performs the data access.
@@ -62,5 +62,5 @@ identifiers and rare words. Most real corpora need both.
 
 ## Measure it
 
-Every change to chunking, embedding or fusion needs an eval run. See `../../evals/CLAUDE.md`.
+Every change to chunking, embedding or fusion needs an eval run. See `../evals/CLAUDE.md`.
 Do not tune retrieval by reading a few examples.

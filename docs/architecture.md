@@ -17,10 +17,11 @@ Load with `/arch`. `/code-review` reads this file plus `CLAUDE.md` as the Standa
 | `src/app/core/CLAUDE.md` | Settings, structlog, Prometheus metrics, error types, retries |
 | `src/app/repositories/CLAUDE.md` | SQL, pgvector indexes, protocols, connection pools |
 | `src/app/services/CLAUDE.md` | Orchestration, transaction boundaries, fan-out limits |
-| `src/app/services/retrieval/CLAUDE.md` | Chunking, embedding, hybrid search, filtering |
-| `src/app/services/reranking/CLAUDE.md` | Cross-encoders, fusion, diversity, fallback |
-| `src/app/services/agents/CLAUDE.md` | LangGraph, prompt caching, tools, token budgets |
-| `src/app/evals/CLAUDE.md` | Datasets, metrics per layer, when to run |
+| `src/app/ai/CLAUDE.md` | Why AI is its own layer; rules for all of it |
+| `src/app/ai/retrieval/CLAUDE.md` | Chunking, embedding, hybrid search, filtering |
+| `src/app/ai/reranking/CLAUDE.md` | Cross-encoders, fusion, diversity, fallback |
+| `src/app/ai/agents/CLAUDE.md` | LangGraph, prompt caching, tools, token budgets |
+| `src/app/ai/evals/CLAUDE.md` | Datasets, metrics per layer, when to run |
 | `tests/CLAUDE.md` | Unit vs integration, seams, fakes, determinism |
 
 ## Choose the architecture during research
@@ -47,16 +48,19 @@ Keep the layering invariant below unless a feature justifies a documented except
 Three layers, one direction:
 
 ```
-api  ──▶  services  ──▶  repositories  ──▶  config
+api  ──▶  services  ──▶  ai  ──▶  repositories  ──▶  config
 ```
 
 - **No reverse dependency.** A repository must never import a service.
 - **No lateral dependency.** Two services must not import each other's internals. Compose
   them at the layer above, or behind an injected interface.
 - `core/` is cross-cutting. Every layer may import it. It imports none of them.
-- `agents`, `retrieval` and `reranking` are **capabilities, not layers**. They are
-  services. Their data access belongs in `repositories/`.
-- `evals/` sits outside the request path. It may import anything; nothing imports it.
+- `ai/` is the applied-AI capability layer: retrieval, reranking, agents. `services` may
+  call into it; it must never import a service. Its data access belongs in
+  `repositories/`. See `src/app/ai/CLAUDE.md` for why it is separate from `services`.
+- `ai/evals/` sits outside the request path. It may import any layer; nothing imports it.
+  This is the one documented exception to the direction above, and it holds because evals
+  never runs in a request.
 
 ## 2. Depend on protocols, not classes
 

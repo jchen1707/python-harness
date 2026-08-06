@@ -1,4 +1,4 @@
-# Conventions — `services/reranking/`
+# Conventions — `ai/reranking/`
 
 Reranking reorders a candidate set for precision. Retrieval gives recall; this layer
 decides what reaches the model or the user.
@@ -43,4 +43,4 @@ fact. Apply Maximal Marginal Relevance, or deduplicate by document id, before re
 ## Measure it
 
 A reranker that is not measured is a guess. Track nDCG and MRR against a labelled set
-before and after any change. See `../../evals/CLAUDE.md`.
+before and after any change. See `../evals/CLAUDE.md`.

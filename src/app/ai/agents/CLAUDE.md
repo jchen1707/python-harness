@@ -1,4 +1,4 @@
-# Conventions — `services/agents/`
+# Conventions — `ai/agents/`
 
 Agent orchestration, built on LangGraph with `langchain-anthropic`.
 
@@ -72,4 +72,4 @@ prompt-injection vector.
 
 ## Measure it
 
-Prompt changes need eval runs, not impressions. See `../../evals/CLAUDE.md`.
+Prompt changes need eval runs, not impressions. See `../evals/CLAUDE.md`.

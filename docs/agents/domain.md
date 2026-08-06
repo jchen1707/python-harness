@@ -46,7 +46,7 @@ If the concept you need isn't in the glossary yet, that's a signal — either yo
 Note the standing ambiguity this repo has already resolved: **"agent"/"subagent" in
 `CLAUDE.md` and these docs means a Claude Code dev-workflow subagent**, not an
 application-level LangGraph agent. Application agents are the ones built in
-`src/app/services/agents/`. Say which you mean.
+`src/app/ai/agents/`. Say which you mean.
 
 ## Flag ADR conflicts
 

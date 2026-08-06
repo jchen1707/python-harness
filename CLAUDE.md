@@ -127,10 +127,11 @@ Rules live **next to the code they govern**. Each directory below owns its own
 | `src/app/core/` | `Settings`, structlog, Prometheus metrics, error types, retries |
 | `src/app/repositories/` | SQL, pgvector indexes, protocols, connection pools |
 | `src/app/services/` | Orchestration, transaction boundaries, bounded fan-out |
-| `src/app/services/retrieval/` | Chunking, embedding, hybrid search, filtering |
-| `src/app/services/reranking/` | Cross-encoders, fusion, diversity, fallback order |
-| `src/app/services/agents/` | LangGraph, prompt caching, tools, token budgets |
-| `src/app/evals/` | Datasets, metric per layer, when to run |
+| `src/app/ai/` | Why AI is its own layer; rules covering all of it |
+| `src/app/ai/retrieval/` | Chunking, embedding, hybrid search, filtering |
+| `src/app/ai/reranking/` | Cross-encoders, fusion, diversity, fallback order |
+| `src/app/ai/agents/` | LangGraph, prompt caching, tools, token budgets |
+| `src/app/ai/evals/` | Datasets, metric per layer, when to run |
 | `tests/` | Unit vs integration, seams, fakes, determinism |
 
 Nested `CLAUDE.md` files are **path-scoped**: working in `api/` does not load
@@ -140,8 +141,8 @@ policy. Load it with `/arch` before non-trivial design work.
 
 The four rules to know without reading anything:
 
-- **Layering**: `api` → `services` → `repositories` → `config`. One direction, no lateral
-  imports.
+- **Layering**: `api` → `services` → `ai` → `repositories` → `config`. One direction, no
+  lateral imports.
 - **Depend on protocols**, not classes. Inject implementations at the app factory.
 - **Type every public function.** Pydantic on every I/O surface.
 - **Unit tests stay offline.** Integration tests use testcontainers.
@@ -162,11 +163,12 @@ costs a rewrite.
 | Designing an error type, retry or timeout | `src/app/core/CLAUDE.md` → Errors, Retries |
 | Writing SQL or a migration | `src/app/repositories/CLAUDE.md` |
 | Adding a vector index or tuning pgvector | `src/app/repositories/CLAUDE.md` → pgvector |
-| Changing chunking, embedding or search | `src/app/services/retrieval/CLAUDE.md` |
-| Changing rank order or fusion | `src/app/services/reranking/CLAUDE.md` |
-| Building or changing an agent graph | `src/app/services/agents/CLAUDE.md` |
-| Touching a prompt, tool, or model choice | `src/app/services/agents/CLAUDE.md` |
-| Measuring whether an AI change helped | `src/app/evals/CLAUDE.md` |
+| Changing chunking, embedding or search | `src/app/ai/retrieval/CLAUDE.md` |
+| Changing rank order or fusion | `src/app/ai/reranking/CLAUDE.md` |
+| Building or changing an agent graph | `src/app/ai/agents/CLAUDE.md` |
+| Touching a prompt, tool, or model choice | `src/app/ai/agents/CLAUDE.md` |
+| Measuring whether an AI change helped | `src/app/ai/evals/CLAUDE.md` |
+| Starting any AI work at all | `src/app/ai/CLAUDE.md` first |
 | Writing any test | `tests/CLAUDE.md` |
 | Choosing an architecture or a new library | `docs/architecture.md` |
 | Designing for load, or adding an extension point | `docs/architecture.md` → §4, §5 |
@@ -198,7 +200,7 @@ Fixed in `pyproject.toml` (`app` extra) — read it there. What the file doesn't
 
 - **Voyage AI** for embeddings because Anthropic has no embeddings API.
 - **Postgres + pgvector** over a dedicated vector DB — one datastore, one backup story.
-- **LangGraph** for agent orchestration in `services/agents/`.
+- **LangGraph** for agent orchestration in `ai/agents/`.
 - Introducing an alternative to any of these means updating `docs/architecture.md` first.
 
 ## Issue tracker
