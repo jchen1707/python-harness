@@ -12,7 +12,8 @@ Postgres + pgvector).
 ## What's here
 - `CLAUDE.md` — the source of truth: stack, workflow, Definition of Done, context/memory
   guidance, model guidance. Loaded every Claude Code session.
-- `docs/architecture.md` — detailed architectural standards (load with `/arch`).
+- `docs/architecture.md` — **cross-cutting** standards only: layering, protocols, types,
+  scaling, extensibility, concurrency, containers, dependency policy (load with `/arch`).
 - `pyproject.toml` — tool config (ruff, mypy, pytest) + the approved app stack as the
   opt-in `app` extra (no runtime deps by default).
 - `.claude/` — shared Claude Code config: `settings.json` (pre-approved safe commands)
@@ -28,8 +29,43 @@ Postgres + pgvector).
   suite, which needs Docker).
 - `.pre-commit-config.yaml` — pre-commit hooks (ruff + mypy + hygiene).
 - `docker-compose.yml` — dev infra: Postgres + pgvector (`docker compose up -d db`).
-- `src/app/` — empty package scaffold (the standard layout; populate per
-  `docs/architecture.md`).
+- `src/app/` — package scaffold, no application code yet. Each directory carries its own
+  `CLAUDE.md` with the conventions that govern it (see below).
+
+## Layout — rules live next to the code
+
+Each directory owns its conventions. Read the file for the directory you are changing;
+Claude Code loads it automatically when working there.
+
+```
+src/app/
+├── api/            HTTP edge — status codes, pagination, Annotated deps
+├── services/       orchestration, transaction boundaries, bounded fan-out
+├── ai/             applied AI — why it is its own layer
+│   ├── retrieval/  chunking, embedding, hybrid search, filtering
+│   ├── reranking/  cross-encoders, fusion, diversity, fallback order
+│   ├── agents/     LangGraph, prompt caching, tools, token budgets
+│   └── evals/      datasets, metric per layer, when to run
+├── repositories/   SQL, pgvector indexes, protocols, connection pools
+└── core/           Settings, structlog, Prometheus metrics, errors, retries
+tests/              unit vs integration, seams, fakes, determinism
+```
+
+Dependency direction, one way:
+
+```
+api  ──▶  services  ──▶  ai  ──▶  repositories  ──▶  config
+```
+
+`core/` is cross-cutting — every layer may import it, it imports none of them.
+`ai/evals/` is the one documented exception: it may import any layer, and nothing
+imports it, which is safe only because it never runs in a request.
+
+**These files are path-scoped.** Working in `api/` does not load
+`repositories/CLAUDE.md`. That is why anything spanning layers stays in
+`docs/architecture.md` — a cross-layer rule in a leaf file stops being enforced exactly
+where it matters. Root `CLAUDE.md` indexes both, and carries a reference table mapping a
+task to the file to read before starting it.
 
 ## Setup
 Requires Python 3.12 and [uv](https://docs.astral.sh/uv/).

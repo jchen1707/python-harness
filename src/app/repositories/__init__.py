@@ -1,12 +1,11 @@
-"""Repository layer — data access behind interfaces.
+"""Repository layer — data access behind protocols. No business rules.
 
-Services (`services/`) call repositories; repositories talk to storage and external
-APIs and expose protocols (never business logic).
+Imports `core` only. `services/` and `ai/` call in; this layer never calls out to them.
 
 Recommended layout:
   repositories/vector.py      — VectorStore (pgvector + in-memory) behind a protocol
   repositories/embeddings.py  — Embedder (Voyage + Fake) behind a protocol
   repositories/<entity>.py    — relational data access
 
-See docs/architecture.md -> Layering and -> Interfaces over implementations.
+Conventions: repositories/CLAUDE.md. Cross-cutting rules: docs/architecture.md.
 """

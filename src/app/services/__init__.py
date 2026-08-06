@@ -1,13 +1,12 @@
-"""Service layer — business logic and orchestration.
+"""Service layer — business logic and orchestration. Decides what happens.
 
-Controllers (`api/`) call services; services call the AI layer (`ai/`), repositories
-(`repositories/`) and external capabilities, apply domain rules, and drive workflows.
+Imports `ai/`, `repositories/` and `core/`. Must not import `api/`.
+
+Applied AI is NOT here. Retrieval, reranking, agent orchestration and their evals live
+in `ai/`, a layer of its own between services and repositories.
 
 Recommended layout:
   services/<domain>.py    — domain services
 
-Applied AI is NOT here. Retrieval, reranking, agent orchestration and their evals live
-in `ai/`, which is its own layer between services and repositories. See ai/CLAUDE.md.
-
-See docs/architecture.md -> Layering.
+Conventions: services/CLAUDE.md. Cross-cutting rules: docs/architecture.md.
 """
