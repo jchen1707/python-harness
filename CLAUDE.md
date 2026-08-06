@@ -116,6 +116,40 @@ signal is the whole point.
   `REVIEW_BASE` says otherwise (`$env:REVIEW_BASE = "..."`). Nine agents is real spend —
   reach for `/code-review` (two axes) by default and this when the diff warrants it.
 
+## Symbol navigation (LSP) — prefer it to grep
+
+`pyright-lsp` in `.mcp.json` runs pyright's language server behind MCP. It answers
+questions about **symbols**, where grep answers questions about **text**.
+
+Use it when the question is semantic:
+
+| Question | Tool |
+| --- | --- |
+| Where is this defined? | `definition` |
+| What calls this? | `references` |
+| What type is this, what does it accept? | `hover` |
+| What errors does this file have? | `diagnostics` |
+| Rename this symbol everywhere | `rename_symbol` |
+
+Grep matches strings. It cannot tell a definition from a call, a method on the class you
+mean from the same name on another class, a real use from a mention in a comment or a
+string. On a name like `run`, `get` or `Settings`, grep returns noise and you guess.
+
+**Rule: if you are about to grep for a Python symbol, use the LSP instead.** Keep grep for
+what it is good at — text that is not a symbol: config keys, log messages, TODO markers,
+strings in Markdown.
+
+Setup, once per machine (both must be on `PATH`):
+
+```sh
+npm install -g pyright
+go install github.com/isaacphi/mcp-language-server@latest   # then add GOPATH/bin to PATH
+```
+
+The server is declared with `--workspace .`, so it resolves to whatever clone it starts
+in. Check it with `/mcp`. MCP servers load at session start, so a fresh install needs a
+restart.
+
 ## Standards
 
 `docs/architecture.md` is authoritative — load it with `/arch` before non-trivial design work.

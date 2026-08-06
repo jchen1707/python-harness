@@ -28,6 +28,9 @@
     "mattpocock-skills@mattpocock": true
   },
   "plansDirectory": ".claude/plans",
+  "enabledMcpjsonServers": [
+    "pyright-lsp"
+  ],
   "hooks": {
     "PreToolUse": [
       {
