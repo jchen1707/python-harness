@@ -48,8 +48,10 @@ apart is what stops a search from quietly editing the thing it was searching.
    `Project Learnings/_INDEX.md` when the question is about a past session specifically;
    it adds the date and originating project.
 
-   Both are rebuilt whenever a session ends with the second brain configured, so they are
-   current to the last session. A note added in Obsidian since then will be missing —
+   The two indexes refresh on different schedules. `_VAULT_INDEX.md` rebuilds on every
+   session end with the second brain configured. `Project Learnings/_INDEX.md` rebuilds
+   only when that session wrote a note, so it can lag behind a note you renamed or deleted
+   in Obsidian. A note added in Obsidian since the last rebuild is missing from both —
    which is why step 2 still greps rather than trusting the index alone.
 
    A blank "what it covers" means the note is an empty stub, not that it is unreadable.

@@ -262,11 +262,13 @@ A layer above memory, in the user's own notes rather than the agent's:
 - **Write** — `session_learnings.py` (SessionEnd) distils the session's mistakes and their
   fixes into a dated note under `CLAUDE_LEARNINGS_DIR`, split into *Implementation* and
   *Architecture & design* learnings. It writes **nothing** when a session taught nothing.
-- **Index** — the same hook rebuilds two Markdown indexes, and does so on every session
-  end whether or not a learning was written: `_VAULT_INDEX.md` at the vault root (one row
-  per note in the whole vault — path, tags, what it covers) and `Project
-  Learnings/_INDEX.md` (the session notes, with date and project). `vault_index.py` owns
-  both; run it standalone to refresh without ending a session.
+- **Index** — the same hook rebuilds two Markdown indexes, on two different schedules.
+  `_VAULT_INDEX.md` at the vault root holds one row per note in the whole vault — path,
+  tags, what it covers. It rebuilds on every session end, whether or not a learning was
+  written. `Project Learnings/_INDEX.md` holds the session notes, with date and project.
+  It rebuilds only when that session wrote a note. `vault_index.py` owns
+  `_VAULT_INDEX.md`; `session_learnings.py` owns `_INDEX.md`. Run `vault_index.py`
+  standalone to refresh the vault index without ending a session.
 - **Read** — `/search-second-brain <topic>` reads the indexes, then opens only what
   matches, and reports the pattern across them with citations. Read-only by design.
 
