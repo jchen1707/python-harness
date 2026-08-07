@@ -28,9 +28,10 @@ Edit the right-hand columns to match whatever vocabulary you actually use.
 
 ## Note for this repo
 
-The tracker is **Linear** (see `issue-tracker.md`). All seven labels exist in the workspace.
-The five state labels live under a **`Triage`** parent group; the category labels are
-ungrouped workspace labels.
+The tracker is **Linear** (see `issue-tracker.md`), workspace **Development**. All seven
+labels exist there as **workspace** labels, so both the `Backend` and `Frontend` teams see
+them. The five state labels live under a **`Triage`** parent group; the category labels are
+ungrouped.
 
 State labels are **labels**, not workflow states — applying one does not move the issue
 across the board. Set the Linear workflow state explicitly when the role implies one.

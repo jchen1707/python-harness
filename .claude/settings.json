@@ -29,7 +29,8 @@
   },
   "plansDirectory": ".claude/plans",
   "enabledMcpjsonServers": [
-    "pyright-lsp"
+    "pyright-lsp",
+    "linear"
   ],
   "hooks": {
     "PreToolUse": [

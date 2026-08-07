@@ -220,12 +220,14 @@ Fixed in `pyproject.toml` (`app` extra) — read it there. What the file doesn't
 
 ## Issue tracker
 
-**Linear**, via the claude.ai account connector — check with `/mcp`, where it shows as
-*claude.ai Linear*. MCP tools load at session start, so connecting mid-session needs a
-restart. Conventions, tool discovery and wayfinding: `docs/agents/issue-tracker.md`.
-PRs stay on GitHub.
+**Linear**, as a project MCP server in `.mcp.json` — check with `/mcp`, where it shows as
+*linear*. Workspace **Development**, default team **Backend** (`BAC`). It authenticates
+with `LINEAR_API_KEY`, which belongs in **user** settings: `.mcp.json` carries only the
+`${LINEAR_API_KEY}` reference, and both it and `.claude/settings.json` are committed. MCP
+tools load at session start, so adding the key mid-session needs a restart. Conventions,
+tool discovery and wayfinding: `docs/agents/issue-tracker.md`. PRs stay on GitHub.
 
-Branch as `<type>/<TEAM-NUM>-<slug>` (e.g. `feat/ENG-412-vector-store`) so `/code-review`
+Branch as `<type>/<TEAM-NUM>-<slug>` (e.g. `feat/BAC-412-vector-store`) so `/code-review`
 can resolve the originating ticket mechanically.
 
 ## Environment

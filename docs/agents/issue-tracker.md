@@ -3,22 +3,50 @@
 Issues, specs and tickets for this repo live in **Linear**, reached over MCP. **Pull
 requests stay on GitHub** — Linear holds the work item, GitHub holds the diff.
 
+## Workspace and teams
+
+| | |
+| --- | --- |
+| Workspace | **Development** (`development-jchen`) |
+| Default team | **Backend**, key `BAC` — issue ids read `BAC-12` |
+| Other team | Frontend, key `FRO` |
+
+Create issues in **Backend** unless the work is plainly frontend. A personal API key is
+scoped to one workspace, so the key decides the workspace; there is no way to address
+another one with it.
+
 ## Connecting
 
-Linear comes from the **claude.ai account connector**, not from a repo-level `.mcp.json`.
-It follows the account, so it is already available in every project once connected — there
-is nothing to approve per repo.
+Linear is a **project MCP server**, declared in this repo's `.mcp.json` and pre-approved
+through `.claude/settings.json` → `enabledMcpjsonServers`. A clone picks it up with no
+per-account setup. It replaced the claude.ai account connector, which followed the account
+rather than the repo and could not be pinned to a workspace here.
 
-- Check it with `/mcp`; it appears as **claude.ai Linear**.
-- MCP servers load at **session start**. Connecting mid-session does not make the tools
-  available until you restart.
-- If it is absent, connect Linear in your claude.ai connector settings.
+```json
+"linear": {
+  "type": "http",
+  "url": "https://mcp.linear.app/mcp",
+  "headers": { "Authorization": "Bearer ${LINEAR_API_KEY}" }
+}
+```
+
+**`.mcp.json` holds the reference, never the value.** Set `LINEAR_API_KEY` in your **user**
+settings (`~/.claude/settings.json` → `env`), which is not committed. Both `.mcp.json` and
+`.claude/settings.json` are tracked, so a key written into either is a key pushed to
+GitHub.
+
+- Check it with `/mcp`; it appears as **linear**.
+- MCP servers load at **session start**. Adding the key or the server mid-session does not
+  make the tools available until you restart.
+- Linear also serves `https://mcp.linear.app/mcp/readonly`. Point a read-only agent at that
+  rather than trusting it not to write.
 
 ## Discovering the tools
 
-**List the tools before first use rather than assuming names.** The prefix depends on how
-Linear is connected — an account connector and a project server expose the same service
-under different names — and the surface changes between releases.
+**List the tools before first use rather than assuming names.** Tools are currently
+prefixed `mcp__linear__`, but that follows the server name in `.mcp.json` — it was
+`mcp__claude_ai_Linear__` under the old connector — and the surface changes between
+releases.
 
 `/mcp` shows the connected servers and their tools. Match the operation you need from the
 table below to what is actually offered.
@@ -28,14 +56,14 @@ table below to what is actually offered.
 | Operation | What to call |
 | --- | --- |
 | **Create an issue** | the create-issue tool — needs `team`; set `title`, `description` (markdown), optional `labels`, `project` |
-| **Read an issue** | the get-issue tool, with the identifier (`ENG-123`) |
+| **Read an issue** | the get-issue tool, with the identifier (`BAC-123`) |
 | **List issues** | the list-issues tool — filter by `team`, `state`, `assignee`, `label` |
 | **Comment** | the create-comment tool, with the issue id and markdown `body` |
 | **Apply/remove labels** | the update-issue tool, setting the `labels` array |
 | **Change state** | the update-issue tool, with the target workflow state |
 | **Close** | move to the team's Done/Cancelled state — Linear has no separate close verb |
 
-Issue identifiers are `TEAM-NUMBER` (e.g. `ENG-4521`), not bare integers. A reference like
+Issue identifiers are `TEAM-NUMBER` (e.g. `BAC-4521`), not bare integers. A reference like
 `#42` in conversation is **not** a Linear id — ask which team it belongs to rather than
 guessing.
 
@@ -78,5 +106,5 @@ Used by `/wayfinder`. The **map** is one issue; **tickets** are its children.
   plus the summary in `CLAUDE.md`. Those override the skill's generic smell baseline.
 - The **Spec** axis resolves the originating ticket from the Linear id in the branch name
   or commit trailer. Name branches `<type>/<TEAM-NUM>-<slug>` (e.g.
-  `feat/ENG-412-vector-store`) so the link is mechanical.
+  `feat/BAC-412-vector-store`) so the link is mechanical.
 - Definition of Done lives in `CLAUDE.md`; `/verify` runs those gates and prints evidence.
