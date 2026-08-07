@@ -105,26 +105,44 @@ How a request travels from landing in the tracker to meeting the Definition of D
    Linear issue
         │
         ▼
-   /triage ─┬─▶ needs-triage ⇄ needs-info      evaluation loop, not terminal
-            │
-            ├─▶ ready-for-human · wontfix      leaves the pipeline
-            │
-            └─▶ ready-for-agent
-                     │
-                     ▼
-   ┌── ALIGNMENT — one unbroken context ──────────────┐
-   │  /grill-with-docs → /to-spec → /to-tickets       │
-   └──────────────────────────────────────────────────┘
-                     │ one ticket at a time
-                     ▼
-   ┌── EXECUTION — branch first, fresh context per ticket ─┐
-   │  /plan → sign-off → /implement-from-plan              │
-   │                       → /verify → /code-review        │
-   └───────────────────────────────────────────────────────┘
-                     │
-                     ▼
-              PR → Definition of Done
+   /triage ◆ ─┬─▶ needs-triage ⇄ needs-info    evaluation loop, not terminal
+              ├─▶ ready-for-human · wontfix    leaves the pipeline
+              └─▶ ready-for-agent
+                       │
+                       ▼
+   ┌── ALIGNMENT — one unbroken context ────────────────────┐
+   │  /grill-with-docs ◆ → /to-spec ◆ → /to-tickets ◆       │
+   └────────────────────────────────────────────────────────┘
+                       │ one ticket at a time
+                       ▼
+   ┌── EXECUTION — branch first, fresh context per ticket ──┐
+   │  ( /plan ◆ only if the ticket needs it ) → /implement  │
+   │                        → /verify → /code-review        │
+   └────────────────────────────────────────────────────────┘
+                       │
+                       ▼
+                PR → Definition of Done
+
+   ◆ = stops and waits for you. Nothing past a ◆ happens without your say-so.
 ```
+
+### Where you're in the loop
+
+Four checkpoints before a line of code is written, and none of them are advisory — each
+iterates until you approve.
+
+| Checkpoint | What you're approving | What happens if you say no |
+| --- | --- | --- |
+| `/triage` | the category and state call, with reasoning | it re-evaluates; it never labels blind |
+| `/grill-with-docs` | your own assumptions, round by round | keeps grilling; ADRs and glossary entries land as you settle things |
+| `/to-spec` | **the seams** — where tests will attach | re-sketches before writing the spec |
+| `/to-tickets` | the breakdown: granularity, blocking edges | re-slices, and iterates until you're happy |
+| `/plan` *(optional)* | per-ticket approach + test plan | revises and re-asks; it will not proceed to code |
+
+After that the loop changes shape: `/verify` and `/code-review` **report to you** rather
+than asking permission — they surface evidence and findings, and reviewers are read-only by
+design so they can't quietly act on what they find. The hooks are the one thing that never
+asks: they run in the harness and hold regardless of what any instruction says.
 
 ### 1. Triage — decide if it's real and whose it is
 
@@ -146,24 +164,24 @@ returns to it once the reporter replies. Roles map to real label strings in
 **Keep these three steps in one unbroken context window — no `/compact`, no `/clear`.**
 Each builds on the thinking of the last, and that continuity is the whole point.
 
-| Step | Produces |
-| --- | --- |
-| `/grill-with-docs` | assumptions stress-tested against real docs, not model priors |
-| `/to-spec` | a spec — behaviour and acceptance criteria, not implementation |
-| `/to-tickets` | the spec split into independently implementable tickets |
+| Step | Produces | You are asked to |
+| --- | --- | --- |
+| `/grill-with-docs` | assumptions stress-tested against real docs, not model priors; ADRs and glossary entries as decisions land | answer rounds of questions — this is an interview, not a report |
+| `/to-spec` | the spec: problem, user stories, **Implementation Decisions**, **Testing Decisions**, out-of-scope | **confirm the seams** before the spec is written |
+| `/to-tickets` | the spec split into tracer-bullet tickets with blocking edges | approve the breakdown — granularity and blocking edges, iterating until you're happy |
+
+**Alignment plans the how, not just the what.** The spec's *Implementation Decisions*
+section covers the modules to be built or changed, their interfaces, architectural
+decisions, schema changes and API contracts; *Testing Decisions* records which modules get
+tested and the prior art to follow. Both are published to the tracker, so the implementer
+reads a design, not just a wish.
+
+The seam check in `/to-spec` matters more than it looks. `/tdd` refuses to write a test at
+an unconfirmed seam — *"No test is written at an unconfirmed seam"* — and this is where
+that confirmation is obtained, once, for the whole feature.
 
 Pick the architectural style here, during research — not while coding — and record it in
 `docs/architecture.md`.
-
-Alignment does settle design, but at **spec** level. `/to-spec` records **Implementation
-Decisions** (modules, interfaces, schema changes, API contracts) and **Testing Decisions**,
-and its step 2 confirms the test seams with you before writing anything.
-
-Those decisions then stop at the ticket boundary on purpose: `/to-tickets` states each
-ticket as *"end-to-end behaviour, from the user's perspective — not a layer-by-layer
-implementation list."* Combine that with the fresh-context rule in step 3 and an
-implementing agent starts from a ticket that deliberately withholds the spec's design.
-That gap is real, and step 3 is where it gets closed — per ticket.
 
 ### 3. Execution — one ticket, one clean slate
 
@@ -172,28 +190,30 @@ continuity; execution needs a clean slate. Branch as `<type>/<TEAM-NUM>-<slug>`
 (e.g. `feat/BAC-412-vector-store`) so `/code-review` can resolve the originating ticket
 mechanically.
 
-**Then plan the ticket before building it — `/plan` first, not `/implement` first.**
+The design already exists: it's in the spec's *Implementation Decisions*, agreed with you in
+step 2. `/implement` works from the ticket and that spec — it does not need to invent an
+approach, and shouldn't.
 
-`/implement` is deliberately thin: implement the spec, use `/tdd` at pre-agreed seams,
-typecheck, review, commit. It contains no design step. Handing it a ticket directly means
-the approach — layer placement, which protocols to extend, the sync/async boundary — gets
-decided while typing, which is exactly what `docs/architecture.md` says not to do.
+**When to add `/plan` on top.** `/implement` is deliberately thin — implement the spec, use
+`/tdd` at pre-agreed seams, typecheck, review, commit — with no design step of its own. That
+is fine when the spec's decisions reach far enough into the ticket. Add `/plan` when they
+don't:
 
-`/plan` fills that gap per ticket. It researches the ticket, settles the design, and writes
-`.claude/plans/plan.md` + `test-plan.md` for your explicit sign-off, then stops.
+- The ticket is large, or its approach is genuinely ambiguous after reading the spec.
+- The spec's decisions were written for the feature and don't say much about *this* slice.
+- You want the design settled by one model and built by another — `/plan` and
+  `/implement-from-plan` are a clean handoff seam.
+- The implementing terminal can't reach the tracker, so the spec needs pinning to local
+  files it can read.
 
-The test plan carries the seam confirmation across the context boundary. `/tdd` will not
-write a test at an unconfirmed seam — *"No test is written at an unconfirmed seam"* — and
-a fresh `/implement` context cannot see that `/to-spec` already confirmed them with you.
-`test-plan.md` is what re-supplies that confirmation. On the small-work path below, where
-no spec ran at all, it is the **only** thing that supplies it.
+`/plan` researches the ticket, settles layer placement and the sync/async boundary, and
+writes `.claude/plans/plan.md` + `test-plan.md` for your explicit sign-off, then stops.
+`/implement-from-plan` then feeds both to `/implement` as the spec, turns the numbered Steps
+into the task list, and pins this repo's `uv` gates in place of the skills' generic
+TypeScript phrasing.
 
-Then `/implement-from-plan` takes over: it feeds both plans to `/implement` as the spec,
-turns the numbered Steps into the task list, hands the test cases over as the pre-agreed
-seams, and pins this repo's `uv` gates in place of the skills' generic TypeScript phrasing.
-
-This is why both paths share an ending — the small-work path below is the same two steps
-without alignment in front of them.
+For a routine ticket off a well-specified feature, this is ceremony you don't need — the
+spec did the work already. Reach for it deliberately, not by default.
 
 While you work, the hooks enforce themselves regardless of instructions: `protect_paths`
 blocks edits to `.env`, `migrations/`, `generated/` and `uv.lock`; `format_edited` runs
@@ -241,9 +261,12 @@ built by another — skips alignment entirely:
 /plan  →  (new terminal)  →  /implement-from-plan
 ```
 
-This is step 3 with nothing in front of it. Same two commands, same sign-off, same gates —
-the only difference is that no grilling, spec or tickets preceded them, because the work
-was small enough not to need them. Both paths converge on step 4.
+Here `/plan` is not optional — it's the **only** planning checkpoint, and the only place you
+approve anything. With no spec to carry the Implementation Decisions and no seam check from
+`/to-spec`, `plan.md` and `test-plan.md` do that job instead. That inverts step 3: on the
+main path `/plan` is a deliberate addition; here it's the whole design step.
+
+Both paths converge on step 4.
 
 The new terminal is optional but useful: `/plan` and `/implement-from-plan` are a clean
 model-switching seam, so you can plan with one model and build with another.

@@ -28,7 +28,21 @@ the harness stays dependency-free until you build something).
 
 Alignment work needs continuity; execution work needs a clean slate. Keep steps 1–3 in one
 context window — no `/compact`, no `/clear` — so the grilling, spec and tickets build on the
-same thinking. Then start each `/implement` **fresh**, working only from its ticket.
+same thinking. Then start each `/implement` **fresh**, working from its ticket and the spec
+that ticket names as its parent. Fresh means no conversation history, not no design.
+
+**Every alignment step waits for the user.** `/grill-with-docs` interviews in rounds;
+`/to-spec` confirms the **seams** before writing anything (this is the confirmation `/tdd`
+requires — it refuses to test at an unconfirmed seam); `/to-tickets` iterates on the
+breakdown until the user approves it. Do not run these unattended, and do not treat a
+checkpoint as a formality to narrate past.
+
+Alignment settles the *how*, not only the *what*: the spec carries **Implementation
+Decisions** (modules, interfaces, architecture, schema, API contracts) and **Testing
+Decisions**, both published to the tracker. `/implement` works from the ticket plus that
+spec. Add `/plan` on top only when the ticket is large or ambiguous, when the spec's
+decisions don't reach into that slice, or when the implementing terminal can't reach the
+tracker — not by default.
 
 **Small work** — anything you could describe in one sentence, or a change you want planned
 by one model and built by another — uses the repo's own path instead:
