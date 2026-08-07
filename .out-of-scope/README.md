@@ -37,10 +37,10 @@ doesn't align with the project's focus on content authoring.
 
 ## Prior requests
 
-- ENG-42 — "Add dark mode support"
-- ENG-87 — "Night theme for accessibility"
+- BAC-42 — "Add dark mode support"
+- BAC-87 — "Night theme for accessibility"
 ```
 
-Use Linear identifiers (`ENG-42`), not bare integers — see `docs/agents/issue-tracker.md`.
+Use Linear identifiers (`BAC-42`), not bare integers — see `docs/agents/issue-tracker.md`.
 
 Full spec: `skills/engineering/triage/OUT-OF-SCOPE.md` in the `mattpocock-skills` plugin.

@@ -169,7 +169,7 @@ That gap is real, and step 3 is where it gets closed — per ticket.
 
 **Start each ticket in a fresh context, working only from that ticket.** Alignment needs
 continuity; execution needs a clean slate. Branch as `<type>/<TEAM-NUM>-<slug>`
-(e.g. `feat/ENG-412-vector-store`) so `/code-review` can resolve the originating ticket
+(e.g. `feat/BAC-412-vector-store`) so `/code-review` can resolve the originating ticket
 mechanically.
 
 **Then plan the ticket before building it — `/plan` first, not `/implement` first.**
@@ -306,8 +306,10 @@ alias) and broadened to cover any agent-read document. Use the new name.
 | `.claude/agents/` | Subagents. Workers: `explorer`, `test-writer` (worktree-isolated). Reviewers, one per `full-review` axis and each invokable standalone: `standards-reviewer`, `spec-checker`, `security-reviewer`, `test-reviewer`, `async-reviewer`, `simplicity-reviewer`, `design-reviewer`, `perf-reviewer`, `cost-reviewer` |
 | `.claude/hooks/` | `protect_paths` (block protected edits), `format_edited` (auto-format), `verify` (Stop gate on the Definition of Done), `session_learnings` (SessionEnd: distils lessons to the second brain), `vault_index` (rebuilds the vault's Markdown indexes) |
 | `.claude/workflows/` | `full-review.js` — nine reviewers fanned out, one ranked report fanned in. Each axis reads its prompt from the matching `.claude/agents/` definition, so the two forms cannot drift |
-Issues live in **Linear** via the claude.ai account connector — check `/mcp` for
-*claude.ai Linear*, and note MCP tools only load at session start
+Issues live in **Linear**, declared as a project MCP server in `.mcp.json` and pre-approved
+in `.claude/settings.json`. Workspace **Development**, default team **Backend** (`BAC`).
+Set `LINEAR_API_KEY` in your *user* settings — `.mcp.json` is committed and holds only the
+`${LINEAR_API_KEY}` reference. MCP tools load at session start
 (`docs/agents/issue-tracker.md`). PRs stay on GitHub.
 
 ## Notes
