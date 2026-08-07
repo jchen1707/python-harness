@@ -109,3 +109,31 @@ def test_a_note_without_front_matter_is_skipped(hook: ModuleType, tmp_path: Path
     hook.rebuild_index(tmp_path)
 
     assert "1 notes." in (tmp_path / "_INDEX.md").read_text(encoding="utf-8")
+
+
+def test_the_vault_index_is_rebuilt_even_when_the_session_taught_nothing(
+    hook: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`vault_index.refresh()` has to run above every early return in `main`.
+
+    The vault gains hand-written notes between sessions, and most sessions distil no
+    learning at all. If the refresh sits below the early returns, `_VAULT_INDEX.md` only
+    updates on sessions that happened to write a note — so the file an agent reads first
+    goes stale for exactly the notes the user wrote themselves.
+
+    Driven through `main` rather than by reading the source, so it pins the behaviour and
+    not the line number. `CLAUDE_LEARNINGS_DIR` is unset here, which returns early well
+    before anything is distilled.
+    """
+    (tmp_path / "Handwritten.md").write_text(
+        "A note the user wrote in Obsidian, never seen by the hook.\n", encoding="utf-8"
+    )
+    monkeypatch.delenv("CLAUDE_LEARNINGS_SKIP", raising=False)
+    monkeypatch.delenv("CLAUDE_LEARNINGS_OFF", raising=False)
+    monkeypatch.delenv("CLAUDE_LEARNINGS_DIR", raising=False)
+    monkeypatch.setenv("CLAUDE_VAULT_DIR", str(tmp_path))
+
+    assert hook.main() == 0
+
+    index = (tmp_path / "_VAULT_INDEX.md").read_text(encoding="utf-8")
+    assert "Handwritten.md" in index
