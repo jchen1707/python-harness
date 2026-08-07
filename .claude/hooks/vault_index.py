@@ -28,9 +28,9 @@ from pathlib import Path
 
 INDEX_NAME = "_VAULT_INDEX.md"
 
-# Folders holding no indexable prose. `.obsidian` is editor config; an Excalidraw note is
-# a base64 drawing payload wearing a `.md` extension, so its "first line of prose" is
-# kilobytes of encoded binary.
+# Folders holding no indexable prose. `.obsidian` is editor config. An Excalidraw note is
+# a base64 drawing payload inside a `.md` file, so its first line of prose is kilobytes of
+# encoded binary.
 SKIP_DIRS = frozenset({".obsidian", ".trash", ".git", "Excalidraw", "Attachments"})
 
 # Generated indexes, this one included. Indexing an index yields a row that says nothing
@@ -141,7 +141,7 @@ def describe(text: str) -> str:
         if len(line) < MIN_DESC:
             continue
         if CROSS_REFERENCE.search(raw) and len(line) < CROSS_REFERENCE_MAX:
-            pointer = pointer or line  # Keep looking, but do not come back empty-handed.
+            pointer = pointer or line  # Hold as fallback. Continue to look for real prose.
             continue
         return truncate(line)
     return truncate(pointer)
