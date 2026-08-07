@@ -54,8 +54,9 @@ apart is what stops a search from quietly editing the thing it was searching.
    in Obsidian. A note added in Obsidian since the last rebuild is missing from both —
    which is why step 2 still greps rather than trusting the index alone.
 
-   A blank "what it covers" means the note is an empty stub, not that it is unreadable.
-   Do not open it hoping for content.
+   A blank "what it covers" means the indexer found no prose, heading or bullet to quote.
+   That is almost always an empty stub. A note built only from a table lands here too, so
+   treat a blank row as low priority rather than as proof the note is empty.
 
    Never read every note to answer one question. That cost is exactly what the indexes
    exist to avoid, and it grows with every session.

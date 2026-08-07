@@ -127,6 +127,56 @@ def test_a_pointer_is_still_better_than_nothing(hook: ModuleType) -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("note", "expected"),
+    [
+        # A checklist or a set of takeaways is a whole genre of note in this vault.
+        (
+            "# Prompt caching\n\n- cache the system prompt, not the user turn\n- measure hit rate\n",
+            "Prompt caching · cache the system prompt, not the user turn · measure hit rate",
+        ),
+        # An outline the user never filled in still says what the note is about.
+        (
+            "# Retro\n\n## What went well\n\n## What to change\n",
+            "Retro · What went well · What to change",
+        ),
+    ],
+)
+def test_a_note_of_only_headings_and_bullets_still_gets_a_description(
+    hook: ModuleType, note: str, expected: str
+) -> None:
+    """Returning "" here hides a real note from the only file an agent reads first.
+
+    `search-second-brain` reads a blank row as an empty stub and is told not to open it,
+    so a bullet-list note would be skipped on the strength of a description the indexer
+    declined to derive.
+    """
+    assert hook.describe(note) == expected
+
+
+def test_prose_and_pointers_still_outrank_the_outline(hook: ModuleType) -> None:
+    """The outline is the last resort, not a competitor.
+
+    A sentence the user wrote describes the note better than its own headings, and the
+    fallback must not start winning against one.
+    """
+    with_prose = "# Caching\n\n- a bullet\n\nCaching keeps expensive results close.\n"
+    assert hook.describe(with_prose) == "Caching keeps expensive results close."
+
+    with_pointer = "- a bullet\n\nRefer to [[Template]] for guidance on answer delivery.\n"
+    assert hook.describe(with_pointer) == "Refer to Template for guidance on answer delivery."
+
+
+def test_a_note_with_no_readable_text_is_still_blank(hook: ModuleType) -> None:
+    """The blank row has to keep meaning something, or the index gains noise instead.
+
+    11 of the vault's notes are 0-byte stubs. A fallback that invented text for those
+    would make every row look equally informative.
+    """
+    assert hook.describe("") == ""
+    assert hook.describe("\n\n   \n") == ""
+
+
 def test_notes_skips_generated_and_non_prose_folders(hook: ModuleType, tmp_path: Path) -> None:
     """Excalidraw notes are base64 payloads and indexes are machinery; neither is a note."""
     (tmp_path / "Upskilling").mkdir()

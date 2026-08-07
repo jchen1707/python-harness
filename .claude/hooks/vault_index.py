@@ -55,6 +55,18 @@ NOISE = re.compile(r"^\s*(#{1,6}\s|[-*+]\s|\d+\.\s|\||```|!\[|-{3,}\s*$|={3,}\s*
 CROSS_REFERENCE = re.compile(r"\[\[")
 CROSS_REFERENCE_MAX = 100
 
+# Headings, bullets and numbered items are the part of NOISE that still names a topic.
+# They make a poor description while prose exists, and the only description there is when
+# it does not: a note written entirely as a bullet list is a real note, and returning ""
+# for it hides it from the one file an agent reads before choosing what to open. Table
+# rows, fences and images stay out — they name nothing on their own.
+OUTLINE = re.compile(r"^\s*(#{1,6}\s|[-*+]\s|\d+\.\s)")
+
+# Enough items to characterise a note. `truncate` cuts the joined result anyway; this
+# stops a 500-bullet note from building a long string to throw most of away.
+OUTLINE_MAX = 12
+OUTLINE_JOIN = " · "
+
 
 def unquote(line: str) -> str:
     """Strip blockquote and Obsidian callout markers, keeping the text inside.
@@ -126,16 +138,24 @@ def describe(text: str) -> str:
     """One line saying what a note covers.
 
     A `summary:` field wins: the SessionEnd hook writes one, and anything hand-written
-    beats anything inferred. Otherwise take the first line of real prose.
+    is better than anything inferred. Otherwise take the first line of real prose.
+
+    Two fallbacks follow, in order: a cross-reference line, then the note's own headings
+    and bullets joined together. Only a note with no readable text at all returns "".
     """
     summary = front_matter(text).get("summary", "")
     if summary:
         return truncate(summary)
 
     pointer = ""
+    outline: list[str] = []
     for quoted in body(text).splitlines():
         raw = unquote(quoted)
         if NOISE.match(raw):
+            if OUTLINE.match(raw) and len(outline) < OUTLINE_MAX:
+                item = strip_markdown(OUTLINE.sub("", raw, count=1))
+                if item:
+                    outline.append(item)
             continue
         line = strip_markdown(raw)
         if len(line) < MIN_DESC:
@@ -144,7 +164,7 @@ def describe(text: str) -> str:
             pointer = pointer or line  # Hold as fallback. Continue to look for real prose.
             continue
         return truncate(line)
-    return truncate(pointer)
+    return truncate(pointer or OUTLINE_JOIN.join(outline))
 
 
 def notes(vault: Path) -> list[Path]:
