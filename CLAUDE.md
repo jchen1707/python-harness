@@ -56,8 +56,9 @@ by one model and built by another — uses the repo's own path instead:
 /plan  →  (new terminal)  →  /implement-from-plan
 ```
 
-`/plan` writes `.claude/plans/plan.md` + `test-plan.md`, gets explicit sign-off, and stops.
-`/implement-from-plan` feeds those files to `/implement` with this repo's gates pinned.
+`/plan` writes `plan.md` + `test-plan.md` under `.claude/plans/<branch-slug>/`, gets
+explicit sign-off, and stops. `/implement-from-plan` resolves the same directory from
+the branch it is on and feeds those files to `/implement` with this repo's gates pinned.
 Choose this when the work is too small to spec, or when you want the model-switching handoff.
 
 Either path ends the same way: `/verify`, then `/code-review`, then commit. Committing to a
@@ -281,6 +282,9 @@ A layer above memory, in the user's own notes rather than the agent's:
 - **Write** — `session_learnings.py` (SessionEnd) distils the session's mistakes and their
   fixes into a dated note under `CLAUDE_LEARNINGS_DIR`, split into *Implementation* and
   *Architecture & design* learnings. It writes **nothing** when a session taught nothing.
+  SessionEnd fires only on a clean exit — a killed or still-open terminal never distils.
+  `distil_backlog.py` recovers those sessions; it lists them on a dry run by default and
+  distils with `--run`.
 - **Index** — the same hook rebuilds two Markdown indexes, on two different schedules.
   `_VAULT_INDEX.md` at the vault root holds one row per note in the whole vault — path,
   tags, what it covers. It rebuilds on every session end, whether or not a learning was

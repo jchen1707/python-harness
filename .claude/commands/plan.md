@@ -27,8 +27,9 @@ The argument is the feature/task to plan: `$ARGUMENTS`.
    - Create and switch to a new feature branch off it: `git checkout -b <feature-branch>`.
      Derive `<feature-branch>` in kebab-case from the feature argument and confirm the
      name with the user (offer the derived default in the same or a follow-up question).
-   - `plan.md` / `test-plan.md` are gitignored (untracked), so switching branches does not
-     disturb them. Do not commit anything here — this step only sets up the branch.
+   - The plan files live under `.claude/plans/`, which is gitignored, so switching
+     branches does not disturb them. Do not commit anything here — this step only sets
+     up the branch.
 3. **Understand** — read the relevant existing code and `docs/architecture.md` (or
    `/arch`). Note the layers, interfaces, and files this work touches.
 4. **Design approach** — decide the design (Controller → Service → Repository), where
@@ -40,7 +41,12 @@ The argument is the feature/task to plan: `$ARGUMENTS`.
    vs render), and confirm the API shape against the version locked in `uv.lock` — the
    installed package, not memory. Record each check in the plan ("verified against
    httpx 0.28"). An unverified claim is copied into the implementation and fails there.
-5. **Write the implementation plan** — overwrite `.claude/plans/plan.md` with:
+5. **Write the implementation plan** — write `.claude/plans/<branch-slug>/plan.md`,
+   where `<branch-slug>` is the feature branch name with each `/` replaced by `-`
+   (e.g. branch `feat/BAC-412-vector-store` → `.claude/plans/feat-BAC-412-vector-store/plan.md`).
+   One directory per branch is what lets two features be planned in parallel without
+   overwriting each other, and `/implement-from-plan` resolves the same slug from the
+   branch it is on. The plan contains:
    - **Goal** — what this change delivers.
    - **Context** — findings from step 3 (current state, constraints, files).
    - **Approach** — the design from step 4 (layer placement + interfaces); state and
@@ -53,7 +59,8 @@ The argument is the feature/task to plan: `$ARGUMENTS`.
      check .`, `ruff format --check .`, `mypy`, `pytest`; `pytest -m integration` if
      DB-backed; then `/code-review`) and any DB/container setup.
    - **Open questions** — anything terminal 2 should confirm before/while implementing.
-6. **Write the test plan** — overwrite `.claude/plans/test-plan.md` with:
+6. **Write the test plan** — write `test-plan.md` next to `plan.md` in the same
+   `.claude/plans/<branch-slug>/` directory, with:
    - **Scope** — the behaviors that must be covered (tie each back to a plan Step).
    - **Unit tests (offline)** — the cases per layer (repository / service / api), and the
      fakes/stubs to use (`FakeEmbedder`, in-memory store, stubbed `ChatAnthropic`). No
@@ -73,12 +80,12 @@ The argument is the feature/task to plan: `$ARGUMENTS`.
    and re-ask until the user approves. Do NOT proceed past this checkpoint on your own —
    even in autonomous/auto mode, planning requires this explicit user verification.
 8. **STOP — do not implement.** After sign-off, mark the planning tasks complete and
-   stop. Tell the user to open terminal 2 (implementation model) and run
-   `/implement-from-plan`, which feeds `.claude/plans/plan.md` + `test-plan.md` to the
-   `/implement` skill as its spec (that skill won't find them on its own).
-   Implementing is a separate, explicit step — never roll straight from planning into
-   writing code, even in a single terminal.
+   stop. Tell the user to open terminal 2 (implementation model) **on this branch** and
+   run `/implement-from-plan`, which resolves the branch's plan directory and feeds
+   `plan.md` + `test-plan.md` to the `/implement` skill as its spec (that skill won't
+   find them on its own). Implementing is a separate, explicit step — never roll
+   straight from planning into writing code, even in a single terminal.
 
-`plan.md` and `test-plan.md` are gitignored — local handoff artifacts, not committed to
-git. Plan mode's own auto-saved file uses a random slug name and isn't a reliable
-handoff, so this command writes the stable `plan.md` / `test-plan.md` instead.
+The plan files are gitignored — local handoff artifacts, not committed to git. Plan
+mode's own auto-saved file uses a random slug name and isn't a reliable handoff, so this
+command writes the stable per-branch `plan.md` / `test-plan.md` instead.
