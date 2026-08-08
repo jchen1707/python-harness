@@ -70,6 +70,9 @@ def test_porcelain_path_extracts_the_file_on_disk(
         " M .claude/hooks/format_edited.py",
         # Config that defines the gates — breaks them while touching no Python.
         " M pyproject.toml",
+        # Wires the hooks; its matchers are pinned by tests/test_hook_matchers.py,
+        # so a broken edit here fails pytest without touching any Python.
+        " M .claude/settings.json",
     ],
 )
 def test_gated_paths_trigger_the_gates(
@@ -85,7 +88,7 @@ def test_gated_paths_trigger_the_gates(
         "",  # nothing changed
         " M README.md\n M docs/architecture.md\n",  # prose ends freely
         " M .claude/plans/plan.md\n",  # plans too
-        " M .claude/settings.json\n",  # non-gated config
+        " M .claude/settings.local.json\n",  # personal config stays ungated
     ],
 )
 def test_ungated_changes_end_the_turn_freely(
@@ -114,7 +117,7 @@ def test_git_is_asked_about_every_gated_path(
     hook.gated_change("")
 
     argv = captured[0]
-    for expected in ("src", "tests", ".claude/hooks", "pyproject.toml"):
+    for expected in ("src", "tests", ".claude/hooks", "pyproject.toml", ".claude/settings.json"):
         assert expected in argv, f"{expected} missing from the git pathspec"
 
 

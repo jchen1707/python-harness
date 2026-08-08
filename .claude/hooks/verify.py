@@ -16,6 +16,10 @@ Three path groups qualify (see GATED_PATHS / GATED_FILES):
   catch.
 - `pyproject.toml` — configures ruff, mypy and pytest. A change here can break
   every gate at once while touching no Python at all.
+- `.claude/settings.json` — wires the hooks themselves, and the pytest suite pins
+  its matchers (`tests/test_hook_matchers.py`). A broken matcher edit fails the
+  gates while touching no Python, so it belongs in the gated set for the same
+  reason `pyproject.toml` does.
 
 The tradeoff this balances: widening the filter costs some override budget on
 config work, but the excluded set that motivated the original narrow filter —
@@ -49,7 +53,7 @@ GATED_PATHS: tuple[str, ...] = ("src", "tests", ".claude/hooks")
 
 # Individual files that configure the gates themselves; a change breaks them
 # without touching any Python.
-GATED_FILES: frozenset[str] = frozenset({"pyproject.toml"})
+GATED_FILES: frozenset[str] = frozenset({"pyproject.toml", ".claude/settings.json"})
 
 
 def porcelain_path(line: str) -> str:
