@@ -65,6 +65,9 @@ BASE_NAME = "LLM.base"
 MAX_TRANSCRIPT_CHARS = 60_000
 DISTILL_TIMEOUT = 240
 
+# Below this a transcript is too short to have taught anything.
+MIN_TRANSCRIPT_CHARS = 500
+
 PROMPT = f"""You are writing a note for an engineer's personal knowledge base, recording
 what a coding session taught them. Someone will read this months from now with no memory
 of the session.
@@ -293,6 +296,47 @@ def rebuild_index(directory: Path) -> None:
         print(f"session_learnings: could not write index ({exc})", file=sys.stderr)
 
 
+def distil_transcript(
+    transcript_path: str, session_id: str, cwd: str, directory: Path
+) -> Path | None:
+    """Distil one transcript into a dated note. Returns the note path, or None.
+
+    None means the transcript was too short, the distiller found no lesson, or the
+    write failed — the caller cannot tell which, and does not need to: in every case
+    there is no note to index. Shared by the SessionEnd path (`main`) and the recovery
+    path (`distil_backlog.py`), so the two cannot drift on what a note looks like.
+    """
+    transcript = read_transcript(transcript_path)
+    if len(transcript) < MIN_TRANSCRIPT_CHARS:
+        return None
+
+    body = distil(transcript, git_context(cwd))
+    if not body:
+        return None
+
+    summary, body = split_summary(body)
+    project = Path(cwd).name or "session"
+    target = note_path(directory, project, session_id)
+    stamp = datetime.now(tz=UTC).strftime("%Y-%m-%d %H:%M")
+    front = (
+        "---\n"
+        f"date: {stamp}\n"
+        f"project: {project}\n"
+        f"session: {session_id}\n"
+        f"summary: {summary}\n"
+        "tags: [project-learnings, session-retro]\n"
+        "---\n\n"
+        f"# {project} — session learnings ({stamp})\n\n"
+    )
+
+    try:
+        target.write_text(front + body + "\n", encoding="utf-8", newline="\n")
+    except OSError as exc:
+        print(f"session_learnings: could not write {target} ({exc})", file=sys.stderr)
+        return None
+    return target
+
+
 def main() -> int:
     if os.environ.get("CLAUDE_LEARNINGS_SKIP") == "1":
         return 0  # We are the distiller's own session ending. Do not recurse.
@@ -319,34 +363,10 @@ def main() -> int:
         return 0
 
     cwd = payload.get("cwd", "") or os.getcwd()
-    transcript = read_transcript(payload.get("transcript_path", ""))
-    if len(transcript) < 500:
-        return 0  # Too short to have taught anything.
-
-    body = distil(transcript, git_context(cwd))
-    if not body:
-        return 0
-
-    summary, body = split_summary(body)
-    project = Path(cwd).name or "session"
-    session_id = str(payload.get("session_id", ""))
-    target = note_path(directory, project, session_id)
-    stamp = datetime.now(tz=UTC).strftime("%Y-%m-%d %H:%M")
-    front = (
-        "---\n"
-        f"date: {stamp}\n"
-        f"project: {project}\n"
-        f"session: {session_id}\n"
-        f"summary: {summary}\n"
-        "tags: [project-learnings, session-retro]\n"
-        "---\n\n"
-        f"# {project} — session learnings ({stamp})\n\n"
+    target = distil_transcript(
+        payload.get("transcript_path", ""), str(payload.get("session_id", "")), cwd, directory
     )
-
-    try:
-        target.write_text(front + body + "\n", encoding="utf-8", newline="\n")
-    except OSError as exc:
-        print(f"session_learnings: could not write {target} ({exc})", file=sys.stderr)
+    if target is None:
         return 0
 
     rebuild_index(directory)
