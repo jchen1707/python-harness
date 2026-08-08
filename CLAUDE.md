@@ -44,6 +44,11 @@ spec. Add `/plan` on top only when the ticket is large or ambiguous, when the sp
 decisions don't reach into that slice, or when the implementing terminal can't reach the
 tracker — not by default.
 
+**Verify the verb and the version before a spec, plan or ticket names a library.**
+Confirm the library supports the operation the design asks of it (read vs write, parse
+vs render). Confirm the API against the version locked in `pyproject.toml` / `uv.lock`,
+not against memory. A wrong claim in a spec is copied into every ticket derived from it.
+
 **Small work** — anything you could describe in one sentence, or a change you want planned
 by one model and built by another — uses the repo's own path instead:
 

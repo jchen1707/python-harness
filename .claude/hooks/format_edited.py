@@ -14,6 +14,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+# `--unfixable F401`: never auto-remove an unused import. This hook fires after every
+# single edit, so in a batch it runs between the edit that adds an import and the edit
+# that adds the import's first use — an F401 autofix at that moment deletes the import
+# and the next edit references an undefined name. The Stop gate still runs plain
+# `ruff check .`, so a genuinely unused import fails the turn and gets removed
+# deliberately. Pinned by tests/test_format_hook.py.
+FIX_ARGS: tuple[str, ...] = ("check", "--fix", "--unfixable", "F401")
+
 
 def run(args: list[str], cwd: str) -> None:
     # Advisory hook: never fail the turn over formatting.
@@ -33,7 +41,7 @@ def main() -> int:
 
     cwd = payload.get("cwd", "")
     run(["uv", "run", "ruff", "format", raw], cwd)
-    run(["uv", "run", "ruff", "check", "--fix", raw], cwd)
+    run(["uv", "run", "ruff", *FIX_ARGS, raw], cwd)
     return 0
 
 

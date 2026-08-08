@@ -35,6 +35,11 @@ The argument is the feature/task to plan: `$ARGUMENTS`.
    each piece lives, which protocols to define/extend, dependencies, the
    **sync/async boundary** (async for I/O paths, sync for pure CPU/in-memory logic — not
    blanket `async def`; see architecture.md §3), risks, and the verification steps.
+   **Verify the verb and the version** for every library or external API the design
+   names: confirm the library supports the operation asked of it (read vs write, parse
+   vs render), and confirm the API shape against the version locked in `uv.lock` — the
+   installed package, not memory. Record each check in the plan ("verified against
+   httpx 0.28"). An unverified claim is copied into the implementation and fails there.
 5. **Write the implementation plan** — overwrite `.claude/plans/plan.md` with:
    - **Goal** — what this change delivers.
    - **Context** — findings from step 3 (current state, constraints, files).
@@ -52,11 +57,15 @@ The argument is the feature/task to plan: `$ARGUMENTS`.
    - **Scope** — the behaviors that must be covered (tie each back to a plan Step).
    - **Unit tests (offline)** — the cases per layer (repository / service / api), and the
      fakes/stubs to use (`FakeEmbedder`, in-memory store, stubbed `ChatAnthropic`). No
-     network/DB — these are the default `uv run pytest` run.
+     network/DB — these are the default `uv run pytest` run. Each case asserts on
+     behaviour the application code produces, at the place that produces it. A case that
+     emits the event it asserts on, or computes the expected value the way the code
+     does, is tautological (tests/CLAUDE.md) — replace it before sign-off.
    - **Integration tests** — any testcontainers/pgvector cases (marked `integration`),
      with the seed/reset they rely on; or "none" with a one-line reason.
    - **Edge cases & failure modes** — validation errors, not-found, limits/bounds,
-     cancellation/concurrency, empty inputs.
+     cancellation/concurrency, empty inputs. For each config/`Settings` field, list
+     three distinct cases: absent, present-but-empty, and invalid value.
    - **How to run** — the exact commands and which Definition-of-Done gates this covers.
 7. **Get user sign-off (REQUIRED checkpoint — do not skip).** Present a concise summary
    of both `plan.md` and `test-plan.md` and explicitly ask the user to confirm they look
