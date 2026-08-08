@@ -1,6 +1,6 @@
 ---
-description: Hand .claude/plans/plan.md + test-plan.md to the /implement skill as its spec, with this repo's uv gates pinned (terminal 2, implementation model)
-argument-hint: "[path to a plan file, or blank for .claude/plans/plan.md]"
+description: Hand the branch's plan.md + test-plan.md (under .claude/plans/) to the /implement skill as its spec, with this repo's uv gates pinned (terminal 2, implementation model)
+argument-hint: "[path to a plan file, or blank to resolve from the current branch]"
 ---
 
 Two-terminal workflow — **terminal 2 (implementation model)**. This is a thin adapter
@@ -8,11 +8,16 @@ over the vendored `/implement` skill: that skill implements "a spec or set of ti
 but does **not** know about this repo's plan files or its `uv`-based gates. This command
 supplies both.
 
-1. **Locate the plans.** Default to `.claude/plans/plan.md` and
-   `.claude/plans/test-plan.md`; if `$ARGUMENTS` names a path, use that as the
-   implementation plan and look for a sibling `test-plan.md`.
-   - If `plan.md` is missing, **STOP** and tell the user to run `/plan` in terminal 1
-     first. Do not improvise a plan here — planning is a separate, signed-off step.
+1. **Locate the plans.** Derive the plan directory from the current branch: take
+   `git branch --show-current`, replace each `/` with `-`, and read
+   `.claude/plans/<branch-slug>/plan.md` + `test-plan.md` (e.g. branch
+   `feat/BAC-412-vector-store` → `.claude/plans/feat-BAC-412-vector-store/`). If
+   `$ARGUMENTS` names a path, that wins as the implementation plan, with a sibling
+   `test-plan.md`. If the per-branch directory does not exist, fall back to the legacy
+   `.claude/plans/plan.md` + `test-plan.md`.
+   - If no plan is found in any of those places, **STOP** and tell the user to run
+     `/plan` in terminal 1 first. Do not improvise a plan here — planning is a
+     separate, signed-off step.
    - If `test-plan.md` is missing, ask the user whether to proceed without it or go
      back to `/plan`. Don't silently skip the test plan.
 2. **Read both files in full** before doing anything else. The plan is the source of
@@ -22,7 +27,7 @@ supplies both.
    base. Run `git branch --show-current`; if you're on `main`, stop and ask which
    branch to use — per CLAUDE.md, direct commits to `main` need explicit user request.
 4. **Invoke `/implement` with the plans as the spec.** Say explicitly that the spec is
-   `.claude/plans/plan.md` plus `.claude/plans/test-plan.md`, and pass along:
+   the resolved `plan.md` plus `test-plan.md` (name their full paths), and pass along:
    - the numbered **Steps** from `plan.md` as the task list (build it with `TaskCreate`,
      one task per Step, marking each in_progress/complete as you go);
    - the **test cases** from `test-plan.md` as the cases to drive `/tdd` with, and the
