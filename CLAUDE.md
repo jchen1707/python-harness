@@ -285,6 +285,22 @@ A layer above memory, in the user's own notes rather than the agent's:
   SessionEnd fires only on a clean exit — a killed or still-open terminal never distils.
   `distil_backlog.py` recovers those sessions; it lists them on a dry run by default and
   distils with `--run`.
+- **One note per session.** `note_path` keys the filename on the session id and reuses the
+  note that session already has. A session distils more than once — it is resumed and ends
+  again, or the recovery script reaches it while it is still open — and dating each write
+  from the clock turned one session into several near-identical notes. The rewrite is not
+  lossy: the distiller reads only the last `MAX_TRANSCRIPT_CHARS` of a session, so the
+  earlier note goes back into the prompt and its learnings carry forward.
+- **The distiller must not read itself.** `distil()` shells out to `claude -p`, and that
+  child session writes a transcript holding the prompt *and* the finished note. Distilling
+  it returns that note again under a second session id. Two guards: the child runs in
+  `DISTILLER_HOME`, outside every repo, so new child transcripts land where nothing scans;
+  and `is_distiller_transcript` recognises the ones already on disk.
+- **Audit** — fixing a writer removes nothing it already wrote, so
+  `distil_backlog.py --audit` reads the vault and reports the notes both bugs left there.
+  `--audit --run` deletes the notes written from the distiller's own transcript, which are
+  artifacts. It only reports a session holding several notes, because each of those files
+  distils a different part of one real session and the merge is a judgement call.
 - **Index** — the same hook rebuilds two Markdown indexes, on two different schedules.
   `_VAULT_INDEX.md` at the vault root holds one row per note in the whole vault — path,
   tags, what it covers. It rebuilds on every session end, whether or not a learning was
