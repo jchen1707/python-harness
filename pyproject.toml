@@ -62,6 +62,9 @@ ignore = ["E501"]
 # Claude Code hooks shell out to fixed argv lists (never user input) and rely on
 # PATH lookup for `uv`/`git`, which is what S603/S607 flag.
 ".claude/hooks/**" = ["S603", "S607"]
+# The MCP headers helper shells out to the platform credential store (`powershell`,
+# `security`, `secret-tool`) through a fixed argv list, for the same reason.
+".claude/mcp_headers.py" = ["S603", "S607"]
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -77,7 +80,7 @@ ignore_missing_imports = true
 # `.claude/hooks` is listed explicitly: mypy skips dot-directories during its own
 # recursive discovery, so a bare "." would never reach them. The hooks enforce every
 # other gate, so they are held to the same strictness as `src`.
-files = ["src", "tests", ".claude/hooks"]
+files = ["src", "tests", ".claude/hooks", ".claude/mcp_headers.py"]
 # The hooks import each other as top-level modules (`import vault_index`), which works at
 # runtime because Python puts the running script's directory on sys.path. Static analysis
 # does not read sys.path, so it needs this setting.

@@ -117,7 +117,14 @@ def test_git_is_asked_about_every_gated_path(
     hook.gated_change("")
 
     argv = captured[0]
-    for expected in ("src", "tests", ".claude/hooks", "pyproject.toml", ".claude/settings.json"):
+    for expected in (
+        "src",
+        "tests",
+        ".claude/hooks",
+        "pyproject.toml",
+        ".claude/settings.json",
+        ".claude/mcp_headers.py",
+    ):
         assert expected in argv, f"{expected} missing from the git pathspec"
 
 

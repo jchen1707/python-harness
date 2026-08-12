@@ -7,9 +7,7 @@
     "linear": {
       "type": "http",
       "url": "https://mcp.linear.app/mcp",
-      "headers": {
-        "Authorization": "Bearer ${LINEAR_API_KEY}"
-      }
+      "headersHelper": "uv run --no-sync python \"${CLAUDE_PROJECT_DIR}/.claude/mcp_headers.py\" linear-py"
     }
   }
 }

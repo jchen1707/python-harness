@@ -332,9 +332,10 @@ alias) and broadened to cover any agent-read document. Use the new name.
 
 Issues live in **Linear**, declared as a project MCP server in `.mcp.json` and pre-approved
 in `.claude/settings.json`. Workspace **Development**, default team **Backend** (`BAC`).
-Set `LINEAR_API_KEY` in your *user* settings — `.mcp.json` is committed and holds only the
-`${LINEAR_API_KEY}` reference. MCP tools load at session start
-(`docs/agents/issue-tracker.md`). PRs stay on GitHub.
+Store the API key in the OS credential store under the slot `linear-py` — `.mcp.json` is
+committed and holds only the slot name, and `.claude/mcp_headers.py` resolves it at
+connection time. The store command is in `docs/agents/secrets.md`. MCP tools load at
+session start (`docs/agents/issue-tracker.md`). PRs stay on GitHub.
 
 ## Notes
 - On Windows/PowerShell, use `uv run` for everything; no `cd` prefix.

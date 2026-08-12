@@ -243,15 +243,16 @@ Fixed in `pyproject.toml` (`app` extra) — read it there. What the file doesn't
 
 **Linear**, as a project MCP server in `.mcp.json` — check with `/mcp`, where it shows as
 *linear*. Workspace **Development**, default team **Backend** (`BAC`). It authenticates
-with `LINEAR_API_KEY`. `.mcp.json` carries only the `${LINEAR_API_KEY}` reference, and both
-it and `.claude/settings.json` are committed. MCP tools load at session start, so adding the
-key mid-session needs a restart. Conventions, tool discovery and wayfinding:
-`docs/agents/issue-tracker.md`. PRs stay on GitHub.
+with an API key. `.mcp.json` carries only a `headersHelper` line naming the credential slot
+`linear-py`, and both it and `.claude/settings.json` are committed. MCP tools load at
+session start, so storing the key mid-session needs a restart. Conventions, tool discovery
+and wayfinding: `docs/agents/issue-tracker.md`. PRs stay on GitHub.
 
-**Set the key as an OS user environment variable, not in `~/.claude/settings.json` → `env`.**
-Both put the value in the process environment, so both work. They differ in exposure: the
-settings file is plain text that an agent reads for unrelated reasons, and a whole-file read
-puts the literal key in the transcript. Procedure: `docs/agents/secrets.md`.
+**The key lives in the OS credential store, never in an environment variable.**
+`.claude/mcp_headers.py` reads the slot at connection time and writes the header to stdout,
+which Claude Code consumes itself. A `${VAR}` header would put the key in every Bash
+subprocess, where one careless `echo` compromises it. Storing, verifying and rotating:
+`docs/agents/secrets.md`.
 
 Branch as `<type>/<TEAM-NUM>-<slug>` (e.g. `feat/BAC-412-vector-store`) so `/code-review`
 can resolve the originating ticket mechanically.
@@ -259,8 +260,9 @@ can resolve the originating ticket mechanically.
 ## Environment
 
 - Secrets live in `.env` (gitignored); `.env.example` lists the keys. `app.config.Settings`
-  is the only reader. Harness and MCP keys go in OS user environment variables instead —
-  where each value belongs, and how to set one without exposing it: `docs/agents/secrets.md`.
+  is the only reader. An MCP key goes in the OS credential store under a slot; a harness key
+  such as `GH_TOKEN` goes in an OS user environment variable. Where each value belongs, and
+  how to store one without exposing it: `docs/agents/secrets.md`.
 - A secret that reaches a transcript is compromised. Rotate it; do not estimate the risk.
 - `GH_TOKEN` needs `repo` + `workflow` scope for PR automation.
 - PowerShell: `$env:VAR = "value"`, backtick continues a line, `;` chains — `&&` does not
