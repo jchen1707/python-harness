@@ -26,14 +26,19 @@ rather than the repo and could not be pinned to a workspace here.
 "linear": {
   "type": "http",
   "url": "https://mcp.linear.app/mcp",
-  "headers": { "Authorization": "Bearer ${LINEAR_API_KEY}" }
+  "headersHelper": "uv run --no-sync python \"${CLAUDE_PROJECT_DIR}/.claude/mcp_headers.py\" linear-py"
 }
 ```
 
-**`.mcp.json` holds the reference, never the value.** Set `LINEAR_API_KEY` in your **user**
-settings (`~/.claude/settings.json` → `env`), which is not committed. Both `.mcp.json` and
-`.claude/settings.json` are tracked, so a key written into either is a key pushed to
-GitHub.
+**`.mcp.json` holds the slot name, never the value.** The key lives in the OS credential
+store. `.claude/mcp_headers.py` reads it at connection time and writes the `Authorization`
+header to stdout, which Claude Code consumes itself, so the value never enters a
+transcript. Both `.mcp.json` and `.claude/settings.json` are tracked, so a key written into
+either is a key pushed to GitHub.
+
+Do **not** move this key to `~/.claude/settings.json` → `env`, and do not reintroduce a
+`${LINEAR_API_KEY}` header. Both put the value in every Bash subprocess. Storing,
+verifying and rotating: `docs/agents/secrets.md`.
 
 - Check it with `/mcp`; it appears as **linear**.
 - MCP servers load at **session start**. Adding the key or the server mid-session does not

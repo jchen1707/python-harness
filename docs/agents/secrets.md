@@ -19,7 +19,7 @@ Choose by asking which process reads the value.
 | The reader | Store the value in | Example |
 | --- | --- | --- |
 | `app.config.Settings` (application code) | `.env` at the repo root | `ANTHROPIC_API_KEY`, `VOYAGE_API_KEY`, `POSTGRES_DSN` |
-| An MCP server, through `${VAR}` in `.mcp.json` | OS user environment variable | `LINEAR_API_KEY` |
+| A remote MCP server | OS credential store, under a **slot** | Linear, slot `linear-py` |
 | A hook, or the `gh` CLI | OS user environment variable | `GH_TOKEN` |
 
 Never store a secret in `~/.claude/settings.json` → `env`, in `.claude/settings.json`, in
@@ -39,37 +39,92 @@ An OS user variable is in no file the agent reads.
 
 Ask the agent to do steps 1 and 2. Do step 4 yourself.
 
-## Add a harness or MCP secret
+## Add an MCP secret
 
-1. Add the `${VAR}` reference to `.mcp.json`. Commit that file. It holds the name, never
-   the value.
-2. Set the OS user environment variable in an interactive terminal:
+An MCP key goes in the OS credential store, not the environment. `.mcp.json` names a
+**slot**; `.claude/mcp_headers.py` reads that slot at connection time and writes the
+`Authorization` header to stdout, which Claude Code consumes itself.
+
+A `${VAR}` header would need the key in Claude Code's own environment. The Bash tool is a
+child process and inherits it, so `echo $LINEAR_API_KEY` prints the key, and a key printed
+into a transcript must be rotated. With the credential store the variable does not exist,
+so no careless command finds it.
+
+1. Add the `headersHelper` line to `.mcp.json`. Commit that file. It holds the slot name,
+   never the value.
+2. Store the value in an interactive terminal. Use a real terminal window: the `!` prefix
+   runs a command non-interactively, so `Read-Host` returns an empty value.
 
    ```powershell
-   $k = Read-Host "LINEAR_API_KEY" -AsSecureString
-   [Environment]::SetEnvironmentVariable("LINEAR_API_KEY",
-     [Runtime.InteropServices.Marshal]::PtrToStringAuto(
-       [Runtime.InteropServices.Marshal]::SecureStringToBSTR($k)), "User")
+   $slot = 'linear-py'
+   $dir  = Join-Path $env:USERPROFILE '.claude\mcp-credentials'
+   New-Item -ItemType Directory -Force -Path $dir | Out-Null
+
+   $sec = Read-Host -AsSecureString "Paste the key for $slot"
+   $len = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+     [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)).Length
+   if ($len -lt 20) { throw "Refusing to write: got $len characters. The paste did not land." }
+
+   $sec | ConvertFrom-SecureString | Set-Content (Join-Path $dir "$slot.cred")
+   "stored $len characters"
    ```
 
-3. Restart Claude Code. MCP servers read the environment at session start.
-4. Confirm the server with `/mcp`.
+3. Verify the slot resolves, without printing the value:
 
-Use a real terminal for step 2. The `!` prefix runs a command non-interactively, so
-`Read-Host` returns an empty value. `SetEnvironmentVariable` then deletes the variable.
+   ```powershell
+   uv run --no-sync python .claude/mcp_headers.py linear-py > $null; "exit=$LASTEXITCODE"
+   ```
+
+4. Restart Claude Code, then confirm the server with `/mcp`.
+
+`ConvertFrom-SecureString` encrypts with DPAPI, so the file is bound to this user on this
+machine. It is inert to anyone else, and to this user on another machine.
+
+The length check in step 2 is not decoration. `Ctrl+V` does not paste at a `Read-Host`
+prompt in the classic PowerShell console — right-click pastes, and Windows Terminal
+handles `Ctrl+V` normally. Without the check an empty paste writes an empty credential
+that looks exactly like a working one until the connection fails.
 
 Never run `setx VAR "literal"`. That writes the value into shell history.
 
-## Verify without exposing
+### Why a slot, and not the server name
 
-Check the length or a hash. Never print the value.
+The slot names the credential rather than the provider. Two repositories then hold two
+keys for the same service: this repository uses `linear-py`, and
+`frontend-development-harness` uses `linear-fro`. Rotating one never breaks the other.
+
+This is also why the Linear MCP server stays on an API key instead of OAuth. OAuth
+credentials key to the **server URL**, so a second repository pointing at the same URL
+shares the token and therefore the workspace. That is the failure the slot design exists
+to prevent. Do not "simplify" this to OAuth.
+
+## Add a harness secret
+
+A hook or the `gh` CLI reads its own environment, so those values stay in OS user
+variables. `GH_TOKEN` is the live example.
 
 ```powershell
-$env:LINEAR_API_KEY.Length
+$k = Read-Host "GH_TOKEN" -AsSecureString
+[Environment]::SetEnvironmentVariable("GH_TOKEN",
+  [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+    [Runtime.InteropServices.Marshal]::SecureStringToBSTR($k)), "User")
 ```
 
-A working MCP call proves only that the value from session start is valid. A long-running
-session holds the old value in memory. After a rotation, check the OS variable directly.
+Use a real terminal here too. Under `!`, `Read-Host` returns empty and
+`SetEnvironmentVariable` then deletes the variable.
+
+## Verify without exposing
+
+Check the exit code, a length or a hash. Never print the value.
+
+```powershell
+uv run --no-sync python .claude/mcp_headers.py linear-py > $null; "exit=$LASTEXITCODE"
+$env:GH_TOKEN.Length
+```
+
+A working MCP call proves only that the credential was valid when the connection opened.
+A long-running session holds the value it read at start. After a rotation, check the store
+directly and restart.
 
 ## Rotate after any exposure
 
@@ -79,6 +134,11 @@ Treat a value that reached a transcript as compromised. Do not estimate the risk
 2. Issue a new key.
 3. Store the new value by the procedure above.
 4. Restart Claude Code.
+
+A rotation is not finished until the store holds the new value. Revoking the old key and
+stopping there leaves the server failing with a 401 that reads like a bad key rather than
+a missing one. If the slot is empty, `/mcp` reports the server as rejected and
+`mcp_headers.py` exits 1 naming the slot.
 
 ## What the harness enforces
 
@@ -90,17 +150,38 @@ These controls hold whatever an instruction says. See `.claude/settings.json` an
 | `.gitignore` | Excludes `.env` and `.env.*`, and keeps `.env.example` |
 | `protect_paths.py` (PreToolUse) | Refuses an agent **write** to `.env` and `.env.*` |
 | `permissions.deny` → `Read(./.env)` | Refuses an agent **read** of the secret-bearing files |
-| `permissions.deny` → `Bash(cat .env:*)` and similar | Blocks the common shell readers, and `env` / `printenv` |
+| `permissions.deny` → `Bash(cat .env:*)` and similar | Blocks the common shell readers of the file |
+| `permissions.deny` → `Bash(env)`, `Bash(set)`, `Bash(Get-ChildItem Env:*)` and similar | Blocks a whole-environment dump in both shells |
+| `permissions.deny` → `Bash(echo $LINEAR_API_KEY:*)` and similar | Blocks the common spellings that read one variable |
+| `permissions.deny` → `Bash(python -c:*)`, `Bash(node -e:*)` and similar | Blocks an inline interpreter, which reads the environment without naming the variable |
+| `.claude/mcp_headers.py` | Keeps the Linear key out of the environment, so no rule above has to cover it |
 | `gitleaks` (pre-commit) | Fails a commit that carries a key in any staged file |
 | `detect-private-key` (pre-commit) | Fails a commit that carries a private key |
 
-`tests/test_secret_paths.py` pins these rules. Deleting one fails the suite.
+`tests/test_secret_paths.py` pins the deny rules and `tests/test_mcp_headers.py` pins the
+helper. Deleting one fails the suite.
 
-Two limits are deliberate, and you should know both.
+Three limits are deliberate, and you should know all three.
 
 The Bash deny rules match on a command prefix. `sed -n p .env` still runs. They raise the
 cost of an accident; they do not stop intent. The controls that do the real work are
 `.gitignore` and the pre-commit scan.
+
+An OS user variable has a weaker ceiling than a file. Claude Code inherits it, and every
+Bash subprocess inherits it in turn. A prefix rule cannot cover every spelling of a shell
+expansion: `echo $VAR`, `echo "$VAR"` and `printf %s "$VAR"` are three commands, and
+indirection defeats all three. The rules above name the careless spellings. Treat them as
+a speed bump. The complete fix is to keep the value out of the environment, which is what
+the credential store does for the Linear key. `GH_TOKEN` still lives in a variable,
+because the `gh` CLI reads its own environment and no helper sits between them.
+
+The credential store makes the key non-ambient, not unreachable. Bash runs as the same
+user and can run the same lookup `mcp_headers.py` runs. What is gone is the accident path
+— the one that actually cost a key on this machine.
+
+The deny rules bind this repository only. `.claude/settings.json` is per project, and the
+same OS user variable reaches every other clone on the machine. Mirror these rules into
+`~/.claude/settings.json` to cover a session started anywhere else.
 
 The read rules name each `.env` variant instead of globbing `.env.*`. A glob would also
 deny `.env.example`, which is committed and holds no values. Add a new variant to both

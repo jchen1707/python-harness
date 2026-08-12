@@ -20,6 +20,9 @@ Three path groups qualify (see GATED_PATHS / GATED_FILES):
   its matchers (`tests/test_hook_matchers.py`). A broken matcher edit fails the
   gates while touching no Python, so it belongs in the gated set for the same
   reason `pyproject.toml` does.
+- `.claude/mcp_headers.py` — resolves the Linear credential at connection time. It
+  is Python that ruff and mypy check, and it sits outside `.claude/hooks/` because
+  it is not a hook, so it is named as a file rather than covered by a directory.
 
 The tradeoff this balances: widening the filter costs some override budget on
 config work, but the excluded set that motivated the original narrow filter —
@@ -53,7 +56,9 @@ GATED_PATHS: tuple[str, ...] = ("src", "tests", ".claude/hooks")
 
 # Individual files that configure the gates themselves; a change breaks them
 # without touching any Python.
-GATED_FILES: frozenset[str] = frozenset({"pyproject.toml", ".claude/settings.json"})
+GATED_FILES: frozenset[str] = frozenset(
+    {"pyproject.toml", ".claude/settings.json", ".claude/mcp_headers.py"}
+)
 
 
 def porcelain_path(line: str) -> str:
