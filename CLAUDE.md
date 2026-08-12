@@ -194,6 +194,7 @@ costs a rewrite.
 | --- | --- |
 | Adding or changing an endpoint | `src/app/api/CLAUDE.md` |
 | Adding config or a secret | `src/app/core/CLAUDE.md` → Configuration |
+| Storing an API key, or rotating one | `docs/agents/secrets.md` |
 | Adding logging, a metric, or a dashboard | `src/app/core/CLAUDE.md` → Logging, Metrics |
 | Designing an error type, retry or timeout | `src/app/core/CLAUDE.md` → Errors, Retries |
 | Writing SQL or a migration | `src/app/repositories/CLAUDE.md` |
@@ -242,10 +243,15 @@ Fixed in `pyproject.toml` (`app` extra) — read it there. What the file doesn't
 
 **Linear**, as a project MCP server in `.mcp.json` — check with `/mcp`, where it shows as
 *linear*. Workspace **Development**, default team **Backend** (`BAC`). It authenticates
-with `LINEAR_API_KEY`, which belongs in **user** settings: `.mcp.json` carries only the
-`${LINEAR_API_KEY}` reference, and both it and `.claude/settings.json` are committed. MCP
-tools load at session start, so adding the key mid-session needs a restart. Conventions,
-tool discovery and wayfinding: `docs/agents/issue-tracker.md`. PRs stay on GitHub.
+with `LINEAR_API_KEY`. `.mcp.json` carries only the `${LINEAR_API_KEY}` reference, and both
+it and `.claude/settings.json` are committed. MCP tools load at session start, so adding the
+key mid-session needs a restart. Conventions, tool discovery and wayfinding:
+`docs/agents/issue-tracker.md`. PRs stay on GitHub.
+
+**Set the key as an OS user environment variable, not in `~/.claude/settings.json` → `env`.**
+Both put the value in the process environment, so both work. They differ in exposure: the
+settings file is plain text that an agent reads for unrelated reasons, and a whole-file read
+puts the literal key in the transcript. Procedure: `docs/agents/secrets.md`.
 
 Branch as `<type>/<TEAM-NUM>-<slug>` (e.g. `feat/BAC-412-vector-store`) so `/code-review`
 can resolve the originating ticket mechanically.
@@ -253,7 +259,9 @@ can resolve the originating ticket mechanically.
 ## Environment
 
 - Secrets live in `.env` (gitignored); `.env.example` lists the keys. `app.config.Settings`
-  is the only reader.
+  is the only reader. Harness and MCP keys go in OS user environment variables instead —
+  where each value belongs, and how to set one without exposing it: `docs/agents/secrets.md`.
+- A secret that reaches a transcript is compromised. Rotate it; do not estimate the risk.
 - `GH_TOKEN` needs `repo` + `workflow` scope for PR automation.
 - PowerShell: `$env:VAR = "value"`, backtick continues a line, `;` chains — `&&` does not
   work in 5.1. `uv run` needs no `cd` prefix.
