@@ -21,7 +21,27 @@
     "deny": [
       "Bash(git reset --hard:*)",
       "Bash(git push --force:*)",
-      "Bash(git push -f:*)"
+      "Bash(git push -f:*)",
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./.env.*.local)",
+      "Read(./.env.development)",
+      "Read(./.env.production)",
+      "Read(./.env.staging)",
+      "Read(./.env.test)",
+      "Bash(cat .env:*)",
+      "Bash(cat ./.env:*)",
+      "Bash(type .env:*)",
+      "Bash(more .env:*)",
+      "Bash(less .env:*)",
+      "Bash(head .env:*)",
+      "Bash(tail .env:*)",
+      "Bash(nl .env:*)",
+      "Bash(strings .env:*)",
+      "Bash(Get-Content .env:*)",
+      "Bash(gc .env:*)",
+      "Bash(env)",
+      "Bash(printenv:*)"
     ]
   },
   "enabledPlugins": {
