@@ -1,4 +1,4 @@
-"""Guardrail tests for the learnings recovery script (`.claude/hooks/distil_backlog.py`).
+"""Guardrail tests for the learnings recovery script (`.agents/hooks/distil_backlog.py`).
 
 The SessionEnd hook only distils sessions that end cleanly; this script recovers the
 rest. Its selection logic is what these tests pin: picking the wrong transcripts is
@@ -24,7 +24,7 @@ HOOK_DIR = Path(__file__).resolve().parents[1] / ".claude" / "hooks"
 
 @pytest.fixture(scope="module")
 def script() -> ModuleType:
-    """Load the script by path — `.claude/hooks` is not an importable package.
+    """Load the script by path — `.agents/hooks` is not an importable package.
 
     The directory goes on `sys.path` for the load because the script imports
     `session_learnings` (which imports `vault_index`) as sibling top-level modules.

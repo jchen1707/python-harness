@@ -36,14 +36,12 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Claude Code — personal/local only (shared config is committed)
+# Harness-local state (shared adapters and `.agents/` capabilities are committed)
 .claude/settings.local.json
 .claude/.credentials.json
 .claude/scheduled_tasks.json
-.claude/plans/
+.agents/plans/
 .claude/todos/
 
-# .claude/skills/ IS committed — it holds repo-owned skills only (real files, no
-# symlinks). Third-party skills come from the mattpocock-skills plugin, declared in
-# .claude/settings.json → enabledPlugins; the plugin's own files live outside the repo
-# under ~/.claude/plugins/ and must never be vendored back in here.
+# `.agents/` is canonical. The `.claude/skills`, `.claude/agents`, and
+# `.claude/workflows` symlinks are compatibility adapters. Do not vendor plugin caches.

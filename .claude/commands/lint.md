@@ -15,5 +15,5 @@ installed first with `uv sync --extra app`.
 
 Report any violations verbatim with file:line. Fix only what your current change
 introduced — do not silently reformat or rewrite unrelated files. Per the
-Definition of Done (CLAUDE.md), lint + format + types must all be clean before a
+Definition of Done (AGENTS.md), lint + format + types must all be clean before a
 change is considered done.

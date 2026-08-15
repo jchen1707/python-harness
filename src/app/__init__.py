@@ -1,6 +1,6 @@
 """python-harness application package (scaffold).
 
-This is a harness, not an implementation. Each subpackage carries its own `CLAUDE.md`
+This is a harness, not an implementation. Each subpackage carries its own `AGENTS.md`
 with the conventions that govern it; read that file before changing code in it.
 
   api/           HTTP edge — transport only

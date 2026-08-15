@@ -27,7 +27,7 @@ The argument is the feature/task to plan: `$ARGUMENTS`.
    - Create and switch to a new feature branch off it: `git checkout -b <feature-branch>`.
      Derive `<feature-branch>` in kebab-case from the feature argument and confirm the
      name with the user (offer the derived default in the same or a follow-up question).
-   - The plan files live under `.claude/plans/`, which is gitignored, so switching
+   - The plan files live under `.agents/plans/`, which is gitignored, so switching
      branches does not disturb them. Do not commit anything here — this step only sets
      up the branch.
 3. **Understand** — read the relevant existing code and `docs/architecture.md` (or
@@ -41,9 +41,9 @@ The argument is the feature/task to plan: `$ARGUMENTS`.
    vs render), and confirm the API shape against the version locked in `uv.lock` — the
    installed package, not memory. Record each check in the plan ("verified against
    httpx 0.28"). An unverified claim is copied into the implementation and fails there.
-5. **Write the implementation plan** — write `.claude/plans/<branch-slug>/plan.md`,
+5. **Write the implementation plan** — write `.agents/plans/<branch-slug>/plan.md`,
    where `<branch-slug>` is the feature branch name with each `/` replaced by `-`
-   (e.g. branch `feat/BAC-412-vector-store` → `.claude/plans/feat-BAC-412-vector-store/plan.md`).
+   (e.g. branch `feat/BAC-412-vector-store` → `.agents/plans/feat-BAC-412-vector-store/plan.md`).
    One directory per branch is what lets two features be planned in parallel without
    overwriting each other, and `/implement-from-plan` resolves the same slug from the
    branch it is on. The plan contains:
@@ -55,19 +55,19 @@ The argument is the feature/task to plan: `$ARGUMENTS`.
    - **Steps** — numbered, concrete, ordered implementation tasks; each names its
      file(s) and layer and is small enough to verify independently. Terminal 2 turns
      this list into its task list.
-   - **Verification** — gates to pass (CLAUDE.md Definition of Done: `uv run ruff
+   - **Verification** — gates to pass (AGENTS.md Definition of Done: `uv run ruff
      check .`, `ruff format --check .`, `mypy`, `pytest`; `pytest -m integration` if
      DB-backed; then `/code-review`) and any DB/container setup.
    - **Open questions** — anything terminal 2 should confirm before/while implementing.
 6. **Write the test plan** — write `test-plan.md` next to `plan.md` in the same
-   `.claude/plans/<branch-slug>/` directory, with:
+   `.agents/plans/<branch-slug>/` directory, with:
    - **Scope** — the behaviors that must be covered (tie each back to a plan Step).
    - **Unit tests (offline)** — the cases per layer (repository / service / api), and the
      fakes/stubs to use (`FakeEmbedder`, in-memory store, stubbed `ChatAnthropic`). No
      network/DB — these are the default `uv run pytest` run. Each case asserts on
      behaviour the application code produces, at the place that produces it. A case that
      emits the event it asserts on, or computes the expected value the way the code
-     does, is tautological (tests/CLAUDE.md) — replace it before sign-off.
+     does, is tautological (tests/AGENTS.md) — replace it before sign-off.
    - **Integration tests** — any testcontainers/pgvector cases (marked `integration`),
      with the seed/reset they rely on; or "none" with a one-line reason.
    - **Edge cases & failure modes** — validation errors, not-found, limits/bounds,

@@ -2,7 +2,7 @@
 #   uv run pre-commit install
 # Then checks run automatically on `git commit`. Manual run:
 #   uv run pre-commit run --all-files
-# See CLAUDE.md -> Definition of Done.
+# See AGENTS.md -> Definition of Done.
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

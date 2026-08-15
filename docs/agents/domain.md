@@ -9,8 +9,8 @@ How the engineering skills should consume this repo's domain documentation when 
   patterns chosen per feature, and the rest is the authoritative standards reference
   (`/arch` loads it). Read it before proposing structural change; treat its recorded
   choices exactly as you would an ADR.
-- **`CLAUDE.md`** — the always-loaded summary: approved stack, layering rules,
-  Definition of Done. Where it and a skill's generic advice disagree, `CLAUDE.md` wins.
+- **`AGENTS.md`** — the always-loaded summary: approved stack, layering rules,
+  Definition of Done. Where it and a skill's generic advice disagree, `AGENTS.md` wins.
 - **`CONTEXT.md`** at the repo root — the domain glossary, if it exists.
 - **`docs/adr/`** — individual ADRs, if any exist. This repo has none yet: architectural
   decisions have been recorded in `docs/architecture.md` instead. A per-decision file
@@ -25,14 +25,14 @@ Single-context repo (this repo):
 
 ```
 /
-├── CLAUDE.md                  ← standards summary, always loaded
+├── AGENTS.md                  ← standards summary, always loaded
 ├── CONTEXT.md                 ← domain glossary (not yet created)
 ├── docs/
 │   ├── architecture.md        ← standards + the architectural decision record
 │   ├── adr/                   ← optional per-decision files (none yet)
 │   └── agents/                ← this file, issue-tracker.md, triage-labels.md
 └── src/app/                   ← api/ · services/ · ai/ · repositories/ · core/ (layered,
-                                  each with its own CLAUDE.md)
+                                  each with its own AGENTS.md)
 ```
 
 Multi-context layout (a root `CONTEXT-MAP.md` pointing at per-context `CONTEXT.md` files)
@@ -45,7 +45,7 @@ When your output names a domain concept (in an issue title, a refactor proposal,
 If the concept you need isn't in the glossary yet, that's a signal — either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `/domain-modeling`).
 
 Note the standing ambiguity this repo has already resolved: **"agent"/"subagent" in
-`CLAUDE.md` and these docs means a Claude Code dev-workflow subagent**, not an
+`AGENTS.md` and these docs means a Claude Code dev-workflow subagent**, not an
 application-level LangGraph agent. Application agents are the ones built in
 `src/app/ai/agents/`. Say which you mean.
 
@@ -59,4 +59,4 @@ If your output contradicts a decision recorded in `docs/architecture.md` (or an 
 
 The layering rule (`api` → `services` → `ai` → `repositories` → `config`, no reverse deps) and
 the approved stack are the two most likely to be contradicted by generic advice. Neither
-changes without a `CLAUDE.md` edit first.
+changes without a `AGENTS.md` edit first.

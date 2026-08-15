@@ -6,5 +6,5 @@ dependency direction, and it holds because evals never runs in a request.
 An eval asks "did this change make the system better?" A test asks "does this code
 still work?" They do not replace each other.
 
-Conventions: evals/CLAUDE.md.
+Conventions: evals/AGENTS.md.
 """

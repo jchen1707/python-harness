@@ -1,0 +1,4 @@
+name = "perf-reviewer"
+description = "Review scaling risks such as N+1 queries, missing indexes, and unbounded work."
+sandbox_mode = "read-only"
+developer_instructions = "Read .agents/agents/perf-reviewer.md and follow its prompt body. Treat its YAML frontmatter as adapter metadata."

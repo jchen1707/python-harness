@@ -1,7 +1,7 @@
 """Mechanical checks that the rule files agree with each other and with the tree.
 
 Rules are stated in more than one file on purpose. A reviewer subagent runs in a fresh
-context and path-scoped `CLAUDE.md` files do not load unless it reads them, so each
+context and path-scoped `AGENTS.md` files do not load unless it reads them, so each
 reviewer carries the rules it checks. That redundancy is load-bearing.
 
 The cost is drift: two copies stay plausible while disagreeing, and nothing notices. It
@@ -35,27 +35,27 @@ LAYER_WORDS = frozenset(CANONICAL_LAYERS) | {"core"}
 ARROW = re.compile(r"──▶|->|→")
 
 # Directories that are not ours to police.
-EXCLUDED = ("/.venv/", "/node_modules/", "/.claude/plugins/", "/.claude/plans/", "/.git/")
+EXCLUDED = ("/.venv/", "/node_modules/", "/.claude/plugins/", "/.agents/plans/", "/.git/")
 
 
 def rule_files() -> list[Path]:
     """Every file in the repo that states or restates a rule.
 
-    Not only Markdown. `.claude/workflows/*.js` embeds fallback reviewer prompts, and
+    Not only Markdown. `.agents/workflows/*.js` embeds fallback reviewer prompts, and
     those restate the layering rule in prose. Leaving them out is how the `full-review`
     standards fallback kept the pre-`ai/` chain after every Markdown copy was fixed —
     the one copy that fires precisely when the good copy is missing.
     """
     patterns = (
-        "CLAUDE.md",
+        "AGENTS.md",
         "README.md",
         "docs/**/*.md",
-        "src/**/CLAUDE.md",
-        "tests/CLAUDE.md",
-        ".claude/agents/*.md",
-        ".claude/skills/*/SKILL.md",
+        "src/**/AGENTS.md",
+        "tests/AGENTS.md",
+        ".agents/agents/*.md",
+        ".agents/skills/*/SKILL.md",
         ".claude/commands/*.md",
-        ".claude/workflows/*.js",
+        ".agents/workflows/*.js",
         ".out-of-scope/*.md",
     )
     found: set[Path] = set()
@@ -111,10 +111,10 @@ def test_layering_rule_is_stated_identically_everywhere() -> None:
 
 
 def test_every_convention_file_is_indexed() -> None:
-    """A leaf `CLAUDE.md` nobody points at is a rule nobody reads.
+    """A leaf `AGENTS.md` nobody points at is a rule nobody reads.
 
     Scope, stated precisely: this asserts each file is referenced *somewhere* in root
-    `CLAUDE.md` and *somewhere* in `docs/architecture.md`. It does not pin which table.
+    `AGENTS.md` and *somewhere* in `docs/architecture.md`. It does not pin which table.
     Root mentions most paths twice — once in the directory index, once in the reference
     table — so deleting one row leaves the other and the check still passes.
 
@@ -122,39 +122,74 @@ def test_every_convention_file_is_indexed() -> None:
     index is the failure that silently orphans a rule; policing which of two tables
     holds it would couple the test to formatting that is allowed to change.
     """
-    root = (REPO_ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+    root = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
     arch = (REPO_ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
     orphans: list[str] = []
-    convention_files = [*sorted(REPO_ROOT.glob("src/**/CLAUDE.md")), REPO_ROOT / "tests/CLAUDE.md"]
+    convention_files = [*sorted(REPO_ROOT.glob("src/**/AGENTS.md")), REPO_ROOT / "tests/AGENTS.md"]
     for path in convention_files:
         rel = path.relative_to(REPO_ROOT).as_posix()
-        directory = rel.rsplit("/CLAUDE.md", 1)[0]
+        directory = rel.rsplit("/AGENTS.md", 1)[0]
         if directory not in root and rel not in root:
-            orphans.append(f"{rel} missing from CLAUDE.md")
+            orphans.append(f"{rel} missing from AGENTS.md")
         if rel not in arch:
             orphans.append(f"{rel} missing from docs/architecture.md")
 
     assert not orphans, "convention files not indexed:\n  " + "\n  ".join(orphans)
 
 
+def test_claude_files_import_agents_rules() -> None:
+    """Claude compatibility files must import the canonical rules explicitly."""
+    agents_files = [REPO_ROOT / "AGENTS.md", *sorted(REPO_ROOT.glob("src/**/AGENTS.md"))]
+    agents_files.append(REPO_ROOT / "tests/AGENTS.md")
+
+    failures: list[str] = []
+    for agents_file in agents_files:
+        claude_file = agents_file.with_name("CLAUDE.md")
+        if not claude_file.exists():
+            failures.append(f"{claude_file.relative_to(REPO_ROOT)} is missing")
+            continue
+        lines = claude_file.read_text(encoding="utf-8").splitlines()
+        if "@AGENTS.md" not in lines or len(lines) > 4:
+            failures.append(f"{claude_file.relative_to(REPO_ROOT)} does not import AGENTS.md")
+
+    assert not failures, "invalid Claude compatibility files:\n  " + "\n  ".join(failures)
+
+
+def test_full_review_surfaces_cover_the_same_axes() -> None:
+    """The portable skill and Codex adapters must cover each workflow axis."""
+    workflow = (REPO_ROOT / ".agents/workflows/full-review.js").read_text(encoding="utf-8")
+    skill = (REPO_ROOT / ".agents/skills/full-review/SKILL.md").read_text(encoding="utf-8")
+    axes = set(re.findall(r"agent: '([a-z-]+)'", workflow))
+
+    prompt_files = {path.stem for path in (REPO_ROOT / ".agents/agents").glob("*-reviewer.md")}
+    prompt_files.add("spec-checker")
+    codex_files = {path.stem for path in (REPO_ROOT / ".codex/agents").glob("*.toml")}
+
+    assert axes == prompt_files
+    assert axes <= codex_files
+    assert all(f"`{agent}`" in skill for agent in axes)
+
+
 # Generated at runtime and gitignored, so absent on a clean checkout. A doc naming one
 # is correct; the file simply is not committed. Checking these makes the test pass or
 # fail on local leftovers rather than on the repo — which is what happened: it was green
 # locally off a stale `/plan` artifact and red on CI.
-GENERATED_PREFIXES = (".claude/plans/",)
+GENERATED_PREFIXES = (".agents/plans/",)
 
 
-@pytest.mark.parametrize("doc", ["CLAUDE.md", "README.md", "docs/architecture.md"])
+@pytest.mark.parametrize("doc", ["AGENTS.md", "README.md", "docs/architecture.md"])
 def test_referenced_markdown_paths_exist(doc: str) -> None:
     """A pointer to a moved file is worse than no pointer: it reads as authoritative.
 
     Only committed `.md` targets are checked. These docs also name files deliberately
     not written yet (`src/app/main.py`) and files generated per session
-    (`.claude/plans/plan.md`); neither is broken.
+    (`.agents/plans/plan.md`); neither is broken.
     """
     text = (REPO_ROOT / doc).read_text(encoding="utf-8")
-    pattern = re.compile(r"`((?:src/app|tests|docs|\.claude|\.out-of-scope)[\w/.\-]*?\.md)`")
+    pattern = re.compile(
+        r"`((?:src/app|tests|docs|\.agents|\.claude|\.out-of-scope)[\w/.\-]*?\.md)`"
+    )
 
     missing = sorted(
         {

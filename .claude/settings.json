@@ -71,7 +71,7 @@
   "enabledPlugins": {
     "mattpocock-skills@mattpocock": true
   },
-  "plansDirectory": ".claude/plans",
+  "plansDirectory": ".agents/plans",
   "enabledMcpjsonServers": [
     "pyright-lsp",
     "linear"
@@ -87,7 +87,7 @@
             "args": [
               "run",
               "python",
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/protect_paths.py"
+              "${CLAUDE_PROJECT_DIR}/.agents/hooks/protect_paths.py"
             ],
             "timeout": 30,
             "statusMessage": "Checking protected paths…"
@@ -105,7 +105,7 @@
             "args": [
               "run",
               "python",
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/format_edited.py"
+              "${CLAUDE_PROJECT_DIR}/.agents/hooks/format_edited.py"
             ],
             "timeout": 90,
             "statusMessage": "Formatting…"
@@ -122,7 +122,7 @@
             "args": [
               "run",
               "python",
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/verify.py"
+              "${CLAUDE_PROJECT_DIR}/.agents/hooks/verify.py"
             ],
             "timeout": 600,
             "statusMessage": "Verifying Definition of Done…"
@@ -139,7 +139,7 @@
             "args": [
               "run",
               "python",
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/session_learnings.py"
+              "${CLAUDE_PROJECT_DIR}/.agents/hooks/session_learnings.py"
             ],
             "timeout": 300,
             "statusMessage": "Distilling session learnings…"

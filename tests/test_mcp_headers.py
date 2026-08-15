@@ -1,4 +1,4 @@
-"""Guardrail tests for the MCP credential helper (`.claude/mcp_headers.py`).
+"""Guardrail tests for the MCP credential helper (`.agents/mcp_headers.py`).
 
 Claude Code runs this script to authenticate the Linear MCP server. Two failure modes
 matter, and both are silent without a test.
