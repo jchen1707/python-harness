@@ -220,18 +220,11 @@ def test_build_lists_every_note_exactly_once(hook: ModuleType, tmp_path: Path) -
     assert rendered.count("| `") == 3
 
 
-def test_vault_dir_falls_back_to_the_parent_of_the_learnings_dir(
+def test_vault_dir_uses_the_configured_obsidian_vault(
     hook: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The common layout is a learnings folder inside a vault.
-
-    Requiring a second variable to state something already derivable is configuration the
-    user would have to get right for the index to appear at all.
-    """
-    learnings = tmp_path / "Project Learnings"
-    learnings.mkdir()
-    monkeypatch.delenv("CLAUDE_VAULT_DIR", raising=False)
-    monkeypatch.setenv("CLAUDE_LEARNINGS_DIR", str(learnings))
+    """One variable identifies the vault for every second-brain operation."""
+    monkeypatch.setenv("OBSIDIAN_VAULT_DIRECTORY", str(tmp_path))
 
     assert hook.vault_dir() == tmp_path
 
@@ -249,7 +242,7 @@ def test_index_is_written_with_lf_endings(
     Asserted on bytes: decoded text is exactly where the difference disappears.
     """
     (tmp_path / "Note.md").write_text("Prose long enough to describe a note.", encoding="utf-8")
-    monkeypatch.setenv("CLAUDE_VAULT_DIR", str(tmp_path))
+    monkeypatch.setenv("OBSIDIAN_VAULT_DIRECTORY", str(tmp_path))
 
     written = hook.refresh()
 
@@ -257,10 +250,25 @@ def test_index_is_written_with_lf_endings(
     assert b"\r" not in written.read_bytes()
 
 
-def test_no_vault_configured_is_silent(hook: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
-    """A clone with no second brain must not have its sessions disturbed by this."""
-    monkeypatch.delenv("CLAUDE_VAULT_DIR", raising=False)
-    monkeypatch.delenv("CLAUDE_LEARNINGS_DIR", raising=False)
+@pytest.mark.parametrize("value", [None, "", "relative/vault"])
+def test_invalid_vault_configuration_is_silent(
+    hook: ModuleType, monkeypatch: pytest.MonkeyPatch, value: str | None
+) -> None:
+    """Absent, empty, and relative values do not identify a usable vault."""
+    if value is None:
+        monkeypatch.delenv("OBSIDIAN_VAULT_DIRECTORY", raising=False)
+    else:
+        monkeypatch.setenv("OBSIDIAN_VAULT_DIRECTORY", value)
+
+    assert hook.vault_dir() is None
+    assert hook.refresh() is None
+
+
+def test_missing_vault_configuration_is_silent(
+    hook: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A missing absolute path does not identify a usable vault."""
+    monkeypatch.setenv("OBSIDIAN_VAULT_DIRECTORY", str(tmp_path / "missing"))
 
     assert hook.vault_dir() is None
     assert hook.refresh() is None

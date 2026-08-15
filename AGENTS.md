@@ -82,7 +82,7 @@ shared scripts from `.agents/hooks/`:
 | `protect_paths.py` (PreToolUse) | Blocks edits to `.env`, `migrations/`, `generated/`, `uv.lock` |
 | `format_edited.py` (PostToolUse) | Runs `ruff format` + `ruff check --fix` on each edited `.py` |
 | `verify.py` (Stop) | Blocks the turn while the gates fail — **only** when the turn changed `.py` under `src/`, `tests/` or `.agents/hooks/`, or changed `pyproject.toml` |
-| `session_learnings.py` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain, and rebuilds the vault indexes via `vault_index.py`. Off unless `CLAUDE_LEARNINGS_DIR` is set |
+| `session_learnings.py` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain, and rebuilds the vault indexes via `vault_index.py`. Off unless `OBSIDIAN_VAULT_DIRECTORY` is set |
 
 Claude Code calls these scripts directly. Codex adapters accept `apply_patch` payloads and
 launch session distillation outside its three-second `SessionEnd` limit.
@@ -294,8 +294,9 @@ When compacting, preserve the list of modified files and the commands needed to 
 A layer above memory, in the user's own notes rather than the agent's:
 
 - **Write** — `session_learnings.py` (SessionEnd) distils the session's mistakes and their
-  fixes into a dated note under `CLAUDE_LEARNINGS_DIR`, split into *Implementation* and
-  *Architecture & design* learnings. It writes **nothing** when a session taught nothing.
+  fixes into a dated note under `$OBSIDIAN_VAULT_DIRECTORY/Project Learnings`.
+  It splits the note into *Implementation* and *Architecture & design* learnings.
+  It writes **nothing** when a session taught nothing.
   SessionEnd fires only on a clean exit — a killed or still-open terminal never distils.
   `distil_backlog.py` recovers those sessions; it lists them on a dry run by default and
   distils with `--run`.
@@ -329,10 +330,9 @@ An Obsidian `.base` file is a **query evaluated by Obsidian's UI**, so reading o
 the query, never any notes. Bases are for the human; the Markdown indexes are for the
 agent. Do not use `LLM.base` for retrieval.
 
-Set `CLAUDE_LEARNINGS_DIR` in **user** settings, never in this repo's committed
-`.claude/settings.json` — a clone must not inherit a path to somebody else's vault.
-`CLAUDE_VAULT_DIR` sets the vault root, and defaults to the parent of the learnings
-directory, so the usual layout needs no second variable.
+Set `OBSIDIAN_VAULT_DIRECTORY` in **user** settings, never in this repo's committed
+`.claude/settings.json`. A clone must not inherit a path to somebody else's vault.
+The hooks derive the learnings directory as `<vault>/Project Learnings`.
 
 Three tiers, deliberately: memory is for this project's facts, the second brain is for
 transferable lessons across projects, and `AGENTS.md` / `docs/architecture.md` are for

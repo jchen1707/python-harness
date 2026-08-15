@@ -12,8 +12,8 @@ directory.
 ## Where to look
 
 The notes live outside this workspace, so read them with **absolute paths**. The vault
-root is `$CLAUDE_VAULT_DIR`, or the parent of `$CLAUDE_LEARNINGS_DIR` when that is unset
-(in PowerShell, `$env:CLAUDE_VAULT_DIR`).
+root is `$OBSIDIAN_VAULT_DIRECTORY` (in PowerShell,
+`$env:OBSIDIAN_VAULT_DIRECTORY`).
 
 Two generated indexes sit above the notes. Both are cheap; read them before anything else:
 
@@ -25,7 +25,8 @@ Two generated indexes sit above the notes. Both are cheap; read them before anyt
 - The wider vault is where most of the value is — hand-written notes are usually more
   considered than anything auto-distilled. `_VAULT_INDEX.md` is what makes them findable
   without opening them.
-- Learnings written by the `SessionEnd` hook live in `$CLAUDE_LEARNINGS_DIR`. Each has
+- Learnings written by the `SessionEnd` hook live in
+  `$OBSIDIAN_VAULT_DIRECTORY/Project Learnings`. Each has
   `tags: [project-learnings, session-retro]` and two sections — *Implementation learnings*
   and *Architecture & design learnings*.
 
@@ -33,8 +34,7 @@ An `.base` file (`LLM.base`) is **not** an index you can read. It is a query tha
 evaluates in its own UI; reading it returns the query definition, never any notes. It is
 there for the human. The Markdown indexes above are the ones for you.
 
-If neither variable is set, say so and stop; there is nothing to search. Do not guess at a
-path.
+If the variable is not set, say so and stop. Do not guess at a path.
 
 **Never write to the vault from this skill.** It reads. The hook writes. Keeping those
 apart is what stops a search from quietly editing the thing it was searching.
