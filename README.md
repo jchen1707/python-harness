@@ -84,18 +84,14 @@ docker compose up -d db
 ```
 Copy `.env.example` → `.env` and fill in keys (never commit `.env`).
 
-### Symbol navigation (optional, once per machine)
+### Symbol navigation
 
-`.mcp.json` declares a `pyright-lsp` server so agents can resolve Python **symbols**
-instead of grepping for text. Both binaries must be on `PATH`:
+Codex starts `pyright-lsp` through `.codex/start-pyright-mcp.sh`. The script installs
+pinned tools in the sandbox cache when required. A new template project needs no manual
+installation.
 
-```sh
-npm install -g pyright
-go install github.com/isaacphi/mcp-language-server@latest   # then add GOPATH/bin to PATH
-```
-
-MCP servers load at session start, so a fresh install needs a restart. Confirm with
-`/mcp`. When to prefer it over grep: `AGENTS.md` → Symbol navigation.
+MCP servers load at session start. Confirm the connection with `/mcp`. See `AGENTS.md` →
+Symbol navigation for usage rules.
 
 ## The SDLC
 
@@ -338,15 +334,13 @@ alias) and broadened to cover any agent-read document. Use the new name.
 | `.agents/hooks/` | `protect_paths` (block protected edits), `format_edited` (auto-format), `verify` (Stop gate on the Definition of Done), `session_learnings` (SessionEnd: distils lessons to the second brain), `vault_index` (rebuilds the vault's Markdown indexes) |
 | `.agents/workflows/` | `full-review.js` — nine reviewers fanned out, one ranked report fanned in. Each axis reads its prompt from the matching `.agents/agents/` definition, so the two forms cannot drift |
 
-Issues live in **Linear**, declared as a project MCP server in `.mcp.json` and pre-approved
-in `.claude/settings.json`. Workspace **Development**, default team **Backend** (`BAC`).
-Store the API key in the OS credential store under the slot `linear-py` — `.mcp.json` is
-committed and holds only the slot name, and `.agents/mcp_headers.py` resolves it at
-connection time. The store command is in `docs/agents/secrets.md`. MCP tools load at
-session start (`docs/agents/issue-tracker.md`). PRs stay on GitHub.
+Issues live in **Linear**. Workspace **Development**, default team **Backend** (`BAC`).
+Claude uses the server in `.mcp.json`. Codex receives the host-authorized server through
+`sbx --static-mcp linear`. MCP tools load at session start. PRs stay on GitHub.
 
-Codex declares the same servers in `.codex/config.toml`. Its Linear adapter uses OAuth;
-run `codex mcp login linear` once. Claude Code keeps the credential-helper flow above.
+Register Linear once with `sbx mcp add linear --url https://mcp.linear.app/mcp`. Start each
+Codex sandbox with `--static-mcp linear`. The host registration then works for new sessions
+and template-derived projects.
 
 Lifecycle hooks are defense in depth. Claude Code and Codex enable protected paths,
 formatting, verification, and session learning. Codex also blocks common secret reads.

@@ -19,7 +19,8 @@ Choose by asking which process reads the value.
 | The reader | Store the value in | Example |
 | --- | --- | --- |
 | `app.config.Settings` (application code) | `.env` at the repo root | `ANTHROPIC_API_KEY`, `VOYAGE_API_KEY`, `POSTGRES_DSN` |
-| A remote MCP server | OS credential store, under a **slot** | Linear, slot `linear-py` |
+| A Docker MCP server | Docker Desktop's credential store | Linear |
+| A sandbox MCP server | The sandbox runtime's credential store | Linear for Codex |
 | A hook, or the `gh` CLI | OS user environment variable | `GH_TOKEN` |
 
 Never store a secret in `~/.claude/settings.json` → `env`, in `.claude/settings.json`, in
@@ -39,64 +40,21 @@ An OS user variable is in no file the agent reads.
 
 Ask the agent to do steps 1 and 2. Do step 4 yourself.
 
-## Add an MCP secret
+## Add a Docker MCP secret
 
-An MCP key goes in the OS credential store, not the environment. `.mcp.json` names a
-**slot**; `.agents/mcp_headers.py` reads that slot at connection time and writes the
-`Authorization` header to stdout, which Claude Code consumes itself.
+Docker Desktop owns credentials for servers supplied through Docker MCP Toolkit.
 
-A `${VAR}` header would need the key in Claude Code's own environment. The Bash tool is a
-child process and inherits it, so `echo $LINEAR_API_KEY` prints the key, and a key printed
-into a transcript must be rotated. With the credential store the variable does not exist,
-so no careless command finds it.
+1. Select the required Docker Desktop MCP Toolkit profile.
+2. Enable the server in that profile.
+3. Authenticate the server through Docker Desktop.
+4. Restart the agent client.
+5. Confirm the server with `/mcp`.
 
-1. Add the `headersHelper` line to `.mcp.json`. Commit that file. It holds the slot name,
-   never the value.
-2. Store the value in an interactive terminal. Use a real terminal window: the `!` prefix
-   runs a command non-interactively, so `Read-Host` returns an empty value.
+Do not copy the credential into `.mcp.json`, `.codex/config.toml`, or an environment
+variable.
 
-   ```powershell
-   $slot = 'linear-py'
-   $dir  = Join-Path $env:USERPROFILE '.claude\mcp-credentials'
-   New-Item -ItemType Directory -Force -Path $dir | Out-Null
-
-   $sec = Read-Host -AsSecureString "Paste the key for $slot"
-   $len = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
-     [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)).Length
-   if ($len -lt 20) { throw "Refusing to write: got $len characters. The paste did not land." }
-
-   $sec | ConvertFrom-SecureString | Set-Content (Join-Path $dir "$slot.cred")
-   "stored $len characters"
-   ```
-
-3. Verify the slot resolves, without printing the value:
-
-   ```powershell
-   uv run --no-sync python .agents/mcp_headers.py linear-py > $null; "exit=$LASTEXITCODE"
-   ```
-
-4. Restart Claude Code, then confirm the server with `/mcp`.
-
-`ConvertFrom-SecureString` encrypts with DPAPI, so the file is bound to this user on this
-machine. It is inert to anyone else, and to this user on another machine.
-
-The length check in step 2 is not decoration. `Ctrl+V` does not paste at a `Read-Host`
-prompt in the classic PowerShell console — right-click pastes, and Windows Terminal
-handles `Ctrl+V` normally. Without the check an empty paste writes an empty credential
-that looks exactly like a working one until the connection fails.
-
-Never run `setx VAR "literal"`. That writes the value into shell history.
-
-### Why a slot, and not the server name
-
-The slot names the credential rather than the provider. Two repositories then hold two
-keys for the same service: this repository uses `linear-py`, and
-`frontend-development-harness` uses `linear-fro`. Rotating one never breaks the other.
-
-This is also why the Linear MCP server stays on an API key instead of OAuth. OAuth
-credentials key to the **server URL**, so a second repository pointing at the same URL
-shares the token and therefore the workspace. That is the failure the slot design exists
-to prevent. Do not "simplify" this to OAuth.
+For Codex, run `sbx mcp add linear --url https://mcp.linear.app/mcp` on the host. Start the
+sandbox with `--static-mcp linear`. The sandbox runtime stores the OAuth credential.
 
 ## Add a harness secret
 
@@ -118,7 +76,6 @@ Use a real terminal here too. Under `!`, `Read-Host` returns empty and
 Check the exit code, a length or a hash. Never print the value.
 
 ```powershell
-uv run --no-sync python .agents/mcp_headers.py linear-py > $null; "exit=$LASTEXITCODE"
 $env:GH_TOKEN.Length
 ```
 
@@ -132,13 +89,8 @@ Treat a value that reached a transcript as compromised. Do not estimate the risk
 
 1. Revoke the key at the provider.
 2. Issue a new key.
-3. Store the new value by the procedure above.
-4. Restart Claude Code.
-
-A rotation is not finished until the store holds the new value. Revoking the old key and
-stopping there leaves the server failing with a 401 that reads like a bad key rather than
-a missing one. If the slot is empty, `/mcp` reports the server as rejected and
-`mcp_headers.py` exits 1 naming the slot.
+3. Store the new value through Docker Desktop or the documented reader.
+4. Restart the agent client.
 
 ## What the harness enforces
 
@@ -154,7 +106,6 @@ These controls hold whatever an instruction says. See `.claude/settings.json` an
 | `permissions.deny` → `Bash(env)`, `Bash(set)`, `Bash(Get-ChildItem Env:*)` and similar | Blocks a whole-environment dump in both shells |
 | `permissions.deny` → `Bash(echo $LINEAR_API_KEY:*)` and similar | Blocks the common spellings that read one variable |
 | `permissions.deny` → `Bash(python -c:*)`, `Bash(node -e:*)` and similar | Blocks an inline interpreter, which reads the environment without naming the variable |
-| `.agents/mcp_headers.py` | Keeps the Linear key out of the environment, so no rule above has to cover it |
 | `.codex/hooks.json` → `protect_secrets.py` | Blocks common secret-file reads and environment dumps in Codex |
 | `gitleaks` (pre-commit) | Fails a commit that carries a key in any staged file |
 | `detect-private-key` (pre-commit) | Fails a commit that carries a private key |
@@ -172,13 +123,9 @@ An OS user variable has a weaker ceiling than a file. Claude Code inherits it, a
 Bash subprocess inherits it in turn. A prefix rule cannot cover every spelling of a shell
 expansion: `echo $VAR`, `echo "$VAR"` and `printf %s "$VAR"` are three commands, and
 indirection defeats all three. The rules above name the careless spellings. Treat them as
-a speed bump. The complete fix is to keep the value out of the environment, which is what
-the credential store does for the Linear key. `GH_TOKEN` still lives in a variable,
-because the `gh` CLI reads its own environment and no helper sits between them.
-
-The credential store makes the key non-ambient, not unreachable. Bash runs as the same
-user and can run the same lookup `mcp_headers.py` runs. What is gone is the accident path
-— the one that actually cost a key on this machine.
+a speed bump. Keep service credentials out of the environment when the service supports a
+credential store. `GH_TOKEN` still lives in a variable because the `gh` CLI reads its
+environment.
 
 The deny rules bind this repository only. `.claude/settings.json` is per project, and the
 same OS user variable reaches every other clone on the machine. Mirror these rules into

@@ -130,7 +130,7 @@ signal is the whole point.
 
 ## Symbol navigation (LSP) — prefer it to grep
 
-`pyright-lsp` in `.mcp.json` runs pyright's language server behind MCP. It answers
+`pyright-lsp` in `.codex/config.toml` runs pyright's language server behind MCP. It answers
 questions about **symbols**, where grep answers questions about **text**.
 
 Use it when the question is semantic:
@@ -151,9 +151,8 @@ string. On a name like `run`, `get` or `Settings`, grep returns noise and you gu
 what it is good at — text that is not a symbol: config keys, log messages, TODO markers,
 strings in Markdown.
 
-The server is declared with `--workspace .`, so it resolves to whatever clone it starts
-in. Check it with `/mcp`. MCP servers load at session start, so a fresh install needs a
-restart. One-time machine setup is in the README.
+The launcher uses `--workspace .`, so it resolves the clone that starts it. It installs
+pinned tools in the sandbox cache. Check the server with `/mcp` after session startup.
 
 ## Standards
 
@@ -245,18 +244,11 @@ Fixed in `pyproject.toml` (`app` extra) — read it there. What the file doesn't
 
 ## Issue tracker
 
-**Linear**, as a project MCP server in `.mcp.json` — check with `/mcp`, where it shows as
-*linear*. Workspace **Development**, default team **Backend** (`BAC`). It authenticates
-with an API key. `.mcp.json` carries only a `headersHelper` line naming the credential slot
-`linear-py`, and both it and `.claude/settings.json` are committed. MCP tools load at
-session start, so storing the key mid-session needs a restart. Conventions, tool discovery
-and wayfinding: `docs/agents/issue-tracker.md`. PRs stay on GitHub.
-
-**The key lives in the OS credential store, never in an environment variable.**
-`.agents/mcp_headers.py` reads the slot at connection time and writes the header to stdout,
-which Claude Code consumes itself. A `${VAR}` header would put the key in every Bash
-subprocess, where one careless `echo` compromises it. Storing, verifying and rotating:
-`docs/agents/secrets.md`.
+**Linear**, injected into Codex by the sandbox runtime — check with `/mcp`, where it shows
+as *linear*. Workspace **Development**, default team **Backend** (`BAC`). Register it once
+with `sbx mcp add`. Start Codex with `--static-mcp linear`. MCP tools load at session start.
+Conventions, tool discovery and wayfinding: `docs/agents/issue-tracker.md`. PRs stay on
+GitHub.
 
 Branch as `<type>/<TEAM-NUM>-<slug>` (e.g. `feat/BAC-412-vector-store`) so `/code-review`
 can resolve the originating ticket mechanically.
