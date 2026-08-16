@@ -10,19 +10,17 @@ transcript, gather git context, write the file — and shells out to a headless
 note: it dilutes the directory every later search has to sift. The distiller is told to
 emit a single sentinel when there is no real lesson, and that path exits silently.
 
-Configure with `CLAUDE_LEARNINGS_DIR` (absolute path to the notes directory). Unset means
-disabled, which is the right default for a harness other people clone — nobody inherits a
-path to somebody else's vault. Set it in **user** settings, not this repo's committed
+Configure with `OBSIDIAN_VAULT_DIRECTORY` (absolute path to the vault). The hook writes to
+its `Project Learnings` child. Unset means disabled, which is the right default for a
+harness other people clone. Set it in **user** settings, not this repo's committed
 `.claude/settings.json`.
 
 | Variable | Effect |
 | --- | --- |
-| `CLAUDE_LEARNINGS_DIR` | Where notes are written. Unset -> hook does nothing. |
+| `OBSIDIAN_VAULT_DIRECTORY` | Vault root. The hook writes to `Project Learnings`. |
 | `CLAUDE_LEARNINGS_OFF=1` | Disable without unsetting the directory. |
 | `CLAUDE_LEARNINGS_MODEL` | Model for the distillation. Default `sonnet`. |
 | `CLAUDE_LEARNINGS_SKIP=1` | Recursion guard; set on the child, never set by hand. |
-| `CLAUDE_VAULT_DIR` | Vault root for the whole-vault index. Defaults to the parent
-of `CLAUDE_LEARNINGS_DIR`. See `vault_index.py`. |
 
 This hook also refreshes the whole-vault index, and does so **unconditionally** — notes
 written by hand in Obsidian between sessions need indexing whether or not this particular
@@ -499,11 +497,11 @@ def main() -> int:
     # nothing. Returns None and stays quiet when no vault is configured.
     vault_index.refresh()
 
-    directory_raw = os.environ.get("CLAUDE_LEARNINGS_DIR", "").strip()
-    if not directory_raw:
+    vault = vault_index.vault_dir()
+    if vault is None:
         return 0  # Not configured -> not this clone's business.
 
-    directory = Path(directory_raw)
+    directory = vault / "Project Learnings"
     if not directory.is_dir():
         print(f"session_learnings: {directory} is not a directory", file=sys.stderr)
         return 0

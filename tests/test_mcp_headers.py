@@ -191,12 +191,11 @@ def test_a_diagnostic_never_carries_the_token(
     assert STORED_VALUE not in capsys.readouterr().err
 
 
-def test_mcp_config_uses_the_helper_rather_than_an_environment_variable() -> None:
-    """`${LINEAR_API_KEY}` in a header is what puts the key in every child process."""
+def test_mcp_config_uses_docker_mcp_toolkit() -> None:
+    """Docker MCP Toolkit must own the Linear connection and its credential."""
     config = json.loads((Path(__file__).resolve().parents[1] / ".mcp.json").read_text())
     linear = config["mcpServers"]["linear"]
 
     assert "headers" not in linear
     assert "LINEAR_API_KEY" not in json.dumps(config)
-    assert "mcp_headers.py" in linear["headersHelper"]
-    assert linear["headersHelper"].endswith("linear-py")
+    assert linear == {"command": "docker", "args": ["mcp", "gateway", "run"]}

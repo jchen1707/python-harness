@@ -82,7 +82,7 @@ shared scripts from `.agents/hooks/`:
 | `protect_paths.py` (PreToolUse) | Blocks edits to `.env`, `migrations/`, `generated/`, `uv.lock` |
 | `format_edited.py` (PostToolUse) | Runs `ruff format` + `ruff check --fix` on each edited `.py` |
 | `verify.py` (Stop) | Blocks the turn while the gates fail — **only** when the turn changed `.py` under `src/`, `tests/` or `.agents/hooks/`, or changed `pyproject.toml` |
-| `session_learnings.py` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain, and rebuilds the vault indexes via `vault_index.py`. Off unless `CLAUDE_LEARNINGS_DIR` is set |
+| `session_learnings.py` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain, and rebuilds the vault indexes via `vault_index.py`. Off unless `OBSIDIAN_VAULT_DIRECTORY` is set |
 
 Claude Code calls these scripts directly. Codex adapters accept `apply_patch` payloads and
 launch session distillation outside its three-second `SessionEnd` limit.
@@ -130,7 +130,7 @@ signal is the whole point.
 
 ## Symbol navigation (LSP) — prefer it to grep
 
-`pyright-lsp` in `.mcp.json` runs pyright's language server behind MCP. It answers
+`pyright-lsp` in `.codex/config.toml` runs pyright's language server behind MCP. It answers
 questions about **symbols**, where grep answers questions about **text**.
 
 Use it when the question is semantic:
@@ -151,9 +151,8 @@ string. On a name like `run`, `get` or `Settings`, grep returns noise and you gu
 what it is good at — text that is not a symbol: config keys, log messages, TODO markers,
 strings in Markdown.
 
-The server is declared with `--workspace .`, so it resolves to whatever clone it starts
-in. Check it with `/mcp`. MCP servers load at session start, so a fresh install needs a
-restart. One-time machine setup is in the README.
+The launcher uses `--workspace .`, so it resolves the clone that starts it. It installs
+pinned tools in the sandbox cache. Check the server with `/mcp` after session startup.
 
 ## Standards
 
@@ -245,18 +244,11 @@ Fixed in `pyproject.toml` (`app` extra) — read it there. What the file doesn't
 
 ## Issue tracker
 
-**Linear**, as a project MCP server in `.mcp.json` — check with `/mcp`, where it shows as
-*linear*. Workspace **Development**, default team **Backend** (`BAC`). It authenticates
-with an API key. `.mcp.json` carries only a `headersHelper` line naming the credential slot
-`linear-py`, and both it and `.claude/settings.json` are committed. MCP tools load at
-session start, so storing the key mid-session needs a restart. Conventions, tool discovery
-and wayfinding: `docs/agents/issue-tracker.md`. PRs stay on GitHub.
-
-**The key lives in the OS credential store, never in an environment variable.**
-`.agents/mcp_headers.py` reads the slot at connection time and writes the header to stdout,
-which Claude Code consumes itself. A `${VAR}` header would put the key in every Bash
-subprocess, where one careless `echo` compromises it. Storing, verifying and rotating:
-`docs/agents/secrets.md`.
+**Linear**, injected into Codex by the sandbox runtime — check with `/mcp`, where it shows
+as *linear*. Workspace **Development**, default team **Backend** (`BAC`). Register it once
+with `sbx mcp add`. Start Codex with `--static-mcp linear`. MCP tools load at session start.
+Conventions, tool discovery and wayfinding: `docs/agents/issue-tracker.md`. PRs stay on
+GitHub.
 
 Branch as `<type>/<TEAM-NUM>-<slug>` (e.g. `feat/BAC-412-vector-store`) so `/code-review`
 can resolve the originating ticket mechanically.
@@ -294,8 +286,9 @@ When compacting, preserve the list of modified files and the commands needed to 
 A layer above memory, in the user's own notes rather than the agent's:
 
 - **Write** — `session_learnings.py` (SessionEnd) distils the session's mistakes and their
-  fixes into a dated note under `CLAUDE_LEARNINGS_DIR`, split into *Implementation* and
-  *Architecture & design* learnings. It writes **nothing** when a session taught nothing.
+  fixes into a dated note under `$OBSIDIAN_VAULT_DIRECTORY/Project Learnings`.
+  It splits the note into *Implementation* and *Architecture & design* learnings.
+  It writes **nothing** when a session taught nothing.
   SessionEnd fires only on a clean exit — a killed or still-open terminal never distils.
   `distil_backlog.py` recovers those sessions; it lists them on a dry run by default and
   distils with `--run`.
@@ -329,10 +322,9 @@ An Obsidian `.base` file is a **query evaluated by Obsidian's UI**, so reading o
 the query, never any notes. Bases are for the human; the Markdown indexes are for the
 agent. Do not use `LLM.base` for retrieval.
 
-Set `CLAUDE_LEARNINGS_DIR` in **user** settings, never in this repo's committed
-`.claude/settings.json` — a clone must not inherit a path to somebody else's vault.
-`CLAUDE_VAULT_DIR` sets the vault root, and defaults to the parent of the learnings
-directory, so the usual layout needs no second variable.
+Set `OBSIDIAN_VAULT_DIRECTORY` in **user** settings, never in this repo's committed
+`.claude/settings.json`. A clone must not inherit a path to somebody else's vault.
+The hooks derive the learnings directory as `<vault>/Project Learnings`.
 
 Three tiers, deliberately: memory is for this project's facts, the second brain is for
 transferable lessons across projects, and `AGENTS.md` / `docs/architecture.md` are for

@@ -9,10 +9,6 @@ hooks = true
 max_concurrent_threads_per_session = 8
 
 [mcp_servers.pyright-lsp]
-command = "mcp-language-server"
-args = ["--workspace", ".", "--lsp", "pyright-langserver", "--", "--stdio"]
-
-[mcp_servers.linear]
-url = "https://mcp.linear.app/mcp"
-auth = "oauth"
-default_tools_approval_mode = "auto"
+command = "/bin/sh"
+args = [".codex/start-pyright-mcp.sh"]
+startup_timeout_sec = 120
