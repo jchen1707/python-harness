@@ -10,17 +10,18 @@ Target workload: backend web development, RAG applications, and AI agent orchest
 Postgres + pgvector).
 
 ## What's here
-- `CLAUDE.md` — the source of truth: stack, workflow, Definition of Done, context/memory
-  guidance, model guidance. Loaded every Claude Code session.
+- `AGENTS.md` — the source of truth for every coding harness. Each `CLAUDE.md` is a thin
+  compatibility pointer to the adjacent `AGENTS.md`.
 - `docs/architecture.md` — **cross-cutting** standards only: layering, protocols, types,
   scaling, extensibility, concurrency, containers, dependency policy (load with `/arch`).
 - `pyproject.toml` — tool config (ruff, mypy, pytest) + the approved app stack as the
   opt-in `app` extra (no runtime deps by default).
-- `.claude/` — shared Claude Code config: `settings.json` (pre-approved safe commands),
-  `commands/` and `skills/` (both tabled under [Commands](#commands) below).
-- `.claude/settings.json` → `enabledPlugins` — declares the `mattpocock-skills` plugin, so
-  a clone picks it up automatically and it self-updates. `.claude/skills/` holds
-  repo-owned skills only.
+- `.agents/` — portable skills, agent prompts, and workflows. This is the canonical
+  capability directory.
+- `.claude/` — the Claude Code adapter: settings, hooks, slash commands, and symlinks to
+  the canonical `.agents/` capability directories.
+- `.codex/` — the Codex adapter: unattended execution settings, custom agent adapters,
+  and the shared Stop verification hook.
 - `docs/agents/` — how agents work with this repo: `issue-tracker.md` (Linear conventions),
   `triage-labels.md` (canonical triage roles → real label strings), `domain.md`.
 - `.out-of-scope/` — rejected feature requests, read by `/triage` to avoid re-litigating a
@@ -30,12 +31,12 @@ Postgres + pgvector).
 - `.pre-commit-config.yaml` — pre-commit hooks (ruff + mypy + hygiene).
 - `docker-compose.yml` — dev infra: Postgres + pgvector (`docker compose up -d db`).
 - `src/app/` — package scaffold, no application code yet. Each directory carries its own
-  `CLAUDE.md` with the conventions that govern it (see below).
+  `AGENTS.md` with the conventions that govern it (see below).
 
 ## Layout — rules live next to the code
 
-Each directory owns its conventions. Read the file for the directory you are changing;
-Claude Code loads it automatically when working there.
+Each directory owns its conventions. Harnesses that support `AGENTS.md` load these files
+by scope. Other harnesses must follow the adjacent compatibility pointer.
 
 ```
 src/app/
@@ -62,9 +63,9 @@ api  ──▶  services  ──▶  ai  ──▶  repositories  ──▶  con
 imports it, which is safe only because it never runs in a request.
 
 **These files are path-scoped.** Working in `api/` does not load
-`repositories/CLAUDE.md`. That is why anything spanning layers stays in
+`repositories/AGENTS.md`. That is why anything spanning layers stays in
 `docs/architecture.md` — a cross-layer rule in a leaf file stops being enforced exactly
-where it matters. Root `CLAUDE.md` indexes both, and carries a reference table mapping a
+where it matters. Root `AGENTS.md` indexes both, and carries a reference table mapping a
 task to the file to read before starting it.
 
 ## Setup
@@ -94,12 +95,12 @@ go install github.com/isaacphi/mcp-language-server@latest   # then add GOPATH/bi
 ```
 
 MCP servers load at session start, so a fresh install needs a restart. Confirm with
-`/mcp`. When to prefer it over grep: `CLAUDE.md` → Symbol navigation.
+`/mcp`. When to prefer it over grep: `AGENTS.md` → Symbol navigation.
 
 ## The SDLC
 
 How a request travels from landing in the tracker to meeting the Definition of Done.
-`CLAUDE.md` is the authority; this is the map.
+`AGENTS.md` is the authority; this is the map.
 
 ```
    Linear issue
@@ -207,7 +208,7 @@ don't:
   files it can read.
 
 `/plan` researches the ticket, settles layer placement and the sync/async boundary, and
-writes `.claude/plans/plan.md` + `test-plan.md` for your explicit sign-off, then stops.
+writes `.agents/plans/plan.md` + `test-plan.md` for your explicit sign-off, then stops.
 `/implement-from-plan` then feeds both to `/implement` as the spec, turns the numbered Steps
 into the task list, and pins this repo's `uv` gates in place of the skills' generic
 TypeScript phrasing.
@@ -226,12 +227,12 @@ gate is what makes a session walk-away-able.
 `/verify` runs the four fast gates and prints their output as evidence; pass
 `--integration` to add the DB-backed suite, which needs Docker and `uv sync --extra app`.
 `/code-review` then reads the diff on two independent axes — **Standards** (against
-`docs/architecture.md` plus the summary in `CLAUDE.md`) and **Spec** (against the
+`docs/architecture.md` plus the summary in `AGENTS.md`) and **Spec** (against the
 originating ticket). Reviewers get read-only tools by design: one
 that can edit will fix things instead of reporting them, and the independent signal is the
 point.
 
-For a change that warrants more than two axes, `.claude/workflows/full-review.js` fans the
+For a change that warrants more than two axes, `.agents/workflows/full-review.js` fans the
 same diff out to **nine** independent reviewers — standards, spec, security, tests,
 async, simplicity, design, speed, cost — then fans in to a single synthesiser that merges
 duplicates, drops
@@ -280,14 +281,17 @@ model-switching seam, so you can plan with one model and build with another.
 - Config and secrets read only through `app.config.Settings`
 - Friction worth remembering captured via `/retro`
 
-## Commands
-Repo-owned (`.claude/commands/` + `.claude/skills/`):
+## Capabilities
+
+Repo-owned skills live in `.agents/skills/`. Claude Code sees the same files through the
+`.claude/skills` adapter. Claude-only slash-command wrappers live in `.claude/commands/`.
 
 | Slash | Does |
 | --- | --- |
-| `/plan` | research + plan a feature, write `.claude/plans/plan.md` (terminal 1) |
+| `/plan` | research + plan a feature, write `.agents/plans/plan.md` (terminal 1) |
 | `/implement-from-plan` | feed the plan + test plan to `/implement` with the `uv` gates pinned (terminal 2) |
 | `/verify` | run the Definition of Done gates and print the output as evidence |
+| `/full-review` | fan one diff out to nine reviewers, then consolidate and rank their findings |
 | `/loop-goal` | run a standing goal (docs, architecture, logging, tests, deps) until its stop condition holds |
 | `/test` | `uv run pytest` |
 | `/lint` | ruff check + format-check + mypy |
@@ -298,8 +302,7 @@ Repo-owned (`.claude/commands/` + `.claude/skills/`):
 | `/prune-rules` | audit the rule files for drift, duplication and dead rules, then refine them |
 | `/search-second-brain` | search past sessions' learnings and report the pattern across them |
 
-From the `mattpocock-skills` plugin — highlights only; the plugin self-updates, so run
-`/help` for the list it actually ships today:
+The workflow also uses these optional upstream capabilities from `mattpocock/skills`:
 
 | Slash | Does |
 | --- | --- |
@@ -312,12 +315,16 @@ From the `mattpocock-skills` plugin — highlights only; the plugin self-updates
 | `/wait-what` | re-pitch a message that didn't land, in plain English |
 | `/writing-for-agents` | write docs and prompts that agents actually follow |
 
-Install (already declared in `.claude/settings.json`, so a clone needs only this once):
+Claude Code installs them as a plugin:
 ```sh
 claude plugin marketplace add mattpocock/skills
 claude plugin install mattpocock-skills@mattpocock --scope project
 ```
 Upstream's own marketplace is used rather than Anthropic's official mirror, which lags.
+
+Codex does not load Claude plugins. Install the upstream repository with Codex's
+`skill-installer`, or install equivalent skills with the same capability names. If an
+optional capability is absent, follow the workflow described in `AGENTS.md` directly.
 
 `/writing-great-skills` was **renamed** to `/writing-for-agents` upstream (breaking, no
 alias) and broadened to cover any agent-read document. Use the new name.
@@ -326,18 +333,30 @@ alias) and broadened to cover any agent-read document. Use the new name.
 
 | Path | What |
 | --- | --- |
-| `.claude/agents/` | Subagents. Workers: `explorer`, `test-writer` (worktree-isolated). Reviewers, one per `full-review` axis and each invokable standalone: `standards-reviewer`, `spec-checker`, `security-reviewer`, `test-reviewer`, `async-reviewer`, `simplicity-reviewer`, `design-reviewer`, `perf-reviewer`, `cost-reviewer` |
-| `.claude/hooks/` | `protect_paths` (block protected edits), `format_edited` (auto-format), `verify` (Stop gate on the Definition of Done), `session_learnings` (SessionEnd: distils lessons to the second brain), `vault_index` (rebuilds the vault's Markdown indexes) |
-| `.claude/workflows/` | `full-review.js` — nine reviewers fanned out, one ranked report fanned in. Each axis reads its prompt from the matching `.claude/agents/` definition, so the two forms cannot drift |
+| `.agents/agents/` | Subagents. Workers: `explorer`, `test-writer` (worktree-isolated). Reviewers, one per `full-review` axis and each invokable standalone: `standards-reviewer`, `spec-checker`, `security-reviewer`, `test-reviewer`, `async-reviewer`, `simplicity-reviewer`, `design-reviewer`, `perf-reviewer`, `cost-reviewer` |
+| `.agents/skills/` | Harness-neutral repo skills. Claude Code loads them through `.claude/skills`. Other harnesses can load this directory directly or install it into their skill search path. |
+| `.agents/hooks/` | `protect_paths` (block protected edits), `format_edited` (auto-format), `verify` (Stop gate on the Definition of Done), `session_learnings` (SessionEnd: distils lessons to the second brain), `vault_index` (rebuilds the vault's Markdown indexes) |
+| `.agents/workflows/` | `full-review.js` — nine reviewers fanned out, one ranked report fanned in. Each axis reads its prompt from the matching `.agents/agents/` definition, so the two forms cannot drift |
 
 Issues live in **Linear**, declared as a project MCP server in `.mcp.json` and pre-approved
 in `.claude/settings.json`. Workspace **Development**, default team **Backend** (`BAC`).
 Store the API key in the OS credential store under the slot `linear-py` — `.mcp.json` is
-committed and holds only the slot name, and `.claude/mcp_headers.py` resolves it at
+committed and holds only the slot name, and `.agents/mcp_headers.py` resolves it at
 connection time. The store command is in `docs/agents/secrets.md`. MCP tools load at
 session start (`docs/agents/issue-tracker.md`). PRs stay on GitHub.
+
+Codex declares the same servers in `.codex/config.toml`. Its Linear adapter uses OAuth;
+run `codex mcp login linear` once. Claude Code keeps the credential-helper flow above.
+
+Lifecycle hooks are defense in depth. Claude Code and Codex enable protected paths,
+formatting, verification, and session learning. Codex also blocks common secret reads.
+CI and pre-commit enforce checks independently.
+
+Codex uses the persistent equivalent of `codex --yolo`: `approval_policy = "never"` and
+`sandbox_mode = "danger-full-access"`. It does not pause for command approvals. The Stop
+hook still keeps the turn running when a gate fails. Review and trust it once with `/hooks`.
 
 ## Notes
 - On Windows/PowerShell, use `uv run` for everything; no `cd` prefix.
 - The approved stack is fixed in `pyproject.toml` (`app` extra) — introducing a different
-  framework requires updating `CLAUDE.md` + `docs/architecture.md` first.
+  framework requires updating `AGENTS.md` + `docs/architecture.md` first.

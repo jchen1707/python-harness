@@ -1,0 +1,4 @@
+interface:
+  display_name: "Full Review"
+  short_description: "Fan out nine review axes and consolidate"
+  default_prompt: "Use $full-review to review this branch against main with all nine axes."

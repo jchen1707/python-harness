@@ -26,12 +26,12 @@ rather than the repo and could not be pinned to a workspace here.
 "linear": {
   "type": "http",
   "url": "https://mcp.linear.app/mcp",
-  "headersHelper": "uv run --no-sync python \"${CLAUDE_PROJECT_DIR}/.claude/mcp_headers.py\" linear-py"
+  "headersHelper": "uv run --no-sync python \"${CLAUDE_PROJECT_DIR}/.agents/mcp_headers.py\" linear-py"
 }
 ```
 
 **`.mcp.json` holds the slot name, never the value.** The key lives in the OS credential
-store. `.claude/mcp_headers.py` reads it at connection time and writes the `Authorization`
+store. `.agents/mcp_headers.py` reads it at connection time and writes the `Authorization`
 header to stdout, which Claude Code consumes itself, so the value never enters a
 transcript. Both `.mcp.json` and `.claude/settings.json` are tracked, so a key written into
 either is a key pushed to GitHub.
@@ -136,8 +136,8 @@ facts. When a downstream phase finds a spec error:
 ## Repo-specific notes
 
 - The **Standards** axis of `/code-review` reads `docs/architecture.md` (authoritative)
-  plus the summary in `CLAUDE.md`. Those override the skill's generic smell baseline.
+  plus the summary in `AGENTS.md`. Those override the skill's generic smell baseline.
 - The **Spec** axis resolves the originating ticket from the Linear id in the branch name
   or commit trailer. Name branches `<type>/<TEAM-NUM>-<slug>` (e.g.
   `feat/BAC-412-vector-store`) so the link is mechanical.
-- Definition of Done lives in `CLAUDE.md`; `/verify` runs those gates and prints evidence.
+- Definition of Done lives in `AGENTS.md`; `/verify` runs those gates and prints evidence.

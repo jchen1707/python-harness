@@ -1,4 +1,4 @@
-"""Guardrail tests for the whole-vault indexer (`.claude/hooks/vault_index.py`).
+"""Guardrail tests for the whole-vault indexer (`.agents/hooks/vault_index.py`).
 
 The index is the only thing an agent reads before deciding which notes to open, so its
 failures are silent in the expensive direction: a note with a blank or wrong row is a note
@@ -22,7 +22,7 @@ HOOK_PATH = Path(__file__).resolve().parents[1] / ".claude" / "hooks" / "vault_i
 
 @pytest.fixture(scope="module")
 def hook() -> ModuleType:
-    """Load the module by path — `.claude/hooks` is not an importable package."""
+    """Load the module by path — `.agents/hooks` is not an importable package."""
     spec = importlib.util.spec_from_file_location("_vault_index_under_test", HOOK_PATH)
     assert spec is not None
     assert spec.loader is not None

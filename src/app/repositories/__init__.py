@@ -7,5 +7,5 @@ Recommended layout:
   repositories/embeddings.py  — Embedder (Voyage + Fake) behind a protocol
   repositories/<entity>.py    — relational data access
 
-Conventions: repositories/CLAUDE.md. Cross-cutting rules: docs/architecture.md.
+Conventions: repositories/AGENTS.md. Cross-cutting rules: docs/architecture.md.
 """

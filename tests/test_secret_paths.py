@@ -19,7 +19,7 @@ that path. The environment rules below close the whole-environment dumps, the co
 single-variable expansions, and the inline interpreters.
 
 `LINEAR_API_KEY` no longer lives in the environment at all: `.mcp.json` resolves the key
-through `.claude/mcp_headers.py` at connection time, so no variable exists to read. Its
+through `.agents/mcp_headers.py` at connection time, so no variable exists to read. Its
 rules stay because they cost nothing and would catch a re-introduction.
 `tests/test_mcp_headers.py` pins the config that keeps the variable gone.
 
@@ -74,7 +74,7 @@ BASH_READER_RULES = (
     "Bash(Get-Content .env:*)",
     "Bash(gc .env:*)",
     # A whole-environment dump exposes every key the session inherited, including the
-    # OS user variables that CLAUDE.md tells the user to store secrets in.
+    # OS user variables that AGENTS.md tells the user to store secrets in.
     "Bash(env)",
     "Bash(printenv:*)",
 )
@@ -134,7 +134,7 @@ def deny_rules() -> list[str]:
 
 @pytest.fixture(scope="module")
 def hook() -> ModuleType:
-    """Load the hook by path — `.claude/hooks` is not an importable package."""
+    """Load the hook by path — `.agents/hooks` is not an importable package."""
     spec = importlib.util.spec_from_file_location("_protect_paths_under_test", HOOK_PATH)
     assert spec is not None
     assert spec.loader is not None
@@ -146,6 +146,15 @@ def hook() -> ModuleType:
 def block_write(hook: ModuleType, monkeypatch: pytest.MonkeyPatch, path: str) -> int:
     """Run the hook against one write payload and return its exit code."""
     payload = json.dumps({"tool_input": {"file_path": path}, "cwd": str(PROJECT)})
+    monkeypatch.setattr(sys, "stdin", io.StringIO(payload))
+    code: int = hook.main()
+    return code
+
+
+def block_patch(hook: ModuleType, monkeypatch: pytest.MonkeyPatch, path: str) -> int:
+    """Run the hook against one Codex apply_patch payload."""
+    command = f"*** Begin Patch\n*** Update File: {path}\n@@\n-old\n+new\n*** End Patch"
+    payload = json.dumps({"tool_input": {"command": command}, "cwd": str(PROJECT)})
     monkeypatch.setattr(sys, "stdin", io.StringIO(payload))
     code: int = hook.main()
     return code
@@ -203,3 +212,10 @@ def test_writing_the_example_file_is_allowed(
     hook: ModuleType, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     assert block_write(hook, monkeypatch, ".env.example") == 0
+
+
+@pytest.mark.parametrize("path", [".env", "uv.lock", "src/app/migrations/001.py"])
+def test_codex_patch_to_protected_path_is_refused(
+    hook: ModuleType, monkeypatch: pytest.MonkeyPatch, path: str
+) -> None:
+    assert block_patch(hook, monkeypatch, path) == 2

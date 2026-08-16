@@ -8,5 +8,5 @@ in `ai/`, a layer of its own between services and repositories.
 Recommended layout:
   services/<domain>.py    — domain services
 
-Conventions: services/CLAUDE.md. Cross-cutting rules: docs/architecture.md.
+Conventions: services/AGENTS.md. Cross-cutting rules: docs/architecture.md.
 """

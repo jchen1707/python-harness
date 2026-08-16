@@ -1,0 +1,4 @@
+name = "test-reviewer"
+description = "Review whether changed tests would catch real behavior regressions."
+sandbox_mode = "read-only"
+developer_instructions = "Read .agents/agents/test-reviewer.md and follow its prompt body. Treat its YAML frontmatter as adapter metadata."

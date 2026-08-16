@@ -1,4 +1,4 @@
-"""Guardrail tests for the Stop-hook gate filter (`.claude/hooks/verify.py`).
+"""Guardrail tests for the Stop-hook gate filter (`.agents/hooks/verify.py`).
 
 The hook decides whether ending a turn should run the Definition of Done gates.
 Getting that decision wrong is silent in both directions: too narrow and broken
@@ -18,12 +18,12 @@ from typing import Any
 
 import pytest
 
-HOOK_PATH = Path(__file__).resolve().parents[1] / ".claude" / "hooks" / "verify.py"
+HOOK_PATH = Path(__file__).resolve().parents[1] / ".agents" / "hooks" / "verify.py"
 
 
 @pytest.fixture(scope="module")
 def hook() -> ModuleType:
-    """Load the hook by path — `.claude/hooks` is not an importable package."""
+    """Load the hook by path — `.agents/hooks` is not an importable package."""
     spec = importlib.util.spec_from_file_location("_verify_hook_under_test", HOOK_PATH)
     assert spec is not None
     assert spec.loader is not None
@@ -46,7 +46,7 @@ def stub_git(stdout: str) -> Callable[..., subprocess.CompletedProcess[str]]:
     [
         (" M src/app/main.py", "src/app/main.py"),
         ("?? tests/test_new.py", "tests/test_new.py"),
-        ("A  .claude/hooks/verify.py", ".claude/hooks/verify.py"),
+        ("A  .agents/hooks/verify.py", ".agents/hooks/verify.py"),
         # Renames report both sides; only the destination exists on disk.
         ("R  src/app/old.py -> src/app/new.py", "src/app/new.py"),
         # Paths with special characters come back quoted.
@@ -67,12 +67,14 @@ def test_porcelain_path_extracts_the_file_on_disk(
         " M tests/test_smoke.py",
         # The regression this guards: hooks are Python the gates check, and were
         # previously outside the filter entirely.
-        " M .claude/hooks/format_edited.py",
+        " M .agents/hooks/format_edited.py",
         # Config that defines the gates — breaks them while touching no Python.
         " M pyproject.toml",
         # Wires the hooks; its matchers are pinned by tests/test_hook_matchers.py,
         # so a broken edit here fails pytest without touching any Python.
         " M .claude/settings.json",
+        " M .codex/config.toml",
+        " M .codex/hooks.json",
     ],
 )
 def test_gated_paths_trigger_the_gates(
@@ -87,7 +89,7 @@ def test_gated_paths_trigger_the_gates(
     [
         "",  # nothing changed
         " M README.md\n M docs/architecture.md\n",  # prose ends freely
-        " M .claude/plans/plan.md\n",  # plans too
+        " M .agents/plans/plan.md\n",  # plans too
         " M .claude/settings.local.json\n",  # personal config stays ungated
     ],
 )
@@ -120,10 +122,12 @@ def test_git_is_asked_about_every_gated_path(
     for expected in (
         "src",
         "tests",
-        ".claude/hooks",
+        ".agents/hooks",
         "pyproject.toml",
         ".claude/settings.json",
-        ".claude/mcp_headers.py",
+        ".codex/config.toml",
+        ".codex/hooks.json",
+        ".agents/mcp_headers.py",
     ):
         assert expected in argv, f"{expected} missing from the git pathspec"
 

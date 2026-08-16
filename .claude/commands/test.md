@@ -13,5 +13,5 @@ installed first with `uv sync --extra app`.
 
 Report the pass/fail summary and any failures verbatim (with file:line). **Do not
 modify tests or source to make failing tests pass** — diagnose the root cause and
-propose a fix instead. Per the Definition of Done (CLAUDE.md), tests must be green
+propose a fix instead. Per the Definition of Done (AGENTS.md), tests must be green
 before a change is considered done.

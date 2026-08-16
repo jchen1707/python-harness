@@ -1,7 +1,7 @@
 # Adding a secret or an API key
 
 This page covers **where a secret goes and how to put it there**. For the `Settings` field
-that reads it, see `src/app/core/CLAUDE.md` → Configuration.
+that reads it, see `src/app/core/AGENTS.md` → Configuration.
 
 ## The rule
 
@@ -42,7 +42,7 @@ Ask the agent to do steps 1 and 2. Do step 4 yourself.
 ## Add an MCP secret
 
 An MCP key goes in the OS credential store, not the environment. `.mcp.json` names a
-**slot**; `.claude/mcp_headers.py` reads that slot at connection time and writes the
+**slot**; `.agents/mcp_headers.py` reads that slot at connection time and writes the
 `Authorization` header to stdout, which Claude Code consumes itself.
 
 A `${VAR}` header would need the key in Claude Code's own environment. The Bash tool is a
@@ -72,7 +72,7 @@ so no careless command finds it.
 3. Verify the slot resolves, without printing the value:
 
    ```powershell
-   uv run --no-sync python .claude/mcp_headers.py linear-py > $null; "exit=$LASTEXITCODE"
+   uv run --no-sync python .agents/mcp_headers.py linear-py > $null; "exit=$LASTEXITCODE"
    ```
 
 4. Restart Claude Code, then confirm the server with `/mcp`.
@@ -118,7 +118,7 @@ Use a real terminal here too. Under `!`, `Read-Host` returns empty and
 Check the exit code, a length or a hash. Never print the value.
 
 ```powershell
-uv run --no-sync python .claude/mcp_headers.py linear-py > $null; "exit=$LASTEXITCODE"
+uv run --no-sync python .agents/mcp_headers.py linear-py > $null; "exit=$LASTEXITCODE"
 $env:GH_TOKEN.Length
 ```
 
@@ -143,7 +143,7 @@ a missing one. If the slot is empty, `/mcp` reports the server as rejected and
 ## What the harness enforces
 
 These controls hold whatever an instruction says. See `.claude/settings.json` and
-`.claude/hooks/`.
+`.agents/hooks/`.
 
 | Control | Effect |
 | --- | --- |
@@ -154,7 +154,8 @@ These controls hold whatever an instruction says. See `.claude/settings.json` an
 | `permissions.deny` → `Bash(env)`, `Bash(set)`, `Bash(Get-ChildItem Env:*)` and similar | Blocks a whole-environment dump in both shells |
 | `permissions.deny` → `Bash(echo $LINEAR_API_KEY:*)` and similar | Blocks the common spellings that read one variable |
 | `permissions.deny` → `Bash(python -c:*)`, `Bash(node -e:*)` and similar | Blocks an inline interpreter, which reads the environment without naming the variable |
-| `.claude/mcp_headers.py` | Keeps the Linear key out of the environment, so no rule above has to cover it |
+| `.agents/mcp_headers.py` | Keeps the Linear key out of the environment, so no rule above has to cover it |
+| `.codex/hooks.json` → `protect_secrets.py` | Blocks common secret-file reads and environment dumps in Codex |
 | `gitleaks` (pre-commit) | Fails a commit that carries a key in any staged file |
 | `detect-private-key` (pre-commit) | Fails a commit that carries a private key |
 

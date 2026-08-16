@@ -6,8 +6,8 @@ Assess context/memory management for the current session and report:
 
 1. **Context size**: Is the conversation large? Summarize what's still relevant vs.
    what can be dropped. Propose a compact if warranted.
-2. **CLAUDE.md vs memory**: Is anything in CLAUDE.md stale or contradicted by recent
-   work? Is anything duplicated between CLAUDE.md and the memory store?
+2. **AGENTS.md vs memory**: Is anything in AGENTS.md stale or contradicted by recent
+   work? Is anything duplicated between AGENTS.md and the memory store?
 3. **Memory write-back**: Are there durable facts from this session (decisions,
    preferences, non-obvious constraints) that belong in the memory store
    (`~/.claude/projects/<project-slug>/memory/`)?

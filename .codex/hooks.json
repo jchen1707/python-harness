@@ -1,0 +1,66 @@
+{
+  "description": "Codex adapter for the harness verification gate.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|apply_patch|mcp__.*(edit|write|create|apply).*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run python \"$(git rev-parse --show-toplevel)/.agents/hooks/protect_paths.py\"",
+            "timeout": 30,
+            "statusMessage": "Checking protected paths…"
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Bash|mcp__.*read.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run python \"$(git rev-parse --show-toplevel)/.agents/hooks/protect_secrets.py\"",
+            "timeout": 30,
+            "statusMessage": "Checking secret boundaries…"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|apply_patch|mcp__.*(edit|write|create|apply).*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run python \"$(git rev-parse --show-toplevel)/.agents/hooks/format_edited.py\"",
+            "timeout": 90,
+            "statusMessage": "Formatting…"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run python \"$(git rev-parse --show-toplevel)/.agents/hooks/verify.py\"",
+            "timeout": 600,
+            "statusMessage": "Verifying Definition of Done…"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run python \"$(git rev-parse --show-toplevel)/.agents/hooks/codex_session_learnings.py\"",
+            "timeout": 3,
+            "statusMessage": "Distilling session learnings…"
+          }
+        ]
+      }
+    ]
+  }
+}

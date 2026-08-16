@@ -1,0 +1,4 @@
+name = "spec-checker"
+description = "Review a diff against its originating specification, plan, or ticket."
+sandbox_mode = "read-only"
+developer_instructions = "Read .agents/agents/spec-checker.md and follow its prompt body. Treat its YAML frontmatter as adapter metadata."

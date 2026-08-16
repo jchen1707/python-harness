@@ -1,4 +1,4 @@
-"""Guardrail tests for the SessionEnd hook's vault writes (`.claude/hooks/session_learnings.py`).
+"""Guardrail tests for the SessionEnd hook's vault writes (`.agents/hooks/session_learnings.py`).
 
 The hook writes into the user's own notes, from more than one repo now. Its failures are
 silent in the direction that matters: a malformed index still looks like an index, and
@@ -25,7 +25,7 @@ HOOK_DIR = Path(__file__).resolve().parents[1] / ".claude" / "hooks"
 
 @pytest.fixture(scope="module")
 def hook() -> ModuleType:
-    """Load the hook by path — `.claude/hooks` is not an importable package.
+    """Load the hook by path — `.agents/hooks` is not an importable package.
 
     The directory goes on `sys.path` for the load because the hook imports `vault_index`
     as a sibling top-level module. That resolves at runtime because Python puts the
@@ -64,6 +64,34 @@ def write_transcript(path: Path, first_user_text: str) -> None:
         json.dumps({"message": {"role": "assistant", "content": [{"type": "text", "text": "ok"}]}}),
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def test_codex_transcript_is_flattened(hook: ModuleType, tmp_path: Path) -> None:
+    """Codex response items must reach the shared distiller."""
+    transcript = tmp_path / "codex.jsonl"
+    lines = [
+        {"type": "session_meta", "payload": {"session_id": "thread"}},
+        {
+            "type": "response_item",
+            "payload": {
+                "role": "user",
+                "content": [{"type": "input_text", "text": "Fix the adapter."}],
+            },
+        },
+        {
+            "type": "response_item",
+            "payload": {
+                "role": "assistant",
+                "content": [{"type": "output_text", "text": "Adapter fixed."}],
+            },
+        },
+    ]
+    transcript.write_text("\n".join(json.dumps(line) for line in lines), encoding="utf-8")
+
+    flattened = hook.read_transcript(str(transcript))
+
+    assert "user: Fix the adapter." in flattened
+    assert "assistant: Adapter fixed." in flattened
 
 
 def test_a_second_distillation_overwrites_the_session_note(

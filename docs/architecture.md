@@ -1,28 +1,28 @@
 # Architectural standards — python-harness
 
 **Cross-cutting rules only.** Everything here holds in every directory. Rules that apply
-to one layer live in that layer's `CLAUDE.md`, next to the code they govern.
+to one layer live in that layer's `AGENTS.md`, next to the code they govern.
 
-This file exists because nested `CLAUDE.md` files are **path-scoped**: an agent working in
-`api/` does not load `repositories/CLAUDE.md`. An invariant that spans layers must live
+This file exists because nested `AGENTS.md` files are **path-scoped**: an agent working in
+`api/` does not load `repositories/AGENTS.md`. An invariant that spans layers must live
 here, or it stops being enforced exactly where it matters.
 
-Load with `/arch`. `/code-review` reads this file plus `CLAUDE.md` as the Standards axis.
+Load with `/arch`. `/code-review` reads this file plus `AGENTS.md` as the Standards axis.
 
 ## Where the per-layer rules live
 
 | Directory | Owns |
 | --- | --- |
-| `src/app/api/CLAUDE.md` | HTTP edge, status codes, pagination, dependency injection |
-| `src/app/core/CLAUDE.md` | Settings, structlog, Prometheus metrics, error types, retries |
-| `src/app/repositories/CLAUDE.md` | SQL, pgvector indexes, protocols, connection pools |
-| `src/app/services/CLAUDE.md` | Orchestration, transaction boundaries, fan-out limits |
-| `src/app/ai/CLAUDE.md` | Why AI is its own layer; rules for all of it |
-| `src/app/ai/retrieval/CLAUDE.md` | Chunking, embedding, hybrid search, filtering |
-| `src/app/ai/reranking/CLAUDE.md` | Cross-encoders, fusion, diversity, fallback |
-| `src/app/ai/agents/CLAUDE.md` | LangGraph, prompt caching, tools, token budgets |
-| `src/app/ai/evals/CLAUDE.md` | Datasets, metrics per layer, when to run |
-| `tests/CLAUDE.md` | Unit vs integration, seams, fakes, determinism |
+| `src/app/api/AGENTS.md` | HTTP edge, status codes, pagination, dependency injection |
+| `src/app/core/AGENTS.md` | Settings, structlog, Prometheus metrics, error types, retries |
+| `src/app/repositories/AGENTS.md` | SQL, pgvector indexes, protocols, connection pools |
+| `src/app/services/AGENTS.md` | Orchestration, transaction boundaries, fan-out limits |
+| `src/app/ai/AGENTS.md` | Why AI is its own layer; rules for all of it |
+| `src/app/ai/retrieval/AGENTS.md` | Chunking, embedding, hybrid search, filtering |
+| `src/app/ai/reranking/AGENTS.md` | Cross-encoders, fusion, diversity, fallback |
+| `src/app/ai/agents/AGENTS.md` | LangGraph, prompt caching, tools, token budgets |
+| `src/app/ai/evals/AGENTS.md` | Datasets, metrics per layer, when to run |
+| `tests/AGENTS.md` | Unit vs integration, seams, fakes, determinism |
 
 ## Choose the architecture during research
 
@@ -57,7 +57,7 @@ api  ──▶  services  ──▶  ai  ──▶  repositories  ──▶  con
 - `core/` is cross-cutting. Every layer may import it. It imports none of them.
 - `ai/` is the applied-AI capability layer: retrieval, reranking, agents. `services` may
   call into it; it must never import a service. Its data access belongs in
-  `repositories/`. See `src/app/ai/CLAUDE.md` for why it is separate from `services`.
+  `repositories/`. See `src/app/ai/AGENTS.md` for why it is separate from `services`.
 - `ai/evals/` sits outside the request path. It may import any layer; nothing imports it.
   This is the one documented exception to the direction above, and it holds because evals
   never runs in a request.
@@ -95,7 +95,7 @@ Design for the load you expect, and state the number.
 - **Make work idempotent** so a retry is safe and a queue can deliver more than once.
 - **Keep the request path stateless.** State in a process prevents horizontal scaling.
 - **Measure before you optimise.** A performance change without a measurement is a guess.
-  See `evals/CLAUDE.md` for AI paths, and the RED and USE methods in `core/CLAUDE.md`.
+  See `evals/AGENTS.md` for AI paths, and the RED and USE methods in `core/AGENTS.md`.
 
 ## 5. Extensibility
 
@@ -142,5 +142,5 @@ The approved stack is declared in `pyproject.toml` under
 `[project.optional-dependencies].app`.
 
 A new framework or library outside that set requires an update to this file **and** to
-`CLAUDE.md` first. Do not run `uv add` to introduce an alternative. Edit `pyproject.toml`,
+`AGENTS.md` first. Do not run `uv add` to introduce an alternative. Edit `pyproject.toml`,
 then run `uv lock` and `uv sync`.

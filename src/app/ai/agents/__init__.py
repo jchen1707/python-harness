@@ -3,5 +3,5 @@
 Model choice comes from `Settings.anthropic_model`, never a literal at a call site.
 Retrieved documents and tool results are untrusted input.
 
-Conventions: agents/CLAUDE.md.
+Conventions: agents/AGENTS.md.
 """

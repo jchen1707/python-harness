@@ -2,5 +2,5 @@
 
 Calls `services/`. Must not import `repositories/` or touch a database session.
 
-Conventions: api/CLAUDE.md. Cross-cutting rules: docs/architecture.md.
+Conventions: api/AGENTS.md. Cross-cutting rules: docs/architecture.md.
 """

@@ -1,5 +1,5 @@
 ---
-description: Hand the branch's plan.md + test-plan.md (under .claude/plans/) to the /implement skill as its spec, with this repo's uv gates pinned (terminal 2, implementation model)
+description: Hand the branch's plan.md + test-plan.md (under .agents/plans/) to the /implement skill as its spec, with this repo's uv gates pinned (terminal 2, implementation model)
 argument-hint: "[path to a plan file, or blank to resolve from the current branch]"
 ---
 
@@ -10,11 +10,11 @@ supplies both.
 
 1. **Locate the plans.** Derive the plan directory from the current branch: take
    `git branch --show-current`, replace each `/` with `-`, and read
-   `.claude/plans/<branch-slug>/plan.md` + `test-plan.md` (e.g. branch
-   `feat/BAC-412-vector-store` → `.claude/plans/feat-BAC-412-vector-store/`). If
+   `.agents/plans/<branch-slug>/plan.md` + `test-plan.md` (e.g. branch
+   `feat/BAC-412-vector-store` → `.agents/plans/feat-BAC-412-vector-store/`). If
    `$ARGUMENTS` names a path, that wins as the implementation plan, with a sibling
    `test-plan.md`. If the per-branch directory does not exist, fall back to the legacy
-   `.claude/plans/plan.md` + `test-plan.md`.
+   `.agents/plans/plan.md` + `test-plan.md`.
    - If no plan is found in any of those places, **STOP** and tell the user to run
      `/plan` in terminal 1 first. Do not improvise a plan here — planning is a
      separate, signed-off step.
@@ -25,7 +25,7 @@ supplies both.
    to the user and ask — don't quietly substitute your own approach.
 3. **Confirm the branch.** `/plan` creates the feature branch off the user's chosen
    base. Run `git branch --show-current`; if you're on `main`, stop and ask which
-   branch to use — per CLAUDE.md, direct commits to `main` need explicit user request.
+   branch to use — per AGENTS.md, direct commits to `main` need explicit user request.
 4. **Invoke `/implement` with the plans as the spec.** Say explicitly that the spec is
    the resolved `plan.md` plus `test-plan.md` (name their full paths), and pass along:
    - the numbered **Steps** from `plan.md` as the task list (build it with `TaskCreate`,
@@ -37,9 +37,9 @@ supplies both.
 5. **Pin the gates — this repo is Python, not TypeScript.** The plugin skills say "run
    typechecking" and "run the test suite" generically, and reach for `npm`, `tsc`,
    `vitest`, Husky and `lint-staged`, none of which exist here. Wherever a skill says
-   that, substitute the `uv` commands from **CLAUDE.md → Commands** (the authoritative
+   that, substitute the `uv` commands from **AGENTS.md → Commands** (the authoritative
    list, loaded every session); for a single file, `uv run pytest tests/test_<name>.py`.
-6. **Finish to the Definition of Done** (CLAUDE.md). Run `/verify` for the evidence —
+6. **Finish to the Definition of Done** (AGENTS.md). Run `/verify` for the evidence —
    paste the real output rather than asserting the gates passed. Then `/code-review`
    with the merge-base as the fixed point (`git merge-base HEAD main`) and no Standards
    findings outstanding. The `Stop` hook re-runs the gates independently, so a turn

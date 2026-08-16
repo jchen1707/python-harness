@@ -3,5 +3,5 @@
 Orchestrates; `repositories/` performs the data access. Optimises recall. Precision is
 `ai/reranking/`.
 
-Conventions: retrieval/CLAUDE.md.
+Conventions: retrieval/AGENTS.md.
 """

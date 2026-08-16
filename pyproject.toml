@@ -19,7 +19,7 @@ dependencies = []
 # Approved application stack. Declared as an extra (not in `dependencies`) to keep
 # the harness lightweight and make the standard explicit/opt-in. See
 # docs/architecture.md for the rationale behind each choice. Adding a library
-# outside this set requires updating CLAUDE.md first.
+# outside this set requires updating AGENTS.md first.
 app = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
@@ -61,9 +61,10 @@ ignore = ["E501"]
 "tests/**" = ["S101"]
 # Claude Code hooks shell out to fixed argv lists (never user input) and rely on
 # PATH lookup for `uv`/`git`, which is what S603/S607 flag.
-".claude/hooks/**" = ["S603", "S607"]
+".agents/hooks/**" = ["S603", "S607"]
 # The MCP headers helper shells out to the platform credential store (`powershell`,
 # `security`, `secret-tool`) through a fixed argv list, for the same reason.
+".agents/mcp_headers.py" = ["S603", "S607"]
 ".claude/mcp_headers.py" = ["S603", "S607"]
 
 [tool.ruff.format]
@@ -77,19 +78,19 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 warn_return_any = false
 ignore_missing_imports = true
-# `.claude/hooks` is listed explicitly: mypy skips dot-directories during its own
+# `.agents/hooks` is listed explicitly: mypy skips dot-directories during its own
 # recursive discovery, so a bare "." would never reach them. The hooks enforce every
 # other gate, so they are held to the same strictness as `src`.
-files = ["src", "tests", ".claude/hooks", ".claude/mcp_headers.py"]
+files = ["src", "tests", ".agents/hooks", ".agents/mcp_headers.py"]
 # The hooks import each other as top-level modules (`import vault_index`), which works at
 # runtime because Python puts the running script's directory on sys.path. Static analysis
 # does not read sys.path, so it needs this setting.
-mypy_path = ".claude/hooks"
+mypy_path = ".agents/hooks"
 
 [tool.pyright]
 # Same reason as mypy_path above. Read by the `pyright-lsp` MCP server in .mcp.json and by
 # the editor plugin, so symbol navigation resolves the hooks instead of flagging them.
-extraPaths = [".claude/hooks"]
+extraPaths = [".agents/hooks"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

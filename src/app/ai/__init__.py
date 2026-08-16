@@ -8,6 +8,6 @@ call into this layer, not the reverse.
   ai/agents/     — LangGraph orchestration
   ai/evals/      — offline measurement; may import any layer, nothing imports it
 
-Conventions: ai/CLAUDE.md, which also explains why this is separate from services/.
+Conventions: ai/AGENTS.md, which also explains why this is separate from services/.
 Cross-cutting rules: docs/architecture.md.
 """

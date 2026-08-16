@@ -1,0 +1,4 @@
+name = "security-reviewer"
+description = "Run a fresh-context security review over a diff."
+sandbox_mode = "read-only"
+developer_instructions = "Read .agents/agents/security-reviewer.md and follow its prompt body. Treat its YAML frontmatter as adapter metadata."

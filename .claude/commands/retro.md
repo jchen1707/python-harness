@@ -16,7 +16,7 @@ For each durable, non-obvious lesson:
 
 1. **Decide if it's worth saving.** Keep only what would have saved real time had
    you known it up front. Skip anything the repo already records (code, git history,
-   `CLAUDE.md`, `docs/architecture.md`) or that mattered only to this one task.
+   `AGENTS.md`, `docs/architecture.md`) or that mattered only to this one task.
 2. **Check for an existing memory** first — scan `MEMORY.md`. Update that file
    rather than duplicating it; delete one that turns out to be wrong.
 3. **Write the lesson to the memory store** at
@@ -33,11 +33,11 @@ For each durable, non-obvious lesson:
    if the lesson is a repeatable procedure or a standard everyone working here should
    follow, propose promoting it:
    - a repeatable workflow → a new slash command in `.claude/commands/`;
-   - a durable standard or stack/tooling rule → an edit to `CLAUDE.md` or
+   - a durable standard or stack/tooling rule → an edit to `AGENTS.md` or
      `docs/architecture.md`.
    Memories are cheap and reversible — write them directly. Promotions to a command
-   or to `CLAUDE.md` / docs are more invasive — propose the change and confirm before
+   or to `AGENTS.md` / docs are more invasive — propose the change and confirm before
    applying it.
 
 Report what you captured and any promotion you propose. See the "Context & memory
-management" section of `CLAUDE.md`; `/context` flags friction you haven't captured yet.
+management" section of `AGENTS.md`; `/context` flags friction you haven't captured yet.
