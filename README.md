@@ -183,6 +183,27 @@ that confirmation is obtained, once, for the whole feature.
 Pick the architectural style here, during research — not while coding — and record it in
 `docs/architecture.md`.
 
+#### Where the Matt Pocock skills fit
+
+These skills add optional steps to the main path. Do not run all three for every ticket.
+
+| Skill | Place it | Use it when |
+| --- | --- | --- |
+| `/improve-codebase-architecture` | During alignment, after `/grill-with-docs` and before `/to-spec` | The change exposes architectural friction, shallow modules, or hard-to-test code. It scans the codebase and gives you candidates to choose from. |
+| `/codebase-design` | During alignment, after you choose a candidate and before `/to-spec` confirms the seams | The module, interface, or seam needs design. Use its deep-module vocabulary to reduce the interface and hide more behavior behind it. |
+| `/tdd` | During execution, inside `/implement`, after `/to-spec` or `/plan` confirms the seams | The ticket adds or changes behavior. Run one red → green cycle per vertical slice, then refactor during review. |
+
+For architecture work, use this order:
+
+```
+/grill-with-docs → /improve-codebase-architecture → /codebase-design
+→ /to-spec → /to-tickets → /implement → /tdd → /verify → /code-review
+```
+
+Skip the two architecture skills when the design is already clear. For the small-work path,
+run `/tdd` inside `/implement-from-plan` after plan sign-off. Skip `/tdd` for documentation-only
+or configuration-only changes.
+
 ### 3. Execution — one ticket, one clean slate
 
 **Start each ticket in a fresh context, working only from that ticket.** Alignment needs
@@ -306,6 +327,8 @@ From the `mattpocock-skills` plugin — highlights only; the plugin self-updates
 | `/implement` | implement from a spec or set of tickets, then commit (prefer `/implement-from-plan` here) |
 | `/code-review` | two-axis review since a fixed point: Standards + Spec |
 | `/tdd` | red-green-refactor loop |
+| `/codebase-design` | design a deep module, its interface, and its seam |
+| `/improve-codebase-architecture` | scan for shallow modules and propose deepening candidates |
 | `/diagnosing-bugs` | diagnosis loop for hard bugs and perf regressions |
 | `/research` | investigate a question against primary sources, write findings to a file |
 | `/triage` | move tracker issues through the triage state machine (see `docs/agents/triage-labels.md`) |
