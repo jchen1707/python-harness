@@ -110,15 +110,18 @@ How a request travels from landing in the tracker to meeting the Definition of D
               └─▶ ready-for-agent
                        │
                        ▼
-   ┌── ALIGNMENT — one unbroken context ────────────────────┐
-   │  /grill-with-docs ◆ → /to-spec ◆ → /to-tickets ◆       │
-   └────────────────────────────────────────────────────────┘
+   ┌── ALIGNMENT — one unbroken context ───────────────────────────────────────┐
+   │ /grill-with-docs ◆ → /improve-codebase-architecture (if needed)           │
+   │ → /codebase-design (if interface/seam needs design) → /to-spec ◆          │
+   │ → /to-tickets ◆                                                           │
+   └───────────────────────────────────────────────────────────────────────────┘
                        │ one ticket at a time
                        ▼
-   ┌── EXECUTION — branch first, fresh context per ticket ──┐
-   │  ( /plan ◆ only if the ticket needs it ) → /implement  │
-   │                        → /verify → /code-review        │
-   └────────────────────────────────────────────────────────┘
+   ┌── EXECUTION — branch first, fresh context per ticket ─────────────────────┐
+   │ ( /plan ◆ only if the ticket needs it ) → /implement                      │
+   │ → /tdd (behavior change)                                                  │
+   │ → /verify → /code-review                                                  │
+   └───────────────────────────────────────────────────────────────────────────┘
                        │
                        ▼
                 PR → Definition of Done
