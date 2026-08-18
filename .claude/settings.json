@@ -31,6 +31,7 @@
       "Read(./.env.test)",
       "Bash(cat .env:*)",
       "Bash(cat ./.env:*)",
+      "Bash(source .env:*)",
       "Bash(type .env:*)",
       "Bash(more .env:*)",
       "Bash(less .env:*)",
@@ -69,7 +70,7 @@
     ]
   },
   "enabledPlugins": {
-    "mattpocock-skills@mattpocock": true
+    "mattpocock-skills@claude-plugins-official": true
   },
   "plansDirectory": ".agents/plans",
   "enabledMcpjsonServers": [
@@ -91,6 +92,22 @@
             ],
             "timeout": 30,
             "statusMessage": "Checking protected paths…"
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Bash|mcp__.*read.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv",
+            "args": [
+              "run",
+              "python",
+              "${CLAUDE_PROJECT_DIR}/.agents/hooks/protect_secrets.py"
+            ],
+            "timeout": 30,
+            "statusMessage": "Checking secret boundaries…"
           }
         ]
       }

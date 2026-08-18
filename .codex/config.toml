@@ -10,5 +10,5 @@ max_concurrent_threads_per_session = 8
 
 [mcp_servers.pyright-lsp]
 command = "/bin/sh"
-args = [".codex/start-pyright-mcp.sh"]
+args = [".agents/start-pyright-mcp.sh"]
 startup_timeout_sec = 120

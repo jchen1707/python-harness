@@ -130,7 +130,8 @@ signal is the whole point.
 
 ## Symbol navigation (LSP) — prefer it to grep
 
-`pyright-lsp` in `.codex/config.toml` runs pyright's language server behind MCP. It answers
+`pyright-lsp` runs pyright's language server behind MCP — started from `.mcp.json` in
+Claude Code and `.codex/config.toml` in Codex, both through the same launcher. It answers
 questions about **symbols**, where grep answers questions about **text**.
 
 Use it when the question is semantic:
