@@ -1,5 +1,14 @@
 #!/usr/bin/env python
-"""Block common Codex reads that would copy a secret into the transcript."""
+"""Block reads and shell commands that would copy a secret into the transcript.
+
+Wired for **both** harnesses: `PreToolUse` on `Read|Bash|mcp__.*read.*` in
+`.claude/settings.json`, and the matching stanza in `.codex/hooks.json`. It was Codex-only
+for a while, which left Claude Code with the deny list alone — and a deny entry is a
+literal pattern, so it stops `cat .env` and not the shell command that reaches the same
+bytes another way.
+
+`tests/test_hook_matchers.py` pins the wiring for both.
+"""
 
 from __future__ import annotations
 

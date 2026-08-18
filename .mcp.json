@@ -1,5 +1,9 @@
 {
   "mcpServers": {
+    "pyright-lsp": {
+      "command": "/bin/sh",
+      "args": [".agents/start-pyright-mcp.sh"]
+    },
     "linear": {
       "command": "docker",
       "args": ["mcp", "gateway", "run"]

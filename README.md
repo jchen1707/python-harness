@@ -86,9 +86,9 @@ Copy `.env.example` → `.env` and fill in keys (never commit `.env`).
 
 ### Symbol navigation
 
-Codex starts `pyright-lsp` through `.codex/start-pyright-mcp.sh`. The script installs
-pinned tools in the sandbox cache when required. A new template project needs no manual
-installation.
+Both harnesses start `pyright-lsp` through `.agents/start-pyright-mcp.sh` — Claude Code
+from `.mcp.json`, Codex from `.codex/config.toml`. The script installs pinned tools in the
+sandbox cache when required. A new template project needs no manual installation.
 
 MCP servers load at session start. Confirm the connection with `/mcp`. See `AGENTS.md` →
 Symbol navigation for usage rules.
@@ -339,10 +339,20 @@ The workflow also uses these optional upstream capabilities from `mattpocock/ski
 
 Claude Code installs them as a plugin:
 ```sh
-claude plugin marketplace add mattpocock/skills
-claude plugin install mattpocock-skills@mattpocock --scope project
+claude plugin marketplace add anthropics/claude-plugins-official
+claude plugin install mattpocock-skills@claude-plugins-official --scope project
 ```
-Upstream's own marketplace is used rather than Anthropic's official mirror, which lags.
+The plugin moved into the official marketplace at v1.2, so `mattpocock/skills` is no
+longer a marketplace of its own — `enabledPlugins` named one for months and resolved
+nothing, which took the whole alignment chain (`/grill-with-docs`, `/to-spec`,
+`/to-tickets`) with it. The official entry is pinned by sha and therefore lags upstream;
+the trade for that is on `v2`, which takes the skills through `npx skills@latest add
+mattpocock/skills` instead and gets editable copies. Never both — that installs every
+skill twice.
+
+Run `/setup-matt-pocock-skills` once per repository after installing. It configures the
+issue tracker, the triage labels and the doc storage the skills write to; without it,
+half of them have nowhere to put their output.
 
 Codex does not load Claude plugins. Install the upstream repository with Codex's
 `skill-installer`, or install equivalent skills with the same capability names. If an

@@ -199,3 +199,32 @@ def test_mcp_config_uses_docker_mcp_toolkit() -> None:
     assert "headers" not in linear
     assert "LINEAR_API_KEY" not in json.dumps(config)
     assert linear == {"command": "docker", "args": ["mcp", "gateway", "run"]}
+
+
+def test_every_enabled_mcp_server_is_defined() -> None:
+    """`enabledMcpjsonServers` named `pyright-lsp` for months; `.mcp.json` never defined it.
+
+    Neither file is wrong on its own, so nothing failed. The server was simply absent from
+    every Claude session, while `AGENTS.md` spent a section telling agents to prefer it to
+    grep. Only the pair carries the defect, so only the pair can be asserted.
+    """
+    root = Path(__file__).resolve().parents[1]
+    config = json.loads((root / ".mcp.json").read_text(encoding="utf-8"))
+    settings = json.loads((root / ".claude" / "settings.json").read_text(encoding="utf-8"))
+
+    assert sorted(settings["enabledMcpjsonServers"]) == sorted(config["mcpServers"])
+
+
+def test_the_pyright_launcher_is_shared_by_both_harnesses() -> None:
+    """The launcher lived under `.codex/`, so only Codex could reasonably reference it.
+
+    On `v2` the canonical directory is `.agents/`; a launcher both harnesses start belongs
+    there, and a harness-specific path is how one of them ends up without the server.
+    """
+    root = Path(__file__).resolve().parents[1]
+    launcher = ".agents/start-pyright-mcp.sh"
+
+    assert (root / launcher).is_file()
+    config = json.loads((root / ".mcp.json").read_text(encoding="utf-8"))
+    assert config["mcpServers"]["pyright-lsp"]["args"] == [launcher]
+    assert launcher in (root / ".codex" / "config.toml").read_text(encoding="utf-8")
