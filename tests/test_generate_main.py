@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -120,3 +121,46 @@ def test_a_stale_manifest_stops_the_build(generator: ModuleType, tmp_path: Path)
     manifest["drop"].append("does/not/exist")
     with pytest.raises(generator.TransformError):
         generator.generate(REPO_ROOT, tmp_path / "main", manifest)
+
+
+def test_a_submodule_is_not_copied_as_a_file(generator: ModuleType, tmp_path: Path) -> None:
+    """`harness` mounts both stacks as submodules, and `ls-files` lists them like files.
+
+    A gitlink entry names a commit in another repository, so there is nothing to copy —
+    and the directory it stands for is a directory, which is what the old code handed to
+    `shutil.copy2`. The build died on a `git submodule add` in the parent repo. This is
+    the fixture that keeps it dead.
+    """
+
+    def git(*args: str, cwd: Path) -> None:
+        # Every argument is a literal or a tmp_path this test just made, and
+        # `protocol.file.allow` is needed because git refuses a local-path submodule
+        # by default.
+        subprocess.run(  # noqa: S603
+            ["git", "-c", "protocol.file.allow=always", *args],  # noqa: S607
+            cwd=cwd,
+            check=True,
+            capture_output=True,
+        )
+
+    child = tmp_path / "child"
+    child.mkdir()
+    git("init", "-q", "-b", "main", cwd=child)
+    (child / "README.md").write_text("child\n", encoding="utf-8")
+    git("add", "-A", cwd=child)
+    git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "init", cwd=child)
+
+    parent = tmp_path / "parent"
+    parent.mkdir()
+    git("init", "-q", "-b", "v2", cwd=parent)
+    (parent / "AGENTS.md").write_text("# parent\n", encoding="utf-8")
+    git("submodule", "add", "-q", str(child), "child", cwd=parent)
+    git("add", "-A", cwd=parent)
+    git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "init", cwd=parent)
+
+    destination = tmp_path / "main"
+    generator.generate(parent, destination, {"drop": [], "substitutions": []})
+
+    assert (destination / "CLAUDE.md").exists()
+    assert (destination / ".gitmodules").exists(), "the parent's own file must survive"
+    assert not (destination / "child").exists(), "a gitlink is a commit, not content"
