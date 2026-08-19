@@ -3,7 +3,6 @@
     ".claude/agents": "../.agents/agents",
     ".claude/hooks": "../.agents/hooks",
     ".claude/skills": "../.agents/skills",
-    ".claude/workflows": "../.agents/workflows",
     ".claude/mcp_headers.py": "../.agents/mcp_headers.py",
     ".claude/start-pyright-mcp.sh": "../.agents/start-pyright-mcp.sh"
   },
@@ -14,7 +13,20 @@
     "tests/test_codex_hooks.py",
     "tests/test_generate_main.py",
     ".github/workflows/generate-main.yml",
-    ".github/workflows/vendor-freshness.yml"
+    ".github/workflows/vendor-freshness.yml",
+    ".claude/skills/arch",
+    ".claude/skills/context",
+    ".claude/skills/implement-from-plan",
+    ".claude/skills/lint",
+    ".claude/skills/plan",
+    ".claude/skills/retro",
+    ".claude/skills/run",
+    ".claude/skills/test",
+    ".claude/skills/full-review",
+    ".claude/skills/loop-goal",
+    ".claude/skills/prune-rules",
+    ".claude/skills/search-second-brain",
+    ".claude/skills/verify"
   ],
   "instructions": {
     "from": "AGENTS.md",
@@ -41,7 +53,7 @@
       "to": ".claude/"
     },
     {
-      "note": "And as a path *segment* — `Path(...) / \".agents\" / \"hooks\"` never contains a slash.",
+      "note": "And as a path *segment* \u2014 `Path(...) / \".agents\" / \"hooks\"` never contains a slash.",
       "regex": "([\"'])\\.agents\\1",
       "to": "\\1.claude\\1"
     },

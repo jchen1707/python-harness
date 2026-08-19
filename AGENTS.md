@@ -111,12 +111,25 @@ Worktrees are the unit of isolation. Separate checkouts prevent parallel agents 
 changing the same files. `.agents/agents/test-writer.md` requests worktree isolation.
 Harnesses without frontmatter support must create the worktree before starting the agent.
 
-Subagent prompts live in `.agents/agents/`. Harness adapters map their tool and model hints
-to native controls. Treat unsupported frontmatter fields as advisory.
+**A reviewer is half a definition each way.** The shared **frame** — the role, the method,
+the reporting rules — is layer A, identical in every stack. What "in this repo's terms" means
+is this repo's, at `docs/agents/subagents/<agent-name>.md`. `full-review` concatenates the
+two, and the standalone subagent reads the checklist itself, so the two forms cannot drift.
 
-The nine reviewers are also the nine axes of `full-review.js`, which reads each prompt from
-the agent file rather than restating it. Add an axis by writing the agent file and adding
-one entry to `AXES`; there is no second copy to keep in step.
+Neither half reviews on its own, and both failures are silent: a frame with no checklist
+reviews on general advice and reports a confident clean.
+
+- **Shared frames** — `.agents/vendor/harness/agents/` (the plugin, on `main`). Never edited
+  here; edit them in [`harness`](https://github.com/jchen1707/harness) and re-sync.
+- **This repo's half** — `docs/agents/subagents/`.
+- **This repo's own agents** — `.agents/agents/`: `async-reviewer`, the ninth axis, and
+  `test-writer`, which is here because it writes and so its tool grant names a runner.
+
+Harness adapters map tool and model hints to native controls. Treat unsupported frontmatter
+fields as advisory.
+
+Add an axis by writing the agent file and naming it in `harness.config.json`; there is no
+second copy to keep in step.
 
 **Fork for breadth, stay inline for depth.** Scanning and summarising belong in a subagent;
 reasoning you need to steer belongs in the main context. Reviewers get read-only tools by
@@ -128,14 +141,20 @@ signal is the whole point.
 - **`/loop-goal <goal>`** — standing goals that run until a stop condition holds (docs,
   architecture, logging, tests, deps). Progress lives in `.agents/plans/loop-<goal>.md` so it
   survives compaction.
-- **`.agents/workflows/full-review.js`** — dynamic workflow fanning a diff out to nine
-  independent reviewers and fanning in to one ranked report. Run it with `/workflows`, or
-  trigger workflow mode with the `ultracode` keyword. Reviews against `main` unless
-  `REVIEW_BASE` says otherwise (`$env:REVIEW_BASE = "..."`). Nine agents is real spend —
-  reach for `/code-review` (two axes) by default and this when the diff warrants it.
+- **`full-review.js`** — layer A's dynamic workflow, fanning a diff out to nine independent
+  reviewers and fanning in to one ranked report. Run it with `/workflows`, or trigger
+  workflow mode with the `ultracode` keyword. Reviews against `main` unless `REVIEW_BASE`
+  says otherwise (`$env:REVIEW_BASE = "..."`). Nine agents is real spend — reach for
+  `/code-review` (two axes) by default and this when the diff warrants it.
+
+  It reads `harness.config.json` for the ninth axis and for which tools already own style,
+  and it **throws rather than falling back** when an axis resolves to no frame and no
+  checklist. An axis reviewing on a one-line brief reports "no findings" from a reviewer
+  that never ran, which is indistinguishable from a clean one.
 <!-- harness:agnostic -->
-- **`/full-review`** — portable skill that runs the same fan-out and fan-in through native
-  subagents. It uses each harness adapter under `.agents/agents/` and `.codex/agents/`.
+- **`/full-review`** — the portable skill that runs the same fan-out through native
+  subagents, for a harness with no workflow runner. Same axes, same two halves; it uses the
+  adapters under `.codex/agents/`.
 <!-- /harness:agnostic -->
 
 ## Symbol navigation (LSP) — prefer it to grep
@@ -290,16 +309,24 @@ can resolve the originating ticket mechanically.
 ## Where commands come from
 
 <!-- harness:agnostic -->
-- `.agents/skills/` is the canonical repo-owned skill directory. Claude Code reaches it
-  through `.claude/skills`. Harnesses may use native invocation instead of slash commands.
-- `.claude/commands/` contains Claude wrappers. Matching skills in `.agents/skills/` make
-  each repository command available to Codex.
+- The commands and the shared skills are **layer A**. They arrive vendored under
+  `.agents/vendor/harness/{commands,skills}/`, pinned by sha, and every stack fact they need
+  comes from `harness.config.json` at the repo root — the gates, the dev server, the review
+  axes.
+- `.agents/skills/` holds one thin stub per shared command and skill, because a harness that
+  discovers skills by directory does not glob the vendored tree. The stub is an address, not
+  a copy; its body is one line telling you where the real one is.
+- **Never edit anything under `.agents/vendor/`.** It is generated. `vendor-freshness.yml`
+  fails on a hand edit as loudly as it fails on a stale pin.
 - `mattpocock/skills` is optional third-party functionality. Install it through the active
   harness's plugin or skill installer. Never assume a Claude plugin exists in Codex.
 <!-- /harness:agnostic -->
 <!-- harness:claude
-- `.claude/skills/` is the canonical repo-owned skill directory.
-- `.claude/commands/` contains the slash-command wrappers over those skills.
+- The commands and the shared skills are **layer A**, supplied by the `harness` plugin and
+  enabled in `.claude/settings.json`. Every stack fact they need comes from
+  `harness.config.json` at the repo root — the gates, the dev server, the review axes.
+- `.claude/skills/` holds only this repo's own skills, if any. A shared one appearing there
+  is a bug: it would shadow the plugin's.
 - `mattpocock/skills` is optional third-party functionality, installed as the
   `mattpocock-skills@claude-plugins-official` plugin.
 /harness:claude -->

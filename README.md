@@ -278,7 +278,7 @@ originating ticket). Reviewers get read-only tools by design: one
 that can edit will fix things instead of reporting them, and the independent signal is the
 point.
 
-For a change that warrants more than two axes, `.agents/workflows/full-review.js` fans the
+For a change that warrants more than two axes, layer A's `full-review.js` fans the
 same diff out to **nine** independent reviewers — standards, spec, security, tests,
 async, simplicity, design, speed, cost — then fans in to a single synthesiser that merges
 duplicates, drops
@@ -330,7 +330,8 @@ model-switching seam, so you can plan with one model and build with another.
 ## Capabilities
 
 Repo-owned skills live in `.agents/skills/`. Claude Code sees the same files through the
-`.claude/skills` adapter. Claude-only slash-command wrappers live in `.claude/commands/`.
+`.claude/skills` adapter. The shared commands and skills come from layer A instead —
+vendored under `.agents/vendor/harness/` here, and from the `harness` plugin on `main`.
 
 | Slash | Does |
 | --- | --- |
@@ -393,10 +394,13 @@ alias) and broadened to cover any agent-read document. Use the new name.
 
 | Path | What |
 | --- | --- |
-| `.agents/agents/` | Subagents. Workers: `explorer`, `test-writer` (worktree-isolated). Reviewers, one per `full-review` axis and each invokable standalone: `standards-reviewer`, `spec-checker`, `security-reviewer`, `test-reviewer`, `async-reviewer`, `simplicity-reviewer`, `design-reviewer`, `perf-reviewer`, `cost-reviewer` |
+| `.agents/agents/` | This repo's own subagents: `async-reviewer` (the ninth review axis) and `test-writer` (worktree-isolated, and here rather than in layer A because it writes, so its tool grant names a runner) |
+| `.agents/vendor/harness/agents/` | The eight shared review **frames** — `standards-reviewer`, `spec-checker`, `security-reviewer`, `test-reviewer`, `simplicity-reviewer`, `design-reviewer`, `perf-reviewer`, `cost-reviewer` — plus `explorer`. Generated, pinned by sha, never edited here |
+| `docs/agents/subagents/` | This repo's half of each shared frame: what "in this repo's terms" means. A frame with no checklist reviews on general advice and reports a confident clean |
+| `harness.config.json` | Everything layer A needs to know about this repo: the gates, the dev server, the ninth axis, which tools already own style |
 | `.agents/skills/` | Harness-neutral repo skills. Claude Code loads them through `.claude/skills`. Other harnesses can load this directory directly or install it into their skill search path. |
 | `.agents/hooks/` | `protect_paths` (block protected edits), `format_edited` (auto-format), `verify` (Stop gate on the Definition of Done), `session_learnings` (SessionEnd: distils lessons to the second brain), `vault_index` (rebuilds the vault's Markdown indexes) |
-| `.agents/workflows/` | `full-review.js` — nine reviewers fanned out, one ranked report fanned in. Each axis reads its prompt from the matching `.agents/agents/` definition, so the two forms cannot drift |
+| `.agents/vendor/harness/workflows/` | `full-review.js` — nine reviewers fanned out, one ranked report fanned in. Each axis is assembled from its shared frame plus this repo's checklist, so the workflow and the standalone subagent cannot drift |
 
 Issues live in **Linear**. Workspace **Development**, default team **Backend** (`BAC`).
 <!-- harness:agnostic -->

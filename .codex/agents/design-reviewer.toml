@@ -1,4 +1,11 @@
 name = "design-reviewer"
 description = "Review interface depth, information hiding, and seam placement."
 sandbox_mode = "read-only"
-developer_instructions = "Read .agents/agents/design-reviewer.md and follow its prompt body. Treat its YAML frontmatter as adapter metadata."
+developer_instructions = """
+Read .agents/vendor/harness/agents/design-reviewer.md and follow its prompt body.
+Then read docs/agents/subagents/design-reviewer.md, which is this repository's half of
+the same definition and what the frame means by this repo's own terms.
+Both halves, in that order. The frame alone reviews on general advice and
+reports a confident clean, which is indistinguishable from a real one.
+Treat the frame's YAML frontmatter as adapter metadata.
+"""

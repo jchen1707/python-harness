@@ -1,6 +1,11 @@
 ---
 name: retro
-description: Capture durable lessons from the current session in the correct memory tier. Use when the user requests a retrospective or friction is worth remembering.
+description: Capture lessons from friction into durable memory
 ---
 
-Read `.claude/commands/retro.md` in full. Follow its workflow with native harness tools.
+Read `.agents/vendor/harness/commands/retro.md` in full and follow it.
+
+This file exists so a harness that discovers skills under `.agents/skills/` finds the
+shared one. The body is layer A: generated, pinned by sha, and the same in every stack.
+Editing it here is the drift the vendored copy's freshness check exists to catch — edit
+it in [`harness`](https://github.com/jchen1707/harness) and re-sync.
