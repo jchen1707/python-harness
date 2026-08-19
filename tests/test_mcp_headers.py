@@ -215,6 +215,7 @@ def test_every_enabled_mcp_server_is_defined() -> None:
     assert sorted(settings["enabledMcpjsonServers"]) == sorted(config["mcpServers"])
 
 
+# harness:agnostic
 def test_the_pyright_launcher_is_shared_by_both_harnesses() -> None:
     """The launcher lived under `.codex/`, so only Codex could reasonably reference it.
 
@@ -228,3 +229,6 @@ def test_the_pyright_launcher_is_shared_by_both_harnesses() -> None:
     config = json.loads((root / ".mcp.json").read_text(encoding="utf-8"))
     assert config["mcpServers"]["pyright-lsp"]["args"] == [launcher]
     assert launcher in (root / ".codex" / "config.toml").read_text(encoding="utf-8")
+
+
+# /harness:agnostic

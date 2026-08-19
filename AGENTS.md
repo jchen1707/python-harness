@@ -84,13 +84,21 @@ shared scripts from `.agents/hooks/`:
 | `verify.py` (Stop) | Blocks the turn while the gates fail — **only** when the turn changed `.py` under `src/`, `tests/` or `.agents/hooks/`, or changed `pyproject.toml` |
 | `session_learnings.py` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain, and rebuilds the vault indexes via `vault_index.py`. Off unless `OBSIDIAN_VAULT_DIRECTORY` is set |
 
+<!-- harness:agnostic -->
 Claude Code calls these scripts directly. Codex adapters accept `apply_patch` payloads and
 launch session distillation outside its three-second `SessionEnd` limit.
+<!-- /harness:agnostic -->
 
 The Stop gate makes a supported session walk-away-able. `HARNESS_SKIP_VERIFY=1` disables it.
 The legacy `CLAUDE_SKIP_VERIFY=1` name remains supported.
+<!-- harness:agnostic -->
 Claude Code overrides a Stop hook after 8 consecutive blocks. Codex continues until the
 gate passes or the user interrupts it.
+<!-- /harness:agnostic -->
+<!-- harness:claude
+Claude Code overrides a Stop hook after 8 consecutive blocks; if you hit that, the loop is
+stuck on something it cannot fix.
+/harness:claude -->
 
 The gated set is *code the gates check, plus the config that defines them* — so prose,
 plans and docs still end freely and never burn override budget. Widen it by editing
@@ -125,13 +133,20 @@ signal is the whole point.
   trigger workflow mode with the `ultracode` keyword. Reviews against `main` unless
   `REVIEW_BASE` says otherwise (`$env:REVIEW_BASE = "..."`). Nine agents is real spend —
   reach for `/code-review` (two axes) by default and this when the diff warrants it.
+<!-- harness:agnostic -->
 - **`/full-review`** — portable skill that runs the same fan-out and fan-in through native
   subagents. It uses each harness adapter under `.agents/agents/` and `.codex/agents/`.
+<!-- /harness:agnostic -->
 
 ## Symbol navigation (LSP) — prefer it to grep
 
+<!-- harness:agnostic -->
 `pyright-lsp` runs pyright's language server behind MCP — started from `.mcp.json` in
 Claude Code and `.codex/config.toml` in Codex, both through the same launcher. It answers
+<!-- /harness:agnostic -->
+<!-- harness:claude
+`pyright-lsp` runs pyright's language server behind MCP, started from `.mcp.json`. It answers
+/harness:claude -->
 questions about **symbols**, where grep answers questions about **text**.
 
 Use it when the question is semantic:
@@ -245,9 +260,16 @@ Fixed in `pyproject.toml` (`app` extra) — read it there. What the file doesn't
 
 ## Issue tracker
 
+<!-- harness:agnostic -->
 **Linear**, injected into Codex by the sandbox runtime — check with `/mcp`, where it shows
 as *linear*. Workspace **Development**, default team **Backend** (`BAC`). Register it once
 with `sbx mcp add`. Start Codex with `--static-mcp linear`. MCP tools load at session start.
+<!-- /harness:agnostic -->
+<!-- harness:claude
+**Linear**, through the Docker MCP Toolkit gateway in `.mcp.json` — check with `/mcp`, where
+it shows as *linear*. Workspace **Development**, default team **Backend** (`BAC`). MCP tools
+load at session start.
+/harness:claude -->
 Conventions, tool discovery and wayfinding: `docs/agents/issue-tracker.md`. PRs stay on
 GitHub.
 
@@ -267,12 +289,20 @@ can resolve the originating ticket mechanically.
 
 ## Where commands come from
 
+<!-- harness:agnostic -->
 - `.agents/skills/` is the canonical repo-owned skill directory. Claude Code reaches it
   through `.claude/skills`. Harnesses may use native invocation instead of slash commands.
 - `.claude/commands/` contains Claude wrappers. Matching skills in `.agents/skills/` make
   each repository command available to Codex.
 - `mattpocock/skills` is optional third-party functionality. Install it through the active
   harness's plugin or skill installer. Never assume a Claude plugin exists in Codex.
+<!-- /harness:agnostic -->
+<!-- harness:claude
+- `.claude/skills/` is the canonical repo-owned skill directory.
+- `.claude/commands/` contains the slash-command wrappers over those skills.
+- `mattpocock/skills` is optional third-party functionality, installed as the
+  `mattpocock-skills@claude-plugins-official` plugin.
+/harness:claude -->
 
 ## Memory
 

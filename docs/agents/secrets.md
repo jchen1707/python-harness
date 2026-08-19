@@ -20,7 +20,9 @@ Choose by asking which process reads the value.
 | --- | --- | --- |
 | `app.config.Settings` (application code) | `.env` at the repo root | `ANTHROPIC_API_KEY`, `VOYAGE_API_KEY`, `POSTGRES_DSN` |
 | A Docker MCP server | Docker Desktop's credential store | Linear |
+<!-- harness:agnostic -->
 | A sandbox MCP server | The sandbox runtime's credential store | Linear for Codex |
+<!-- /harness:agnostic -->
 | A hook, or the `gh` CLI | OS user environment variable | `GH_TOKEN` |
 
 Never store a secret in `~/.claude/settings.json` → `env`, in `.claude/settings.json`, in
@@ -50,11 +52,16 @@ Docker Desktop owns credentials for servers supplied through Docker MCP Toolkit.
 4. Restart the agent client.
 5. Confirm the server with `/mcp`.
 
+<!-- harness:agnostic -->
 Do not copy the credential into `.mcp.json`, `.codex/config.toml`, or an environment
 variable.
 
 For Codex, run `sbx mcp add linear --url https://mcp.linear.app/mcp` on the host. Start the
 sandbox with `--static-mcp linear`. The sandbox runtime stores the OAuth credential.
+<!-- /harness:agnostic -->
+<!-- harness:claude
+Do not copy the credential into `.mcp.json` or an environment variable.
+/harness:claude -->
 
 ## Add a harness secret
 
@@ -106,7 +113,7 @@ These controls hold whatever an instruction says. See `.claude/settings.json` an
 | `permissions.deny` → `Bash(env)`, `Bash(set)`, `Bash(Get-ChildItem Env:*)` and similar | Blocks a whole-environment dump in both shells |
 | `permissions.deny` → `Bash(echo $LINEAR_API_KEY:*)` and similar | Blocks the common spellings that read one variable |
 | `permissions.deny` → `Bash(python -c:*)`, `Bash(node -e:*)` and similar | Blocks an inline interpreter, which reads the environment without naming the variable |
-| `.codex/hooks.json` → `protect_secrets.py` | Blocks common secret-file reads and environment dumps in Codex |
+| `PreToolUse` on `Read\|Bash` → `protect_secrets.py` | Blocks the secret-file reads, environment dumps and interpreter one-liners a literal deny pattern cannot name |
 | `gitleaks` (pre-commit) | Fails a commit that carries a key in any staged file |
 | `detect-private-key` (pre-commit) | Fails a commit that carries a private key |
 

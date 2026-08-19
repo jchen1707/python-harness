@@ -20,14 +20,21 @@ Postgres + pgvector).
   capability directory.
 - `.claude/` — the Claude Code adapter: settings, hooks, slash commands, and symlinks to
   the canonical `.agents/` capability directories.
+<!-- harness:agnostic -->
 - `.codex/` — the Codex adapter: unattended execution settings, custom agent adapters,
   and the shared Stop verification hook.
+<!-- /harness:agnostic -->
 - `docs/agents/` — how agents work with this repo: `issue-tracker.md` (Linear conventions),
   `triage-labels.md` (canonical triage roles → real label strings), `domain.md`.
 - `.out-of-scope/` — rejected feature requests, read by `/triage` to avoid re-litigating a
   decision that was already made.
 - `.github/workflows/ci.yml` — CI gates (ruff, format, mypy, pytest; not the integration
   suite, which needs Docker).
+<!-- harness:agnostic -->
+- `.agents/transform/` — the `v2` → `main` generator and its manifest. `v2` is the branch
+  you edit; `main` is built from it by `.github/workflows/generate-main.yml` on every push,
+  and a hand-edit there is overwritten by the next build.
+<!-- /harness:agnostic -->
 - `.pre-commit-config.yaml` — pre-commit hooks (ruff + mypy + hygiene).
 - `docker-compose.yml` — dev infra: Postgres + pgvector (`docker compose up -d db`).
 - `src/app/` — package scaffold, no application code yet. Each directory carries its own
@@ -86,9 +93,16 @@ Copy `.env.example` → `.env` and fill in keys (never commit `.env`).
 
 ### Symbol navigation
 
+<!-- harness:agnostic -->
 Both harnesses start `pyright-lsp` through `.agents/start-pyright-mcp.sh` — Claude Code
 from `.mcp.json`, Codex from `.codex/config.toml`. The script installs pinned tools in the
 sandbox cache when required. A new template project needs no manual installation.
+<!-- /harness:agnostic -->
+<!-- harness:claude
+Claude Code starts `pyright-lsp` from `.mcp.json`, through
+`.claude/start-pyright-mcp.sh`. The script installs pinned tools in the sandbox cache when
+required. A new template project needs no manual installation.
+/harness:claude -->
 
 MCP servers load at session start. Confirm the connection with `/mcp`. See `AGENTS.md` →
 Symbol navigation for usage rules.
@@ -354,9 +368,11 @@ Run `/setup-matt-pocock-skills` once per repository after installing. It configu
 issue tracker, the triage labels and the doc storage the skills write to; without it,
 half of them have nowhere to put their output.
 
+<!-- harness:agnostic -->
 Codex does not load Claude plugins. Install the upstream repository with Codex's
 `skill-installer`, or install equivalent skills with the same capability names. If an
 optional capability is absent, follow the workflow described in `AGENTS.md` directly.
+<!-- /harness:agnostic -->
 
 `/writing-great-skills` was **renamed** to `/writing-for-agents` upstream (breaking, no
 alias) and broadened to cover any agent-read document. Use the new name.
@@ -371,6 +387,7 @@ alias) and broadened to cover any agent-read document. Use the new name.
 | `.agents/workflows/` | `full-review.js` — nine reviewers fanned out, one ranked report fanned in. Each axis reads its prompt from the matching `.agents/agents/` definition, so the two forms cannot drift |
 
 Issues live in **Linear**. Workspace **Development**, default team **Backend** (`BAC`).
+<!-- harness:agnostic -->
 Claude uses the server in `.mcp.json`. Codex receives the host-authorized server through
 `sbx --static-mcp linear`. MCP tools load at session start. PRs stay on GitHub.
 
@@ -380,6 +397,14 @@ and template-derived projects.
 
 Lifecycle hooks are defense in depth. Claude Code and Codex enable protected paths,
 formatting, verification, and session learning. Codex also blocks common secret reads.
+<!-- /harness:agnostic -->
+<!-- harness:claude
+Claude uses the server in `.mcp.json`. MCP tools load at session start. PRs stay on GitHub.
+
+Lifecycle hooks are defense in depth: protected paths, formatting, verification, session
+learning, and a guard on the reads and shell commands that would copy a secret into the
+transcript.
+/harness:claude -->
 CI and pre-commit enforce checks independently.
 
 Codex uses the persistent equivalent of `codex --yolo`: `approval_policy = "never"` and

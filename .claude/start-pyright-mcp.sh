@@ -1,0 +1,1 @@
+../.agents/start-pyright-mcp.sh
