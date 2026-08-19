@@ -84,7 +84,6 @@ shared scripts from `.claude/hooks/`:
 | `verify.py` (Stop) | Blocks the turn while the gates fail — **only** when the turn changed `.py` under `src/`, `tests/` or `.claude/hooks/`, or changed `pyproject.toml` |
 | `session_learnings.py` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain, and rebuilds the vault indexes via `vault_index.py`. Off unless `OBSIDIAN_VAULT_DIRECTORY` is set |
 
-
 The Stop gate makes a supported session walk-away-able. `HARNESS_SKIP_VERIFY=1` disables it.
 The legacy `CLAUDE_SKIP_VERIFY=1` name remains supported.
 Claude Code overrides a Stop hook after 8 consecutive blocks; if you hit that, the loop is

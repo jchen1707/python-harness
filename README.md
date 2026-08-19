@@ -352,7 +352,6 @@ Run `/setup-matt-pocock-skills` once per repository after installing. It configu
 issue tracker, the triage labels and the doc storage the skills write to; without it,
 half of them have nowhere to put their output.
 
-
 `/writing-great-skills` was **renamed** to `/writing-for-agents` upstream (breaking, no
 alias) and broadened to cover any agent-read document. Use the new name.
 

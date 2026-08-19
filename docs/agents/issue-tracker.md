@@ -19,7 +19,6 @@ another one with it.
 
 Claude reads Linear from `.mcp.json`. Docker MCP Toolkit supplies that connection.
 
-
 - Check it with `/mcp`; it appears as **linear**.
 - MCP servers load at **session start**. Sandbox injection changes require a new session.
 

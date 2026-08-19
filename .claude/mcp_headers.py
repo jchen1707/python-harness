@@ -20,7 +20,7 @@ Usage: `uv run --no-sync python .claude/mcp_headers.py <slot>`
 
 `<slot>` names the credential, not the provider, so two repositories hold two keys for the
 same service. That is what binds this repository to its own Linear workspace while
-`frontend-development-harness` keeps its own, with neither able to drift the other.
+`frontend-harness` keeps its own, with neither able to drift the other.
 """
 
 from __future__ import annotations
