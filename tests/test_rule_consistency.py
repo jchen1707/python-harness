@@ -17,7 +17,14 @@ Offline by construction — file reads only.
 
 from __future__ import annotations
 
+# harness:agnostic
+# Only the vendored-layer-A tests below read JSON, and those live on this branch alone:
+# `main` gets layer A from the plugin, so there is no vendored tree and no
+# `transform.json` to check. Left outside a region, this import survives into a `main`
+# whose only user of it does not — and `ruff` fails the generated tree on F401.
 import json
+
+# /harness:agnostic
 import re
 from pathlib import Path
 
