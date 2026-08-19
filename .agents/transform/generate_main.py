@@ -95,8 +95,14 @@ def materialise_symlinks(root: Path, expected: dict[str, str]) -> None:
     for link_path, target in expected.items():
         link = root / link_path
         if not link.is_symlink():
-            raise TransformError(f"{link_path} is not a symlink any more — the manifest is stale")
-        actual = os.readlink(link)
+            raise TransformError(
+                f"{link_path} is not a symlink — either the manifest is stale, or this "
+                f"checkout has `core.symlinks=false` and git wrote the link as a text file"
+            )
+        # `os.readlink` hands back the separator the platform stores, and git writes these
+        # links with backslashes on Windows. The manifest is one file read on both, so the
+        # comparison is made in the one form a manifest can be written in.
+        actual = os.readlink(link).replace("\\", "/")
         if actual != target:
             raise TransformError(f"{link_path} points at {actual!r}, manifest says {target!r}")
         resolved = (link.parent / target).resolve()
