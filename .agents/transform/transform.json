@@ -1,7 +1,6 @@
 {
   "symlinks": {
     ".claude/agents": "../.agents/agents",
-    ".claude/hooks": "../.agents/hooks",
     ".claude/skills": "../.agents/skills",
     ".claude/mcp_headers.py": "../.agents/mcp_headers.py",
     ".claude/start-pyright-mcp.sh": "../.agents/start-pyright-mcp.sh"
@@ -9,8 +8,7 @@
   "drop": [
     ".agents",
     ".codex",
-    ".claude/hooks/codex_session_learnings.py",
-    "tests/test_codex_hooks.py",
+    "tests/test_harness_hooks.py",
     "tests/test_generate_main.py",
     ".github/workflows/generate-main.yml",
     ".github/workflows/vendor-freshness.yml",
@@ -44,6 +42,18 @@
       "file": ".claude/settings.json",
       "from": "  \"enabledPlugins\": {\n    \"mattpocock-skills@claude-plugins-official\": true\n  },\n",
       "to": "  \"enabledPlugins\": {\n    \"harness@harness\": true,\n    \"mattpocock-skills@claude-plugins-official\": true\n  },\n"
+    },
+    {
+      "note": "The hooks reach this repo two ways, and never both at once. On v2 they are the vendored .mjs files, wired here by repo-relative path; on main the plugin's own hooks.json supplies them from ${CLAUDE_PLUGIN_ROOT}, and the .agents drop has already removed everything this stanza points at. Leaving it would wire four hooks to files that do not exist -- which does not error loudly, it just stops enforcing. Removed as a block rather than by a JSON-aware rule because the generator is one file in three repositories and a new operator would have to be written into all three; a block that goes stale fails the build, which is the same guarantee for none of that cost.",
+      "file": ".claude/settings.json",
+      "from": ",\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Read|Edit|Write|NotebookEdit|Bash|mcp__.*(edit|write|create|apply|read).*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\n              \"${CLAUDE_PROJECT_DIR}/.agents/vendor/harness/hooks/protect_paths.mjs\"\n            ],\n            \"timeout\": 30,\n            \"statusMessage\": \"Checking protected paths\\u2026\"\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": [\n      {\n        \"matcher\": \"Edit|Write|NotebookEdit|mcp__.*(edit|write|create|apply).*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\n              \"${CLAUDE_PROJECT_DIR}/.agents/vendor/harness/hooks/format_edited.mjs\"\n            ],\n            \"timeout\": 120,\n            \"statusMessage\": \"Formatting\\u2026\"\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\n              \"${CLAUDE_PROJECT_DIR}/.agents/vendor/harness/hooks/verify.mjs\"\n            ],\n            \"timeout\": 600,\n            \"statusMessage\": \"Verifying Definition of Done\\u2026\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\n              \"${CLAUDE_PROJECT_DIR}/.agents/vendor/harness/hooks/session_learnings.mjs\"\n            ],\n            \"timeout\": 300,\n            \"statusMessage\": \"Distilling session learnings\\u2026\"\n          }\n        ]\n      }\n    ]\n  }\n",
+      "to": "\n"
+    },
+    {
+      "note": "The Codex adapter is dropped on main, so the two files that configure it are not there to gate. Harmless to git -- a pathspec matching nothing is not an error -- but a config naming a path the branch does not have is exactly what test_nothing_points_at_a_directory_that_no_longer_exists exists to refuse, and the next reader would have no way to tell this dangling reference from a real one. JSON carries no comments, so the region markers the .py and .md files use are not available here.",
+      "file": "harness.config.json",
+      "from": "      \".claude/settings.json\",\n      \".codex/config.toml\",\n      \".codex/hooks.json\"\n",
+      "to": "      \".claude/settings.json\"\n"
     }
   ],
   "substitutions": [

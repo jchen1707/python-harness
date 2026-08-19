@@ -27,6 +27,19 @@ jobs:
       - name: Set up Python 3.12
         run: uv python install 3.12
 
+      # The hooks that enforce this repo's gates are JavaScript, and their suite runs
+      # inside pytest. `.nvmrc` is what makes that dependency declared rather than
+      # inherited from whatever the runner happens to ship -- which is the state this repo
+      # was in for months while it ran `full-review.js` with no manifest at all.
+      #
+      # No cache: `setup-node` fails the job in post-cleanup when the cache path it was
+      # told about does not exist, and there is no lockfile here to key one on. A red tick
+      # for a reason unrelated to what the job measures is the worst kind.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
       - name: Sync dependencies (dev tooling + approved app stack)
         # `dev` is a dependency-group (installed by default), not an optional-dependency
         # extra — so `--extra dev` would error. `--extra app` pulls in the approved stack.

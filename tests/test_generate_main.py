@@ -60,15 +60,37 @@ def test_the_canonical_directory_is_gone(generated: Path) -> None:
 def test_the_adapter_symlinks_became_real_files(generated: Path) -> None:
     """A symlink into `.agents/` is a dangling link once `.agents/` is dropped.
 
-    `.claude/workflows` is no longer in the list: `full-review.js` is layer A now, and on
-    this branch the plugin supplies it. Nothing is left under `.agents/workflows/` to link.
+    Two entries have left this list rather than been fixed. `.claude/workflows` went when
+    `full-review.js` became layer A, and `.claude/hooks` went when the four enforcement
+    hooks did: on this branch the plugin supplies both, so there is nothing local to link.
     """
-    for relative in (".claude/hooks", ".claude/agents"):
+    for relative in (".claude/agents",):
         path = generated / relative
         assert path.is_dir(), f"{relative} is missing"
         assert not path.is_symlink(), f"{relative} is still a symlink"
-    assert (generated / ".claude/hooks/verify.py").is_file()
     assert not (generated / ".claude/workflows").exists()
+    assert not (generated / ".claude/hooks").exists()
+
+
+def test_the_enforcement_layer_arrives_once_on_main(generated: Path) -> None:
+    """Two sets of hooks is worse than none, and worse than a broken one.
+
+    On `v2` the four hooks are the vendored `.mjs` files, wired by repo-relative path in
+    `.claude/settings.json`. On `main` the plugin's own `hooks.json` supplies them from
+    `${CLAUDE_PLUGIN_ROOT}` and `.agents/` is gone. A surviving `hooks` stanza here would
+    point four hooks at files that do not exist — which does not fail loudly. A PreToolUse
+    hook that cannot start does not block; a Stop hook that cannot start does not gate. The
+    repo would read as enforced and enforce nothing.
+    """
+    settings = json.loads((generated / ".claude/settings.json").read_text(encoding="utf-8"))
+    assert "hooks" not in settings, (
+        "main still declares its own hooks; the plugin already supplies them, so this "
+        "either double-fires or points at a dropped path"
+    )
+    assert settings["enabledPlugins"].get("harness@harness"), (
+        "main drops the vendored layer A and does not enable the plugin — nothing supplies "
+        "the hooks at all"
+    )
 
 
 def test_layer_a_arrives_once_on_main(generated: Path) -> None:
@@ -108,8 +130,9 @@ def test_nothing_points_at_a_directory_that_no_longer_exists(generated: Path) ->
         text = path.read_text(encoding="utf-8", errors="ignore")
         relative = path.relative_to(generated).as_posix()
         for needle in (".agents/", '".agents"', "'.agents'", ".codex/", '".codex"'):
-            # Prose recording why a rule exists may name the directory it removed.
-            if needle in text and not relative.startswith("tests/test_hook_matchers"):
+            # Prose recording why a rule exists may name the directory it removed. The
+            # hook suite that used to need this exception is dropped on main outright.
+            if needle in text:
                 offenders.append(f"{relative}: {needle}")
     assert not offenders, "generated main references removed paths:\n  " + "\n  ".join(offenders)
 

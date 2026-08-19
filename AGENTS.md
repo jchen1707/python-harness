@@ -74,15 +74,22 @@ feature branch and opening a PR needs no permission; committing to `main` does.
 
 ## What is enforced automatically
 
-CI and pre-commit are the portable enforcement layer. Harness adapters can run these
-shared scripts from `.agents/hooks/`:
+CI and pre-commit are the portable enforcement layer. The hooks are **layer A** — one
+Node implementation in [`harness`](https://github.com/jchen1707/harness), vendored here
+under `.agents/vendor/harness/hooks/` and pinned by sha. They name nothing about this
+repo: every path they act on is declared under `hooks` in `harness.config.json`.
 
 | Hook | Effect |
 | --- | --- |
-| `protect_paths.py` (PreToolUse) | Blocks edits to `.env`, `migrations/`, `generated/`, `uv.lock` |
-| `format_edited.py` (PostToolUse) | Runs `ruff format` + `ruff check --fix` on each edited `.py` |
-| `verify.py` (Stop) | Blocks the turn while the gates fail — **only** when the turn changed `.py` under `src/`, `tests/` or `.agents/hooks/`, or changed `pyproject.toml` |
-| `session_learnings.py` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain, and rebuilds the vault indexes via `vault_index.py`. Off unless `OBSIDIAN_VAULT_DIRECTORY` is set |
+| `protect_paths.mjs` (PreToolUse) | Refuses a **write** to `migrations/`, `generated/`, `uv.lock` and the vendored tree; refuses a **read** of `.env` and `.env.*`; refuses the shell commands that reach a secret without naming a file |
+| `format_edited.mjs` (PostToolUse) | Runs `ruff format` then `ruff check --fix --unfixable F401` on each edited `.py` |
+| `verify.mjs` (Stop) | Blocks the turn while the gates fail — **only** when the turn changed `.py` or `.mjs` under a gated path, or changed a file that defines the gates |
+| `session_learnings.mjs` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain, and rebuilds both vault indexes. Off unless `OBSIDIAN_VAULT_DIRECTORY` is set |
+
+They are JavaScript because a plugin ships one `hooks/` directory and one language had to
+win. This repo already ran `full-review.js` with no `package.json` and no `.nvmrc`, so it
+gained a *declared* dependency rather than a new one; the frontend repo gained nothing.
+`.nvmrc` says 22.
 
 <!-- harness:agnostic -->
 Claude Code calls these scripts directly. Codex adapters accept `apply_patch` payloads and
@@ -102,8 +109,9 @@ stuck on something it cannot fix.
 
 The gated set is *code the gates check, plus the config that defines them* — so prose,
 plans and docs still end freely and never burn override budget. Widen it by editing
-`GATED_PATHS` / `GATED_FILES` in `verify.py`; `tests/test_verify_hook.py` pins the
-pathspec, so dropping an entry fails the suite rather than silently going quiet.
+`hooks.gatedPaths` / `hooks.gatedFiles` in `harness.config.json`;
+`tests/test_harness_hooks.py` pins them against literals, so dropping an entry fails the
+suite rather than silently going quiet.
 
 ## Parallel development
 
@@ -343,14 +351,14 @@ When compacting, preserve the list of modified files and the commands needed to 
 
 A layer above memory, in the user's own notes rather than the agent's:
 
-- **Write** — `session_learnings.py` (SessionEnd) distils the session's mistakes and their
+- **Write** — `session_learnings.mjs` (SessionEnd) distils the session's mistakes and their
   fixes into a dated note under `$OBSIDIAN_VAULT_DIRECTORY/Project Learnings`.
   It splits the note into *Implementation* and *Architecture & design* learnings.
   It writes **nothing** when a session taught nothing.
   SessionEnd fires only on a clean exit — a killed or still-open terminal never distils.
-  `distil_backlog.py` recovers those sessions; it lists them on a dry run by default and
-  distils with `--run`.
-- **One note per session.** `note_path` keys the filename on the session id and reuses the
+  `node .agents/vendor/harness/hooks/distil_backlog.mjs` recovers those sessions; it lists
+  them on a dry run by default and distils with `--run`.
+- **One note per session.** `placeNote` keys the note on the session id and reuses the
   note that session already has. A session distils more than once — it is resumed and ends
   again, or the recovery script reaches it while it is still open — and dating each write
   from the clock turned one session into several near-identical notes. The rewrite is not
@@ -360,9 +368,10 @@ A layer above memory, in the user's own notes rather than the agent's:
   child session writes a transcript holding the prompt *and* the finished note. Distilling
   it returns that note again under a second session id. Two guards: the child runs in
   `DISTILLER_HOME`, outside every repo, so new child transcripts land where nothing scans;
-  and `is_distiller_transcript` recognises the ones already on disk.
+  and `isDistillerTranscript` recognises the ones already on disk, including the ones the
+  two predecessor implementations wrote before the guard was one.
 - **Audit** — fixing a writer removes nothing it already wrote, so
-  `distil_backlog.py --audit` reads the vault and reports the notes both bugs left there.
+  `distil_backlog.mjs --audit` reads the vault and reports the notes both bugs left there.
   `--audit --run` deletes the notes written from the distiller's own transcript, which are
   artifacts. It only reports a session holding several notes, because each of those files
   distils a different part of one real session and the merge is a judgement call.
@@ -370,9 +379,11 @@ A layer above memory, in the user's own notes rather than the agent's:
   `_VAULT_INDEX.md` at the vault root holds one row per note in the whole vault — path,
   tags, what it covers. It rebuilds on every session end, whether or not a learning was
   written. `Project Learnings/_INDEX.md` holds the session notes, with date and project.
-  It rebuilds only when that session wrote a note. `vault_index.py` owns
-  `_VAULT_INDEX.md`; `session_learnings.py` owns `_INDEX.md`. Run `vault_index.py`
-  standalone to refresh the vault index without ending a session.
+  It rebuilds only when that session wrote a note. `vault_index.mjs` owns
+  `_VAULT_INDEX.md`; `session_learnings.mjs` owns `_INDEX.md`. Run `vault_index.mjs`
+  standalone to refresh the vault index without ending a session. Both are layer A now, so
+  a session ending in **either** harness repo indexes the vault — the lag this section used
+  to document is gone.
 - **Read** — `/search-second-brain <topic>` reads the indexes, then opens only what
   matches, and reports the pattern across them with citations. Read-only by design.
 
