@@ -35,16 +35,31 @@ LAYER_WORDS = frozenset(CANONICAL_LAYERS) | {"core"}
 ARROW = re.compile(r"──▶|->|→")
 
 # Directories that are not ours to police.
-EXCLUDED = ("/.venv/", "/node_modules/", "/.claude/plugins/", "/.claude/plans/", "/.git/")
+EXCLUDED = (
+    "/.venv/",
+    "/node_modules/",
+    "/.claude/plugins/",
+    "/.claude/plans/",
+    "/.git/",
+    # Layer A. Generated, pinned by sha, and owned in `harness` — see the docstring
+    # on `rule_files`.
+    "/.claude/vendor/",
+)
 
 
 def rule_files() -> list[Path]:
-    """Every file in the repo that states or restates a rule.
+    """Every file in **this repo** that states or restates a rule.
 
-    Not only Markdown. `.claude/workflows/*.js` embeds fallback reviewer prompts, and
-    those restate the layering rule in prose. Leaving them out is how the `full-review`
-    standards fallback kept the pre-`ai/` chain after every Markdown copy was fixed —
-    the one copy that fires precisely when the good copy is missing.
+    `.claude/workflows/*.js` used to be in this list because the workflow embedded
+    fallback reviewer prompts that restated the layering rule — and that fallback is how
+    the pre-`ai/` chain survived after every Markdown copy was fixed, in the one copy that
+    fires precisely when the good copy is missing. Layer A removed the fallbacks entirely
+    rather than keeping them correct, so the file is gone and so is the pattern.
+
+    The vendored tree is deliberately absent. It is generated, pinned by sha and policed
+    upstream; a finding against it is not actionable here, and editing it to satisfy this
+    test would break the freshness check on the next sync. `docs/agents/subagents/*.md` is
+    present instead — that is where this repo now states the rules a reviewer checks.
     """
     patterns = (
         "CLAUDE.md",
@@ -54,8 +69,6 @@ def rule_files() -> list[Path]:
         "tests/CLAUDE.md",
         ".claude/agents/*.md",
         ".claude/skills/*/SKILL.md",
-        ".claude/commands/*.md",
-        ".claude/workflows/*.js",
         ".out-of-scope/*.md",
     )
     found: set[Path] = set()
