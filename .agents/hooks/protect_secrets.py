@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 """Block reads and shell commands that would copy a secret into the transcript.
 
-Wired for **both** harnesses: `PreToolUse` on `Read|Bash|mcp__.*read.*` in
-`.claude/settings.json`, and the matching stanza in `.codex/hooks.json`. It was Codex-only
-for a while, which left Claude Code with the deny list alone — and a deny entry is a
+Wired on `PreToolUse` for `Read|Bash|mcp__.*read.*`. It was reachable from one harness
+only for a while, which left the other with the deny list alone — and a deny entry is a
 literal pattern, so it stops `cat .env` and not the shell command that reaches the same
 bytes another way.
 

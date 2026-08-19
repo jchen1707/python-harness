@@ -1,0 +1,47 @@
+{
+  "symlinks": {
+    ".claude/agents": "../.agents/agents",
+    ".claude/hooks": "../.agents/hooks",
+    ".claude/skills": "../.agents/skills",
+    ".claude/workflows": "../.agents/workflows",
+    ".claude/mcp_headers.py": "../.agents/mcp_headers.py",
+    ".claude/start-pyright-mcp.sh": "../.agents/start-pyright-mcp.sh"
+  },
+  "drop": [
+    ".agents",
+    ".codex",
+    ".claude/hooks/codex_session_learnings.py",
+    "tests/test_codex_hooks.py",
+    "tests/test_generate_main.py",
+    ".github/workflows/generate-main.yml"
+  ],
+  "instructions": {
+    "from": "AGENTS.md",
+    "to": "CLAUDE.md"
+  },
+  "blocks": [
+    {
+      "note": "Two per-file-ignore keys collapse onto one path once .agents/ becomes .claude/.",
+      "file": "pyproject.toml",
+      "from": "\".agents/mcp_headers.py\" = [\"S603\", \"S607\"]\n\".claude/mcp_headers.py\" = [\"S603\", \"S607\"]\n",
+      "to": "\".claude/mcp_headers.py\" = [\"S603\", \"S607\"]\n"
+    }
+  ],
+  "substitutions": [
+    {
+      "note": "Every reference to the canonical directory, as a path fragment.",
+      "from": ".agents/",
+      "to": ".claude/"
+    },
+    {
+      "note": "And as a path *segment* \u2014 `Path(...) / \".agents\" / \"hooks\"` never contains a slash.",
+      "regex": "([\"'])\\.agents\\1",
+      "to": "\\1.claude\\1"
+    },
+    {
+      "note": "The instruction file itself, in prose and in glob patterns.",
+      "regex": "\\bAGENTS\\.md\\b",
+      "to": "CLAUDE.md"
+    }
+  ]
+}

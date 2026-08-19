@@ -62,8 +62,10 @@ GATED_FILES: frozenset[str] = frozenset(
         "pyproject.toml",
         ".agents/mcp_headers.py",
         ".claude/settings.json",
+        # harness:agnostic
         ".codex/config.toml",
         ".codex/hooks.json",
+        # /harness:agnostic
     }
 )
 

@@ -138,6 +138,7 @@ def test_every_convention_file_is_indexed() -> None:
     assert not orphans, "convention files not indexed:\n  " + "\n  ".join(orphans)
 
 
+# harness:agnostic
 def test_claude_files_import_agents_rules() -> None:
     """Claude compatibility files must import the canonical rules explicitly."""
     agents_files = [REPO_ROOT / "AGENTS.md", *sorted(REPO_ROOT.glob("src/**/AGENTS.md"))]
@@ -175,6 +176,7 @@ def test_full_review_surfaces_cover_the_same_axes() -> None:
 # is correct; the file simply is not committed. Checking these makes the test pass or
 # fail on local leftovers rather than on the repo — which is what happened: it was green
 # locally off a stale `/plan` artifact and red on CI.
+# /harness:agnostic
 GENERATED_PREFIXES = (".agents/plans/",)
 
 
@@ -187,9 +189,14 @@ def test_referenced_markdown_paths_exist(doc: str) -> None:
     (`.agents/plans/plan.md`); neither is broken.
     """
     text = (REPO_ROOT / doc).read_text(encoding="utf-8")
+    # harness:agnostic
     pattern = re.compile(
         r"`((?:src/app|tests|docs|\.agents|\.claude|\.out-of-scope)[\w/.\-]*?\.md)`"
     )
+    # /harness:agnostic
+    # harness:claude
+    # pattern = re.compile(r"`((?:src/app|tests|docs|\.claude|\.out-of-scope)[\w/.\-]*?\.md)`")
+    # /harness:claude
 
     missing = sorted(
         {

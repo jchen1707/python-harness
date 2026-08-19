@@ -19,6 +19,7 @@ another one with it.
 
 Claude reads Linear from `.mcp.json`. Docker MCP Toolkit supplies that connection.
 
+<!-- harness:agnostic -->
 Codex receives Linear from the sandbox runtime. Register the remote server once on the
 host:
 
@@ -29,6 +30,7 @@ sbx mcp add linear --url https://mcp.linear.app/mcp
 Start every Codex sandbox with `--static-mcp linear`. This injects the authorized server
 into new sessions and new template-derived projects. Do not add the credential to this
 repository.
+<!-- /harness:agnostic -->
 
 - Check it with `/mcp`; it appears as **linear**.
 - MCP servers load at **session start**. Sandbox injection changes require a new session.

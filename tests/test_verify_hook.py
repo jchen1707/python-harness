@@ -73,8 +73,10 @@ def test_porcelain_path_extracts_the_file_on_disk(
         # Wires the hooks; its matchers are pinned by tests/test_hook_matchers.py,
         # so a broken edit here fails pytest without touching any Python.
         " M .claude/settings.json",
+        # harness:agnostic
         " M .codex/config.toml",
         " M .codex/hooks.json",
+        # /harness:agnostic
     ],
 )
 def test_gated_paths_trigger_the_gates(
@@ -125,8 +127,10 @@ def test_git_is_asked_about_every_gated_path(
         ".agents/hooks",
         "pyproject.toml",
         ".claude/settings.json",
+        # harness:agnostic
         ".codex/config.toml",
         ".codex/hooks.json",
+        # /harness:agnostic
         ".agents/mcp_headers.py",
     ):
         assert expected in argv, f"{expected} missing from the git pathspec"
