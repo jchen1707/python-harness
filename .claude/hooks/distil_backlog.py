@@ -218,11 +218,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    directory_raw = os.environ.get("CLAUDE_LEARNINGS_DIR", "").strip()
-    if not directory_raw:
-        print("distil_backlog: CLAUDE_LEARNINGS_DIR is not set", file=sys.stderr)
+    vault_raw = os.environ.get("OBSIDIAN_VAULT_DIRECTORY", "").strip()
+    if not vault_raw:
+        print("distil_backlog: OBSIDIAN_VAULT_DIRECTORY is not set", file=sys.stderr)
         return 1
-    directory = Path(directory_raw)
+    vault = Path(vault_raw)
+    if not vault.is_absolute() or not vault.is_dir():
+        print(f"distil_backlog: {vault} is not an absolute directory", file=sys.stderr)
+        return 1
+    directory = vault / "Project Learnings"
     if not directory.is_dir():
         print(f"distil_backlog: {directory} is not a directory", file=sys.stderr)
         return 1

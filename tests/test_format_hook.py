@@ -12,6 +12,9 @@ pinned here, the same way `tests/test_verify_hook.py` pins `GATED_PATHS`.
 from __future__ import annotations
 
 import importlib.util
+import io
+import json
+import sys
 from pathlib import Path
 from types import ModuleType
 
@@ -23,11 +26,15 @@ HOOK_PATH = Path(__file__).resolve().parents[1] / ".claude" / "hooks" / "format_
 @pytest.fixture(scope="module")
 def hook() -> ModuleType:
     """Load the hook by path — `.claude/hooks` is not an importable package."""
-    spec = importlib.util.spec_from_file_location("_format_hook_under_test", HOOK_PATH)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    sys.path.insert(0, str(HOOK_PATH.parent))
+    try:
+        spec = importlib.util.spec_from_file_location("_format_hook_under_test", HOOK_PATH)
+        assert spec is not None
+        assert spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.remove(str(HOOK_PATH.parent))
     return module
 
 
@@ -42,3 +49,30 @@ def test_fix_never_removes_an_unused_import(hook: ModuleType) -> None:
 def test_fix_still_runs_ruff_check(hook: ModuleType) -> None:
     """The args must still invoke `ruff check`; pinning a flag on a dead command is no pin."""
     assert next(iter(hook.FIX_ARGS)) == "check"
+
+
+def test_codex_patch_formats_each_python_file(
+    hook: ModuleType, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A multi-file Codex patch must format every Python path."""
+    command = "\n".join(
+        (
+            "*** Begin Patch",
+            "*** Update File: src/app/a.py",
+            "*** Update File: README.md",
+            "*** Add File: tests/test_a.py",
+            "*** End Patch",
+        )
+    )
+    payload = json.dumps({"tool_input": {"command": command}, "cwd": "/repo"})
+    calls: list[tuple[list[str], str]] = []
+    monkeypatch.setattr(sys, "stdin", io.StringIO(payload))
+    monkeypatch.setattr(hook, "run", lambda args, cwd: calls.append((args, cwd)))
+
+    assert hook.main() == 0
+    assert [call[0][-1] for call in calls] == [
+        "src/app/a.py",
+        "src/app/a.py",
+        "tests/test_a.py",
+        "tests/test_a.py",
+    ]

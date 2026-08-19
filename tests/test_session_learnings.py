@@ -12,6 +12,7 @@ notes directory under `tmp_path`.
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
 import re
 import sys
@@ -64,6 +65,34 @@ def write_transcript(path: Path, first_user_text: str) -> None:
         json.dumps({"message": {"role": "assistant", "content": [{"type": "text", "text": "ok"}]}}),
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def test_codex_transcript_is_flattened(hook: ModuleType, tmp_path: Path) -> None:
+    """Codex response items must reach the shared distiller."""
+    transcript = tmp_path / "codex.jsonl"
+    lines = [
+        {"type": "session_meta", "payload": {"session_id": "thread"}},
+        {
+            "type": "response_item",
+            "payload": {
+                "role": "user",
+                "content": [{"type": "input_text", "text": "Fix the adapter."}],
+            },
+        },
+        {
+            "type": "response_item",
+            "payload": {
+                "role": "assistant",
+                "content": [{"type": "output_text", "text": "Adapter fixed."}],
+            },
+        },
+    ]
+    transcript.write_text("\n".join(json.dumps(line) for line in lines), encoding="utf-8")
+
+    flattened = hook.read_transcript(str(transcript))
+
+    assert "user: Fix the adapter." in flattened
+    assert "assistant: Adapter fixed." in flattened
 
 
 def test_a_second_distillation_overwrites_the_session_note(
@@ -242,7 +271,7 @@ def test_a_note_without_front_matter_is_skipped(hook: ModuleType, tmp_path: Path
     assert "1 notes." in (tmp_path / "_INDEX.md").read_text(encoding="utf-8")
 
 
-def test_the_vault_index_is_rebuilt_even_when_the_session_taught_nothing(
+def test_the_vault_index_is_rebuilt_even_when_the_learnings_directory_is_missing(
     hook: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """`vault_index.refresh()` has to run above every early return in `main`.
@@ -253,18 +282,74 @@ def test_the_vault_index_is_rebuilt_even_when_the_session_taught_nothing(
     goes stale for exactly the notes the user wrote themselves.
 
     Driven through `main` rather than by reading the source, so it pins the behaviour and
-    not the line number. `CLAUDE_LEARNINGS_DIR` is unset here, which returns early well
-    before anything is distilled.
+    not the line number. The derived directory is missing here, which returns early before
+    anything is distilled.
     """
     (tmp_path / "Handwritten.md").write_text(
         "A note the user wrote in Obsidian, never seen by the hook.\n", encoding="utf-8"
     )
     monkeypatch.delenv("CLAUDE_LEARNINGS_SKIP", raising=False)
     monkeypatch.delenv("CLAUDE_LEARNINGS_OFF", raising=False)
-    monkeypatch.delenv("CLAUDE_LEARNINGS_DIR", raising=False)
-    monkeypatch.setenv("CLAUDE_VAULT_DIR", str(tmp_path))
+    monkeypatch.setenv("OBSIDIAN_VAULT_DIRECTORY", str(tmp_path))
 
     assert hook.main() == 0
 
     index = (tmp_path / "_VAULT_INDEX.md").read_text(encoding="utf-8")
     assert "Handwritten.md" in index
+
+
+@pytest.mark.parametrize("value", [None, ""])
+def test_main_writes_nothing_without_a_vault_root(
+    hook: ModuleType, monkeypatch: pytest.MonkeyPatch, value: str | None
+) -> None:
+    """Absent and empty configuration disable the SessionEnd writer."""
+    monkeypatch.delenv("CLAUDE_LEARNINGS_SKIP", raising=False)
+    monkeypatch.delenv("CLAUDE_LEARNINGS_OFF", raising=False)
+    if value is None:
+        monkeypatch.delenv("OBSIDIAN_VAULT_DIRECTORY", raising=False)
+    else:
+        monkeypatch.setenv("OBSIDIAN_VAULT_DIRECTORY", value)
+
+    assert hook.main() == 0
+
+
+def test_main_reports_a_missing_derived_learnings_directory(
+    hook: ModuleType,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The writer reports a missing `Project Learnings` child and exits cleanly."""
+    monkeypatch.delenv("CLAUDE_LEARNINGS_SKIP", raising=False)
+    monkeypatch.delenv("CLAUDE_LEARNINGS_OFF", raising=False)
+    monkeypatch.setenv("OBSIDIAN_VAULT_DIRECTORY", str(tmp_path))
+
+    assert hook.main() == 0
+    assert f"{tmp_path / 'Project Learnings'} is not a directory" in capsys.readouterr().err
+
+
+def test_main_uses_the_derived_learnings_directory(
+    hook: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A configured vault sends the distiller to its `Project Learnings` child."""
+    learnings = tmp_path / "Project Learnings"
+    learnings.mkdir()
+    monkeypatch.delenv("CLAUDE_LEARNINGS_SKIP", raising=False)
+    monkeypatch.delenv("CLAUDE_LEARNINGS_OFF", raising=False)
+    monkeypatch.setenv("OBSIDIAN_VAULT_DIRECTORY", str(tmp_path))
+    monkeypatch.setattr(
+        sys,
+        "stdin",
+        io.StringIO(json.dumps({"transcript_path": "session.jsonl", "session_id": "session"})),
+    )
+    received: list[Path] = []
+
+    def record_directory(
+        _transcript_path: str, _session_id: str, _cwd: str, directory: Path
+    ) -> None:
+        received.append(directory)
+
+    monkeypatch.setattr(hook, "distil_transcript", record_directory)
+
+    assert hook.main() == 0
+    assert received == [learnings]

@@ -138,10 +138,6 @@ def test_every_convention_file_is_indexed() -> None:
     assert not orphans, "convention files not indexed:\n  " + "\n  ".join(orphans)
 
 
-# Generated at runtime and gitignored, so absent on a clean checkout. A doc naming one
-# is correct; the file simply is not committed. Checking these makes the test pass or
-# fail on local leftovers rather than on the repo — which is what happened: it was green
-# locally off a stale `/plan` artifact and red on CI.
 GENERATED_PREFIXES = (".claude/plans/",)
 
 

@@ -151,6 +151,15 @@ def block_write(hook: ModuleType, monkeypatch: pytest.MonkeyPatch, path: str) ->
     return code
 
 
+def block_patch(hook: ModuleType, monkeypatch: pytest.MonkeyPatch, path: str) -> int:
+    """Run the hook against one Codex apply_patch payload."""
+    command = f"*** Begin Patch\n*** Update File: {path}\n@@\n-old\n+new\n*** End Patch"
+    payload = json.dumps({"tool_input": {"command": command}, "cwd": str(PROJECT)})
+    monkeypatch.setattr(sys, "stdin", io.StringIO(payload))
+    code: int = hook.main()
+    return code
+
+
 @pytest.mark.parametrize("rule", SECRET_READ_RULES)
 def test_reading_a_secret_file_is_denied(rule: str) -> None:
     """A missing rule here is a key in the transcript, which rotation is the only fix for."""
@@ -203,3 +212,10 @@ def test_writing_the_example_file_is_allowed(
     hook: ModuleType, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     assert block_write(hook, monkeypatch, ".env.example") == 0
+
+
+@pytest.mark.parametrize("path", [".env", "uv.lock", "src/app/migrations/001.py"])
+def test_codex_patch_to_protected_path_is_refused(
+    hook: ModuleType, monkeypatch: pytest.MonkeyPatch, path: str
+) -> None:
+    assert block_patch(hook, monkeypatch, path) == 2

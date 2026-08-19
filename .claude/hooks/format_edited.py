@@ -14,6 +14,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from protect_paths import edited_paths
+
 # `--unfixable F401`: never auto-remove an unused import. This hook fires after every
 # single edit, so in a batch it runs between the edit that adds an import and the edit
 # that adds the import's first use — an F401 autofix at that moment deletes the import
@@ -35,13 +37,12 @@ def main() -> int:
     except (json.JSONDecodeError, ValueError):
         return 0
 
-    raw = (payload.get("tool_input") or {}).get("file_path")
-    if not raw or Path(raw).suffix != ".py":
-        return 0
-
     cwd = payload.get("cwd", "")
-    run(["uv", "run", "ruff", "format", raw], cwd)
-    run(["uv", "run", "ruff", *FIX_ARGS, raw], cwd)
+    for raw in edited_paths(payload.get("tool_input")):
+        if Path(raw).suffix != ".py":
+            continue
+        run(["uv", "run", "ruff", "format", raw], cwd)
+        run(["uv", "run", "ruff", *FIX_ARGS, raw], cwd)
     return 0
 
 

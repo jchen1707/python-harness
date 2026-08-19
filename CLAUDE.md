@@ -74,18 +74,20 @@ feature branch and opening a PR needs no permission; committing to `main` does.
 
 ## What is enforced automatically
 
-Hooks run in the harness, so they hold regardless of what any instruction here says. See
-`.claude/hooks/`:
+CI and pre-commit are the portable enforcement layer. Harness adapters can run these
+shared scripts from `.claude/hooks/`:
 
 | Hook | Effect |
 | --- | --- |
 | `protect_paths.py` (PreToolUse) | Blocks edits to `.env`, `migrations/`, `generated/`, `uv.lock` |
 | `format_edited.py` (PostToolUse) | Runs `ruff format` + `ruff check --fix` on each edited `.py` |
 | `verify.py` (Stop) | Blocks the turn while the gates fail — **only** when the turn changed `.py` under `src/`, `tests/` or `.claude/hooks/`, or changed `pyproject.toml` |
-| `session_learnings.py` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain, and rebuilds the vault indexes via `vault_index.py`. Off unless `CLAUDE_LEARNINGS_DIR` is set |
+| `session_learnings.py` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain, and rebuilds the vault indexes via `vault_index.py`. Off unless `OBSIDIAN_VAULT_DIRECTORY` is set |
 
-The Stop gate is what makes a session walk-away-able. `CLAUDE_SKIP_VERIFY=1` disables it.
-The harness overrides a Stop hook after 8 consecutive blocks; if you hit that, the loop is
+
+The Stop gate makes a supported session walk-away-able. `HARNESS_SKIP_VERIFY=1` disables it.
+The legacy `CLAUDE_SKIP_VERIFY=1` name remains supported.
+Claude Code overrides a Stop hook after 8 consecutive blocks; if you hit that, the loop is
 stuck on something it cannot fix.
 
 The gated set is *code the gates check, plus the config that defines them* — so prose,
@@ -95,14 +97,12 @@ pathspec, so dropping an entry fails the suite rather than silently going quiet.
 
 ## Parallel development
 
-Worktrees are the unit of isolation — separate checkouts mean parallel agents cannot collide
-on files. `.claude/agents/test-writer.md` sets `isolation: worktree`; add it to any subagent
-that writes. Claude Code blocks a worktree agent from redirecting git back into the main
-checkout, so the isolation actually holds.
+Worktrees are the unit of isolation. Separate checkouts prevent parallel agents from
+changing the same files. `.claude/agents/test-writer.md` requests worktree isolation.
+Harnesses without frontmatter support must create the worktree before starting the agent.
 
-Subagents live in `.claude/agents/`, each defining its own tools and model. Their names and
-descriptions are loaded into every session automatically from that frontmatter — do not
-restate them here, or the copy drifts.
+Subagent prompts live in `.claude/agents/`. Harness adapters map their tool and model hints
+to native controls. Treat unsupported frontmatter fields as advisory.
 
 The nine reviewers are also the nine axes of `full-review.js`, which reads each prompt from
 the agent file rather than restating it. Add an axis by writing the agent file and adding
@@ -126,7 +126,7 @@ signal is the whole point.
 
 ## Symbol navigation (LSP) — prefer it to grep
 
-`pyright-lsp` in `.mcp.json` runs pyright's language server behind MCP. It answers
+`pyright-lsp` runs pyright's language server behind MCP, started from `.mcp.json`. It answers
 questions about **symbols**, where grep answers questions about **text**.
 
 Use it when the question is semantic:
@@ -147,9 +147,8 @@ string. On a name like `run`, `get` or `Settings`, grep returns noise and you gu
 what it is good at — text that is not a symbol: config keys, log messages, TODO markers,
 strings in Markdown.
 
-The server is declared with `--workspace .`, so it resolves to whatever clone it starts
-in. Check it with `/mcp`. MCP servers load at session start, so a fresh install needs a
-restart. One-time machine setup is in the README.
+The launcher uses `--workspace .`, so it resolves the clone that starts it. It installs
+pinned tools in the sandbox cache. Check the server with `/mcp` after session startup.
 
 ## Standards
 
@@ -241,18 +240,11 @@ Fixed in `pyproject.toml` (`app` extra) — read it there. What the file doesn't
 
 ## Issue tracker
 
-**Linear**, as a project MCP server in `.mcp.json` — check with `/mcp`, where it shows as
-*linear*. Workspace **Development**, default team **Backend** (`BAC`). It authenticates
-with an API key. `.mcp.json` carries only a `headersHelper` line naming the credential slot
-`linear-py`, and both it and `.claude/settings.json` are committed. MCP tools load at
-session start, so storing the key mid-session needs a restart. Conventions, tool discovery
-and wayfinding: `docs/agents/issue-tracker.md`. PRs stay on GitHub.
-
-**The key lives in the OS credential store, never in an environment variable.**
-`.claude/mcp_headers.py` reads the slot at connection time and writes the header to stdout,
-which Claude Code consumes itself. A `${VAR}` header would put the key in every Bash
-subprocess, where one careless `echo` compromises it. Storing, verifying and rotating:
-`docs/agents/secrets.md`.
+**Linear**, through the Docker MCP Toolkit gateway in `.mcp.json` — check with `/mcp`, where
+it shows as *linear*. Workspace **Development**, default team **Backend** (`BAC`). MCP tools
+load at session start.
+Conventions, tool discovery and wayfinding: `docs/agents/issue-tracker.md`. PRs stay on
+GitHub.
 
 Branch as `<type>/<TEAM-NUM>-<slug>` (e.g. `feat/BAC-412-vector-store`) so `/code-review`
 can resolve the originating ticket mechanically.
@@ -270,12 +262,10 @@ can resolve the originating ticket mechanically.
 
 ## Where commands come from
 
-- `.claude/commands/` and `.claude/skills/` — repo-owned and `uv`-aware. Edit freely. The
-  names and descriptions are already in the session's skill listing; do not enumerate them
-  here.
-- **`mattpocock-skills` plugin** — declared in `.claude/settings.json`; files live under
-  `~/.claude/plugins/`. Installed from upstream's marketplace (`mattpocock/skills`), **not**
-  Anthropic's mirror, which lags a version behind. Never vendor them into the repo.
+- `.claude/skills/` is the canonical repo-owned skill directory.
+- `.claude/commands/` contains the slash-command wrappers over those skills.
+- `mattpocock/skills` is optional third-party functionality, installed as the
+  `mattpocock-skills@claude-plugins-official` plugin.
 
 ## Memory
 
@@ -290,8 +280,9 @@ When compacting, preserve the list of modified files and the commands needed to 
 A layer above memory, in the user's own notes rather than the agent's:
 
 - **Write** — `session_learnings.py` (SessionEnd) distils the session's mistakes and their
-  fixes into a dated note under `CLAUDE_LEARNINGS_DIR`, split into *Implementation* and
-  *Architecture & design* learnings. It writes **nothing** when a session taught nothing.
+  fixes into a dated note under `$OBSIDIAN_VAULT_DIRECTORY/Project Learnings`.
+  It splits the note into *Implementation* and *Architecture & design* learnings.
+  It writes **nothing** when a session taught nothing.
   SessionEnd fires only on a clean exit — a killed or still-open terminal never distils.
   `distil_backlog.py` recovers those sessions; it lists them on a dry run by default and
   distils with `--run`.
@@ -325,10 +316,9 @@ An Obsidian `.base` file is a **query evaluated by Obsidian's UI**, so reading o
 the query, never any notes. Bases are for the human; the Markdown indexes are for the
 agent. Do not use `LLM.base` for retrieval.
 
-Set `CLAUDE_LEARNINGS_DIR` in **user** settings, never in this repo's committed
-`.claude/settings.json` — a clone must not inherit a path to somebody else's vault.
-`CLAUDE_VAULT_DIR` sets the vault root, and defaults to the parent of the learnings
-directory, so the usual layout needs no second variable.
+Set `OBSIDIAN_VAULT_DIRECTORY` in **user** settings, never in this repo's committed
+`.claude/settings.json`. A clone must not inherit a path to somebody else's vault.
+The hooks derive the learnings directory as `<vault>/Project Learnings`.
 
 Three tiers, deliberately: memory is for this project's facts, the second brain is for
 transferable lessons across projects, and `CLAUDE.md` / `docs/architecture.md` are for

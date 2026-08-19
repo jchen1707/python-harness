@@ -1,8 +1,6 @@
 ---
 name: verify
 description: Run the Definition of Done gates and report the actual output as evidence. Use before claiming work is complete, before opening a PR, or whenever asked whether the change actually works.
-argument-hint: "[--integration]"
-allowed-tools: Bash(uv run:*), Bash(docker compose:*), Read, Grep, Glob
 ---
 
 Prove the change works. **Paste real command output — never assert success.**

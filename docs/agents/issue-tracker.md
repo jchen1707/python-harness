@@ -17,41 +17,17 @@ another one with it.
 
 ## Connecting
 
-Linear is a **project MCP server**, declared in this repo's `.mcp.json` and pre-approved
-through `.claude/settings.json` → `enabledMcpjsonServers`. A clone picks it up with no
-per-account setup. It replaced the claude.ai account connector, which followed the account
-rather than the repo and could not be pinned to a workspace here.
+Claude reads Linear from `.mcp.json`. Docker MCP Toolkit supplies that connection.
 
-```json
-"linear": {
-  "type": "http",
-  "url": "https://mcp.linear.app/mcp",
-  "headersHelper": "uv run --no-sync python \"${CLAUDE_PROJECT_DIR}/.claude/mcp_headers.py\" linear-py"
-}
-```
-
-**`.mcp.json` holds the slot name, never the value.** The key lives in the OS credential
-store. `.claude/mcp_headers.py` reads it at connection time and writes the `Authorization`
-header to stdout, which Claude Code consumes itself, so the value never enters a
-transcript. Both `.mcp.json` and `.claude/settings.json` are tracked, so a key written into
-either is a key pushed to GitHub.
-
-Do **not** move this key to `~/.claude/settings.json` → `env`, and do not reintroduce a
-`${LINEAR_API_KEY}` header. Both put the value in every Bash subprocess. Storing,
-verifying and rotating: `docs/agents/secrets.md`.
 
 - Check it with `/mcp`; it appears as **linear**.
-- MCP servers load at **session start**. Adding the key or the server mid-session does not
-  make the tools available until you restart.
-- Linear also serves `https://mcp.linear.app/mcp/readonly`. Point a read-only agent at that
-  rather than trusting it not to write.
+- MCP servers load at **session start**. Sandbox injection changes require a new session.
 
 ## Discovering the tools
 
 **List the tools before first use rather than assuming names.** Tools are currently
-prefixed `mcp__linear__`, but that follows the server name in `.mcp.json` — it was
-`mcp__claude_ai_Linear__` under the old connector — and the surface changes between
-releases.
+prefixed `mcp__linear__`. The prefix follows the configured or injected server name. The
+surface changes between releases.
 
 `/mcp` shows the connected servers and their tools. Match the operation you need from the
 table below to what is actually offered.

@@ -12,9 +12,8 @@ index that only lists notes with a `summary:` field would start out covering a f
 of the vault and silently stay there. Front matter is used when present and inferred when
 not: the description falls back to the first line of real prose.
 
-Configure with `CLAUDE_VAULT_DIR`. Unset falls back to the parent of
-`CLAUDE_LEARNINGS_DIR`, so the usual layout — a learnings folder sitting inside a vault —
-needs no new configuration. Both unset means there is no vault, and this does nothing.
+Configure with `OBSIDIAN_VAULT_DIRECTORY`. The value must be an absolute vault path.
+An unset, empty, relative, or missing path means there is no vault.
 
 Refresh by hand with `uv run python .claude/hooks/vault_index.py`.
 """
@@ -227,14 +226,11 @@ def build(vault: Path) -> str:
 
 def vault_dir() -> Path | None:
     """The vault root, or None when no vault is configured or the path is not a directory."""
-    raw = os.environ.get("CLAUDE_VAULT_DIR", "").strip()
+    raw = os.environ.get("OBSIDIAN_VAULT_DIRECTORY", "").strip()
     if not raw:
-        learnings = os.environ.get("CLAUDE_LEARNINGS_DIR", "").strip()
-        if not learnings:
-            return None
-        raw = str(Path(learnings).parent)
+        return None
     path = Path(raw)
-    return path if path.is_dir() else None
+    return path if path.is_absolute() and path.is_dir() else None
 
 
 def refresh() -> Path | None:
@@ -262,7 +258,7 @@ def main() -> int:
     written = refresh()
     if written is None:
         print(
-            "vault_index: no vault configured - set CLAUDE_VAULT_DIR or CLAUDE_LEARNINGS_DIR",
+            "vault_index: no vault configured - set OBSIDIAN_VAULT_DIRECTORY",
             file=sys.stderr,
         )
         return 0

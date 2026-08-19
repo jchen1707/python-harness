@@ -32,7 +32,8 @@ churn on. Editing a hook or the tool config is rare and deserves the gate.
 Convergence matters: every gate here is one Claude can actually fix. A check that
 can never pass just wastes 8 turns of tokens before being overridden anyway.
 
-Escape hatch: set CLAUDE_SKIP_VERIFY=1 to disable for a session.
+Escape hatch: set HARNESS_SKIP_VERIFY=1 to disable for a session. The legacy
+CLAUDE_SKIP_VERIFY name remains supported.
 """
 
 from __future__ import annotations
@@ -57,7 +58,11 @@ GATED_PATHS: tuple[str, ...] = ("src", "tests", ".claude/hooks")
 # Individual files that configure the gates themselves; a change breaks them
 # without touching any Python.
 GATED_FILES: frozenset[str] = frozenset(
-    {"pyproject.toml", ".claude/settings.json", ".claude/mcp_headers.py"}
+    {
+        "pyproject.toml",
+        ".claude/mcp_headers.py",
+        ".claude/settings.json",
+    }
 )
 
 
@@ -102,7 +107,7 @@ def tail(text: str) -> str:
 
 
 def main() -> int:
-    if os.environ.get("CLAUDE_SKIP_VERIFY") == "1":
+    if os.environ.get("HARNESS_SKIP_VERIFY") == "1" or os.environ.get("CLAUDE_SKIP_VERIFY") == "1":
         return 0
 
     try:

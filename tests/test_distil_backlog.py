@@ -225,11 +225,10 @@ def test_audit_run_removes_echoes_and_keeps_split_notes(
     that learned it. A split note is a real distillation of a real session, so which
     learnings survive a merge is a judgement this tool must not make.
 
-    The vault variables are cleared because a delete rebuilds the indexes, and this
+    The vault variable is cleared because a delete rebuilds the indexes, and this
     machine has a real vault configured. A unit test must not write to it.
     """
-    monkeypatch.delenv("CLAUDE_LEARNINGS_DIR", raising=False)
-    monkeypatch.delenv("CLAUDE_VAULT_DIR", raising=False)
+    monkeypatch.delenv("OBSIDIAN_VAULT_DIRECTORY", raising=False)
     notes = tmp_path / "notes"
     project = tmp_path / "projects" / "some-repo"
     notes.mkdir()
@@ -265,12 +264,12 @@ def test_dry_run_is_the_default_and_writes_nothing(
 ) -> None:
     """Each distillation is a paid model call, so acting must require --run."""
     transcripts = tmp_path / "transcripts"
-    notes = tmp_path / "notes"
+    notes = tmp_path / "Project Learnings"
     transcripts.mkdir()
     notes.mkdir()
     (transcripts / "cccccccc-1111.jsonl").write_text("{}", encoding="utf-8")
 
-    monkeypatch.setenv("CLAUDE_LEARNINGS_DIR", str(notes))
+    monkeypatch.setenv("OBSIDIAN_VAULT_DIRECTORY", str(tmp_path))
     monkeypatch.setattr(script, "transcripts_dir", lambda _cwd: transcripts)
 
     def _explode(*_args: object, **_kwargs: object) -> None:
@@ -280,6 +279,36 @@ def test_dry_run_is_the_default_and_writes_nothing(
 
     assert script.main([]) == 0
     assert list(notes.glob("*.md")) == []
+
+
+@pytest.mark.parametrize("value", [None, ""])
+def test_main_fails_when_the_vault_root_is_not_set(
+    script: ModuleType,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    value: str | None,
+) -> None:
+    """Backlog recovery needs an explicit vault root."""
+    if value is None:
+        monkeypatch.delenv("OBSIDIAN_VAULT_DIRECTORY", raising=False)
+    else:
+        monkeypatch.setenv("OBSIDIAN_VAULT_DIRECTORY", value)
+
+    assert script.main([]) == 1
+    assert "OBSIDIAN_VAULT_DIRECTORY is not set" in capsys.readouterr().err
+
+
+def test_main_fails_when_the_derived_learnings_directory_is_missing(
+    script: ModuleType,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Backlog recovery reports the required `Project Learnings` child."""
+    monkeypatch.setenv("OBSIDIAN_VAULT_DIRECTORY", str(tmp_path))
+
+    assert script.main([]) == 1
+    assert f"{tmp_path / 'Project Learnings'} is not a directory" in capsys.readouterr().err
 
 
 def test_short_transcript_produces_no_note_without_calling_the_model(

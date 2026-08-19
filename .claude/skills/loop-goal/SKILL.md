@@ -1,15 +1,13 @@
 ---
 name: loop-goal
 description: Run a standing goal until a stated condition holds — doc sweep, architecture satisfaction, logging coverage, test coverage, dependency freshness. Use when the user wants work driven to completion rather than one pass, or names one of the goals below.
-argument-hint: "[goal name or a custom stop condition]"
-disable-model-invocation: true
 ---
 
 A standing goal is work with a **stop condition** instead of a task list. You keep
 going until the condition holds, not until one pass finishes.
 
-`disable-model-invocation` is set deliberately: these loops edit code and burn
-tokens over many turns. Starting one must be the user's explicit act.
+Start this skill only when the user explicitly requests a standing goal. These loops can
+edit code and consume many turns.
 
 ## Protocol
 

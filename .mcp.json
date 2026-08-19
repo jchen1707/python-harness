@@ -1,13 +1,12 @@
 {
   "mcpServers": {
     "pyright-lsp": {
-      "command": "mcp-language-server",
-      "args": ["--workspace", ".", "--lsp", "pyright-langserver", "--", "--stdio"]
+      "command": "/bin/sh",
+      "args": [".claude/start-pyright-mcp.sh"]
     },
     "linear": {
-      "type": "http",
-      "url": "https://mcp.linear.app/mcp",
-      "headersHelper": "uv run --no-sync python \"${CLAUDE_PROJECT_DIR}/.claude/mcp_headers.py\" linear-py"
+      "command": "docker",
+      "args": ["mcp", "gateway", "run"]
     }
   }
 }
