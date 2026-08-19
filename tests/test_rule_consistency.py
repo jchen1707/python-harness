@@ -17,6 +17,14 @@ Offline by construction — file reads only.
 
 from __future__ import annotations
 
+# harness:agnostic
+# Only the vendored-layer-A tests below read JSON, and those live on this branch alone:
+# `main` gets layer A from the plugin, so there is no vendored tree and no
+# `transform.json` to check. Left outside a region, this import survives into a `main`
+# whose only user of it does not — and `ruff` fails the generated tree on F401.
+import json
+
+# /harness:agnostic
 import re
 from pathlib import Path
 
@@ -35,16 +43,31 @@ LAYER_WORDS = frozenset(CANONICAL_LAYERS) | {"core"}
 ARROW = re.compile(r"──▶|->|→")
 
 # Directories that are not ours to police.
-EXCLUDED = ("/.venv/", "/node_modules/", "/.claude/plugins/", "/.agents/plans/", "/.git/")
+EXCLUDED = (
+    "/.venv/",
+    "/node_modules/",
+    "/.claude/plugins/",
+    "/.agents/plans/",
+    "/.git/",
+    # Layer A. Generated, pinned by sha, and owned in `harness` — see the docstring
+    # on `rule_files`.
+    "/.agents/vendor/",
+)
 
 
 def rule_files() -> list[Path]:
-    """Every file in the repo that states or restates a rule.
+    """Every file in **this repo** that states or restates a rule.
 
-    Not only Markdown. `.agents/workflows/*.js` embeds fallback reviewer prompts, and
-    those restate the layering rule in prose. Leaving them out is how the `full-review`
-    standards fallback kept the pre-`ai/` chain after every Markdown copy was fixed —
-    the one copy that fires precisely when the good copy is missing.
+    `.agents/workflows/*.js` used to be in this list because the workflow embedded
+    fallback reviewer prompts that restated the layering rule — and that fallback is how
+    the pre-`ai/` chain survived after every Markdown copy was fixed, in the one copy that
+    fires precisely when the good copy is missing. Layer A removed the fallbacks entirely
+    rather than keeping them correct, so the file is gone and so is the pattern.
+
+    The vendored tree is deliberately absent. It is generated, pinned by sha and policed
+    upstream; a finding against it is not actionable here, and editing it to satisfy this
+    test would break the freshness check on the next sync. `docs/agents/subagents/*.md` is
+    present instead — that is where this repo now states the rules a reviewer checks.
     """
     patterns = (
         "AGENTS.md",
@@ -54,8 +77,6 @@ def rule_files() -> list[Path]:
         "tests/AGENTS.md",
         ".agents/agents/*.md",
         ".agents/skills/*/SKILL.md",
-        ".claude/commands/*.md",
-        ".agents/workflows/*.js",
         ".out-of-scope/*.md",
     )
     found: set[Path] = set()
@@ -157,19 +178,74 @@ def test_claude_files_import_agents_rules() -> None:
     assert not failures, "invalid Claude compatibility files:\n  " + "\n  ".join(failures)
 
 
-def test_full_review_surfaces_cover_the_same_axes() -> None:
-    """The portable skill and Codex adapters must cover each workflow axis."""
-    workflow = (REPO_ROOT / ".agents/workflows/full-review.js").read_text(encoding="utf-8")
-    skill = (REPO_ROOT / ".agents/skills/full-review/SKILL.md").read_text(encoding="utf-8")
-    axes = set(re.findall(r"agent: '([a-z-]+)'", workflow))
+def test_every_review_axis_resolves_to_a_definition() -> None:
+    """Every axis `full-review` runs must have something to run.
 
-    prompt_files = {path.stem for path in (REPO_ROOT / ".agents/agents").glob("*-reviewer.md")}
-    prompt_files.add("spec-checker")
-    codex_files = {path.stem for path in (REPO_ROOT / ".codex/agents").glob("*.toml")}
+    The axes come from two places now. Eight shared frames live in the vendored layer A
+    and the workflow names them; the ninth is this repo's own, named in
+    `harness.config.json` and defined under `.agents/agents/`. An axis that resolves to
+    neither is the failure the whole split has to be checked against — the review still
+    runs, on nothing, and reports a confident clean.
+    """
+    config = json.loads((REPO_ROOT / "harness.config.json").read_text(encoding="utf-8"))
+    review = config["review"]
+    vendor = REPO_ROOT / ".agents/vendor/harness"
+    workflow = (vendor / "workflows/full-review.js").read_text(encoding="utf-8")
 
-    assert axes == prompt_files
-    assert axes <= codex_files
-    assert all(f"`{agent}`" in skill for agent in axes)
+    shared = set(re.findall(r"agent: '([a-z-]+)'", workflow))
+    ninth = review["ninthAxis"]["agent"]
+    axes = shared | {ninth}
+
+    missing = [a for a in sorted(shared) if not (vendor / "agents" / f"{a}.md").is_file()]
+    assert not missing, f"shared axes with no frame in the vendored tree: {missing}"
+
+    own = REPO_ROOT / review["agentDir"] / f"{ninth}.md"
+    assert own.is_file(), f"the ninth axis {ninth!r} has no definition at {own}"
+
+    codex = {path.stem for path in (REPO_ROOT / ".codex/agents").glob("*.toml")}
+    assert axes <= codex, f"axes with no Codex adapter: {sorted(axes - codex)}"
+
+    skill = (vendor / "skills/full-review/SKILL.md").read_text(encoding="utf-8")
+    assert "ninthAxis" in skill, "the portable skill no longer explains where the ninth comes from"
+
+
+def test_every_shared_frame_has_this_repos_half() -> None:
+    """A frame that defers its checklist here cannot review without it."""
+    config = json.loads((REPO_ROOT / "harness.config.json").read_text(encoding="utf-8"))
+    checklists = REPO_ROOT / config["review"]["checklistDir"]
+    frames = sorted((REPO_ROOT / ".agents/vendor/harness/agents").glob("*.md"))
+
+    missing = [
+        frame.stem
+        for frame in frames
+        if "docs/agents/subagents/" in frame.read_text(encoding="utf-8")
+        and not (checklists / frame.name).is_file()
+    ]
+    assert not missing, (
+        f"frames with no checklist in {config['review']['checklistDir']}: {missing}. "
+        f"Each would review on general advice and report a confident clean."
+    )
+
+
+def test_layer_a_stubs_are_dropped_from_main() -> None:
+    """A stub that survives the transform collides with the plugin's real skill.
+
+    On `v2` the stub is how a harness that discovers skills by directory reaches the
+    vendored one. On `main` the plugin supplies it, so every stub has to be in
+    `transform.json`'s drop list — and forgetting one is silent: two skills of the same
+    name, with nothing saying which answers.
+    """
+    manifest = json.loads(
+        (REPO_ROOT / ".agents/transform/transform.json").read_text(encoding="utf-8")
+    )
+    dropped = set(manifest["drop"])
+    stubs = [
+        path.parent.name
+        for path in (REPO_ROOT / ".agents/skills").glob("*/SKILL.md")
+        if ".agents/vendor/harness" in path.read_text(encoding="utf-8")
+    ]
+    missing = [name for name in stubs if f".claude/skills/{name}" not in dropped]
+    assert not missing, f"layer A stubs missing from transform.json's drop list: {sorted(missing)}"
 
 
 # Generated at runtime and gitignored, so absent on a clean checkout. A doc naming one

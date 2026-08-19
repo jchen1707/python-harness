@@ -58,12 +58,36 @@ def test_the_canonical_directory_is_gone(generated: Path) -> None:
 
 
 def test_the_adapter_symlinks_became_real_files(generated: Path) -> None:
-    """A symlink into `.agents/` is a dangling link once `.agents/` is dropped."""
-    for relative in (".claude/hooks", ".claude/agents", ".claude/skills", ".claude/workflows"):
+    """A symlink into `.agents/` is a dangling link once `.agents/` is dropped.
+
+    `.claude/workflows` is no longer in the list: `full-review.js` is layer A now, and on
+    this branch the plugin supplies it. Nothing is left under `.agents/workflows/` to link.
+    """
+    for relative in (".claude/hooks", ".claude/agents"):
         path = generated / relative
         assert path.is_dir(), f"{relative} is missing"
         assert not path.is_symlink(), f"{relative} is still a symlink"
     assert (generated / ".claude/hooks/verify.py").is_file()
+    assert not (generated / ".claude/workflows").exists()
+
+
+def test_layer_a_arrives_once_on_main(generated: Path) -> None:
+    """The plugin and the stubs must not both supply a skill.
+
+    On `v2` a thin stub under `.agents/skills/<name>/` is how a harness that discovers
+    skills by directory finds the shared one in the vendored tree. On `main` the plugin
+    supplies the real thing, so every stub has to be dropped — two skills of one name is
+    worse than none, because which one answers is not something anybody can see.
+    """
+    survivors = [
+        path.parent.name
+        for path in (generated / ".claude/skills").glob("*/SKILL.md")
+        if ".agents/vendor/harness" in path.read_text(encoding="utf-8")
+    ]
+    assert not survivors, (
+        f"layer A stubs reached main: {sorted(survivors)}. Add each to `drop` in "
+        f"transform.json — the plugin already supplies them."
+    )
 
 
 def test_nothing_points_at_a_directory_that_no_longer_exists(generated: Path) -> None:

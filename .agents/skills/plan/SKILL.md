@@ -1,10 +1,11 @@
 ---
 name: plan
-description: Research a small change, create its feature branch, write the implementation and test plans, and wait for explicit sign-off. Use for the repository's two-terminal small-work workflow.
+description: Research + plan a feature (implementation plan + test plan), get user sign-off, then STOP for handoff (terminal 1, planning model)
 ---
 
-Read `.claude/commands/plan.md` in full. Follow its workflow with native harness tools.
+Read `.agents/vendor/harness/commands/plan.md` in full and follow it.
 
-Translate `TaskCreate` to the harness's native plan or task mechanism.
-
-Translate `AskUserQuestion` to the harness's native user-input mechanism. Preserve every required checkpoint.
+This file exists so a harness that discovers skills under `.agents/skills/` finds the
+shared one. The body is layer A: generated, pinned by sha, and the same in every stack.
+Editing it here is the drift the vendored copy's freshness check exists to catch — edit
+it in [`harness`](https://github.com/jchen1707/harness) and re-sync.

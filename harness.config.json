@@ -1,0 +1,47 @@
+{
+  "name": "python-harness",
+  "tracker": { "team": "BAC" },
+  "install": ["uv", "sync", "--extra", "app"],
+  "dev": {
+    "run": ["uv", "run", "uvicorn", "app.main:app", "--reload"],
+    "url": "http://127.0.0.1:8000",
+    "readyCheck": "GET /healthz responds; if src/app/main.py does not exist yet, say so rather than creating it"
+  },
+  "gates": [
+    {
+      "name": "ruff check",
+      "kind": "lint",
+      "run": ["uv", "run", "ruff", "check", "."]
+    },
+    {
+      "name": "ruff format --check",
+      "kind": "format",
+      "run": ["uv", "run", "ruff", "format", "--check", "."]
+    },
+    {
+      "name": "mypy",
+      "kind": "types",
+      "run": ["uv", "run", "mypy"],
+      "caveat": "mypy checks only the paths in pyproject.toml's `files`, and skips dot-directories during its own discovery. A new top-level directory is silently unchecked while this stays green — add it to `files` in the same change that creates it."
+    },
+    {
+      "name": "pytest",
+      "kind": "test",
+      "run": ["uv", "run", "pytest"],
+      "caveat": "`addopts` excludes the integration marker, so the default run proves nothing about anything DB-backed."
+    },
+    {
+      "name": "pytest -m integration",
+      "kind": "integration",
+      "run": ["uv", "run", "pytest", "-m", "integration"],
+      "when": "the change touches a repository, a migration, or anything reaching Postgres or pgvector",
+      "caveat": "needs Docker and the app extra. Without them it errors rather than passing, but it is also excluded from the default run — so a change with no integration coverage looks identical to one with it."
+    }
+  ],
+  "review": {
+    "agentDir": ".agents/agents",
+    "checklistDir": "docs/agents/subagents",
+    "ninthAxis": { "label": "async", "agent": "async-reviewer" },
+    "styleEnforcedBy": "ruff or mypy"
+  }
+}

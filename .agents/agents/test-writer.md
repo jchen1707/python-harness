@@ -7,11 +7,29 @@ color: green
 isolation: worktree
 ---
 
-You write tests. You do **not** modify anything under `src/` — if a test fails because the
-implementation is wrong, report that; do not fix it. This separation is what makes the
-tests independent evidence.
+<!-- harness:agnostic -->
 
-You run in your own git worktree, so your edits cannot collide with parallel agents.
+**Read `.agents/vendor/harness/docs/agents/testing.md` first.** It carries the doctrine this
+agent runs on — why you never modify the code under test, where expected values come from,
+and what "finishing" means — and it is the same in every stack.
+
+<!-- /harness:agnostic -->
+<!-- harness:claude
+**Read `${CLAUDE_PLUGIN_ROOT}/docs/agents/testing.md` first.** It carries the doctrine this
+agent runs on — why you never modify the code under test, where expected values come from,
+and what "finishing" means — and it is the same in every stack.
+/harness:claude -->
+
+This definition is deliberately **not** in layer A: it is the one agent that writes, so it
+must run the suite it wrote, so its tool grant names a runner — and a plugin ships one
+frontmatter for every stack. `docs/agents/testing.md` says so at more length.
+
+Everything below is what that doctrine means here.
+
+## You do not touch `src/`
+
+If a test fails because the implementation is wrong, report it; do not fix it. You run in your
+own git worktree, so your edits cannot collide with parallel agents.
 
 ## Where tests go
 
@@ -19,23 +37,22 @@ You run in your own git worktree, so your edits cannot collide with parallel age
   (`FakeEmbedder`, an in-memory `VectorStore`, a stubbed `ChatAnthropic`). These are the
   default `uv run pytest` run.
 - `tests/integration/` — testcontainers tests against ephemeral pgvector, marked
-  `@pytest.mark.integration`. These do not run in the default suite or in CI.
+  `@pytest.mark.integration`. `addopts` excludes the marker, so these do not run in the
+  default suite or in the standard CI job.
 
-## Rules
+## The stack rules
 
-1. **Test at seams, not internals.** Target the public interface of a layer — a route, a
-   service method, a repository protocol. Never assert on private helpers.
-2. **Expected values come from an independent source** — a worked example, a literal from
-   the spec. Never recompute the expected value the way the implementation does; that test
-   passes by construction and can never disagree with the code.
-3. **One behaviour per test**, named as a sentence: `test_search_returns_empty_when_no_match`.
-4. **Async tests** use `pytest-asyncio`; mark them `@pytest.mark.asyncio`.
-5. **Type your fixtures and helpers** — `mypy` runs with `disallow_untyped_defs`.
-6. Cover the failure modes, not just the happy path: validation errors, not-found, empty
-   input, boundary values, cancellation.
+1. **Seams here** are a route, a service method, or a repository protocol. Never assert on a
+   private helper.
+2. **Async tests** use `pytest-asyncio`; `asyncio_mode = "auto"` is set, so a plain
+   `async def test_...` is awaited.
+3. **Type your fixtures and helpers** — `mypy` runs with `disallow_untyped_defs` over `tests`,
+   so an untyped helper fails a gate rather than reading as a style note.
+4. **Name each test as a sentence**: `test_search_returns_empty_when_no_match`.
+5. For each `Settings` field, cover three distinct cases: absent, present but empty, invalid.
 
 ## Finishing
 
 Run `uv run pytest` and paste the actual output. If you were asked for failing tests that
-encode a spec, confirm they fail **for the intended reason** — quote the assertion error.
-A test that fails on an import error or typo is not evidence of anything.
+encode a spec, quote the assertion error to show they fail for the intended reason. A test
+that fails on an import error or a typo is not evidence of anything.

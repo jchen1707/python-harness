@@ -90,8 +90,18 @@ def test_codex_test_writer_requires_a_linked_worktree() -> None:
     assert "Refuse" in adapter
 
 
-def test_every_claude_command_has_a_portable_skill() -> None:
-    """Codex must discover every repository command through `.agents/skills`."""
-    commands = {path.stem for path in (PROJECT / ".claude/commands").glob("*.md")}
-    skills = {path.parent.name for path in (PROJECT / ".agents/skills").glob("*/SKILL.md")}
-    assert commands <= skills
+def test_every_layer_a_command_and_skill_is_discoverable() -> None:
+    """Codex discovers skills by directory, and layer A is not in that directory.
+
+    The shared commands and skills live in the vendored tree, which nothing globs. A thin
+    stub under `.agents/skills/<name>/` is what makes them reachable — and the failure of
+    a missing one is that the command simply is not there, with no error anywhere saying
+    why. `.claude/commands/` no longer exists: on `main` the plugin supplies these.
+    """
+    vendor = PROJECT / ".agents/vendor/harness"
+    shared = {path.stem for path in (vendor / "commands").glob("*.md")}
+    shared |= {path.parent.name for path in (vendor / "skills").glob("*/SKILL.md")}
+    assert shared, "no layer A commands or skills vendored -- run vendor_sync.py sync"
+
+    stubs = {path.parent.name for path in (PROJECT / ".agents/skills").glob("*/SKILL.md")}
+    assert shared <= stubs, f"layer A with no discoverable stub: {sorted(shared - stubs)}"
