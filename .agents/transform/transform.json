@@ -16,6 +16,7 @@
     ".claude/skills/context",
     ".claude/skills/implement-from-plan",
     ".claude/skills/lint",
+    ".claude/skills/new-project",
     ".claude/skills/plan",
     ".claude/skills/retro",
     ".claude/skills/run",
