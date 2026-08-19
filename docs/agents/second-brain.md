@@ -6,18 +6,24 @@ Read it first.
 
 This file records only what is true in **this** repo.
 
-## This repo owns both indexes
+## Both indexes are rebuilt by shared code
 
-`vault_index.py` and `distil_backlog.py` run here, at session end, and they rebuild:
+`vault_index.mjs` and `session_learnings.mjs` are layer A, vendored under
+`.claude/vendor/harness/hooks/`. They rebuild:
 
 | Index                          | Covers                                | Rebuilt                                    |
 | ------------------------------ | ------------------------------------- | ------------------------------------------ |
 | `_VAULT_INDEX.md` (vault root) | every note in the vault               | every session end with the vault configured |
 | `Project Learnings/_INDEX.md`  | the auto-distilled session notes only | only when that session wrote a note         |
 
-So the indexes are current to the last session that ended **here**. Notes written from
-`frontend-harness` are in the folder but not in either index until a session ends in this
-repo. That is why the shared skill's grep step is not optional.
+This repo used to own both indexes alone, and the cost was a lag: a note written from
+`frontend-harness` sat in the folder, unindexed, until a session happened to end here. The
+asymmetry was structural — an indexer in both repos would have been one artifact with two
+writers, and that pair had already re-diverged once with only one side under test. One
+implementation cannot disagree with itself, so both repos run it and the lag is gone.
+
+`distil_backlog.mjs` is the recovery path for sessions that never fired `SessionEnd`, and it
+is shared for the same reason: it writes notes through the same code the hook does.
 
 **This is a known asymmetry, not a bug to fix locally.** Adding a second indexer to the other
 repo is one artifact with two writers, and it was tried: the pair re-diverged on a header line

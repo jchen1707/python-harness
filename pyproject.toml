@@ -59,11 +59,9 @@ ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]
-# Claude Code hooks shell out to fixed argv lists (never user input) and rely on
-# PATH lookup for `uv`/`git`, which is what S603/S607 flag.
-".claude/hooks/**" = ["S603", "S607"]
 # The MCP headers helper shells out to the platform credential store (`powershell`,
-# `security`, `secret-tool`) through a fixed argv list, for the same reason.
+# `security`, `secret-tool`) through a fixed argv list, never user input, so the
+# subprocess rules that exist to catch injection have nothing to catch here.
 ".claude/mcp_headers.py" = ["S603", "S607"]
 
 [tool.ruff.format]
@@ -77,19 +75,10 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 warn_return_any = false
 ignore_missing_imports = true
-# `.claude/hooks` is listed explicitly: mypy skips dot-directories during its own
-# recursive discovery, so a bare "." would never reach them. The hooks enforce every
-# other gate, so they are held to the same strictness as `src`.
-files = ["src", "tests", ".claude/hooks", ".claude/mcp_headers.py"]
-# The hooks import each other as top-level modules (`import vault_index`), which works at
-# runtime because Python puts the running script's directory on sys.path. Static analysis
-# does not read sys.path, so it needs this setting.
-mypy_path = ".claude/hooks"
-
-[tool.pyright]
-# Same reason as mypy_path above. Read by the `pyright-lsp` MCP server in .mcp.json and by
-# the editor plugin, so symbol navigation resolves the hooks instead of flagging them.
-extraPaths = [".claude/hooks"]
+# Dot-directories are skipped during mypy's own recursive discovery, so anything under
+# one has to be named. `.claude/mcp_headers.py` is the only Python left there: the
+# hooks were the other, and they are layer A now.
+files = ["src", "tests", ".claude/mcp_headers.py"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -1,9 +1,22 @@
 {
   "name": "python-harness",
-  "tracker": { "team": "BAC" },
-  "install": ["uv", "sync", "--extra", "app"],
+  "tracker": {
+    "team": "BAC"
+  },
+  "install": [
+    "uv",
+    "sync",
+    "--extra",
+    "app"
+  ],
   "dev": {
-    "run": ["uv", "run", "uvicorn", "app.main:app", "--reload"],
+    "run": [
+      "uv",
+      "run",
+      "uvicorn",
+      "app.main:app",
+      "--reload"
+    ],
     "url": "http://127.0.0.1:8000",
     "readyCheck": "GET /healthz responds; if src/app/main.py does not exist yet, say so rather than creating it"
   },
@@ -11,37 +24,130 @@
     {
       "name": "ruff check",
       "kind": "lint",
-      "run": ["uv", "run", "ruff", "check", "."]
+      "run": [
+        "uv",
+        "run",
+        "ruff",
+        "check",
+        "."
+      ]
     },
     {
       "name": "ruff format --check",
       "kind": "format",
-      "run": ["uv", "run", "ruff", "format", "--check", "."]
+      "run": [
+        "uv",
+        "run",
+        "ruff",
+        "format",
+        "--check",
+        "."
+      ]
     },
     {
       "name": "mypy",
       "kind": "types",
-      "run": ["uv", "run", "mypy"],
-      "caveat": "mypy checks only the paths in pyproject.toml's `files`, and skips dot-directories during its own discovery. A new top-level directory is silently unchecked while this stays green — add it to `files` in the same change that creates it."
+      "run": [
+        "uv",
+        "run",
+        "mypy"
+      ],
+      "caveat": "mypy checks only the paths in pyproject.toml's `files`, and skips dot-directories during its own discovery. A new top-level directory is silently unchecked while this stays green \u2014 add it to `files` in the same change that creates it."
     },
     {
       "name": "pytest",
       "kind": "test",
-      "run": ["uv", "run", "pytest"],
+      "run": [
+        "uv",
+        "run",
+        "pytest"
+      ],
       "caveat": "`addopts` excludes the integration marker, so the default run proves nothing about anything DB-backed."
     },
     {
       "name": "pytest -m integration",
       "kind": "integration",
-      "run": ["uv", "run", "pytest", "-m", "integration"],
+      "run": [
+        "uv",
+        "run",
+        "pytest",
+        "-m",
+        "integration"
+      ],
       "when": "the change touches a repository, a migration, or anything reaching Postgres or pgvector",
-      "caveat": "needs Docker and the app extra. Without them it errors rather than passing, but it is also excluded from the default run — so a change with no integration coverage looks identical to one with it."
+      "caveat": "needs Docker and the app extra. Without them it errors rather than passing, but it is also excluded from the default run \u2014 so a change with no integration coverage looks identical to one with it."
     }
   ],
+  "hooks": {
+    "gatedPaths": [
+      "src",
+      "tests",
+      ".claude/vendor/harness/hooks"
+    ],
+    "gatedFiles": [
+      "pyproject.toml",
+      "harness.config.json",
+      ".claude/mcp_headers.py",
+      ".claude/settings.json"
+    ],
+    "gatedExtensions": [
+      ".py",
+      ".mjs"
+    ],
+    "protected": [
+      {
+        "glob": "**/migrations/**",
+        "why": "schema migrations are irreversible - a human applies these"
+      },
+      {
+        "glob": "**/generated/**",
+        "why": "generated output; change the generator instead"
+      },
+      {
+        "glob": "uv.lock",
+        "why": "regenerate with `uv lock`, never hand-edit"
+      },
+      {
+        "glob": ".claude/vendor/**",
+        "why": "layer A is generated and pinned by sha; edit it in the harness repo and re-sync"
+      }
+    ],
+    "secretVars": [
+      "LINEAR_API_KEY",
+      "GH_TOKEN"
+    ],
+    "formatters": [
+      {
+        "match": [
+          ".py"
+        ],
+        "run": [
+          [
+            "uv",
+            "run",
+            "ruff",
+            "format"
+          ],
+          [
+            "uv",
+            "run",
+            "ruff",
+            "check",
+            "--fix",
+            "--unfixable",
+            "F401"
+          ]
+        ]
+      }
+    ]
+  },
   "review": {
     "agentDir": ".claude/agents",
     "checklistDir": "docs/agents/subagents",
-    "ninthAxis": { "label": "async", "agent": "async-reviewer" },
+    "ninthAxis": {
+      "label": "async",
+      "agent": "async-reviewer"
+    },
     "styleEnforcedBy": "ruff or mypy"
   }
 }

@@ -84,24 +84,29 @@ Treat a value that reached a transcript as compromised. Do not estimate the risk
 
 ## What the harness enforces
 
-These controls hold whatever an instruction says. See `.claude/settings.json` and
-`.claude/hooks/`.
+These controls hold whatever an instruction says. See `.claude/settings.json`,
+`harness.config.json` and `.claude/vendor/harness/hooks/`.
 
 | Control | Effect |
 | --- | --- |
 | `.gitignore` | Excludes `.env` and `.env.*`, and keeps `.env.example` |
-| `protect_paths.py` (PreToolUse) | Refuses an agent **write** to `.env` and `.env.*` |
+| `protect_paths.mjs` (PreToolUse) | Refuses an agent **write** to `.env` and `.env.*` |
 | `permissions.deny` → `Read(./.env)` | Refuses an agent **read** of the secret-bearing files |
 | `permissions.deny` → `Bash(cat .env:*)` and similar | Blocks the common shell readers of the file |
 | `permissions.deny` → `Bash(env)`, `Bash(set)`, `Bash(Get-ChildItem Env:*)` and similar | Blocks a whole-environment dump in both shells |
 | `permissions.deny` → `Bash(echo $LINEAR_API_KEY:*)` and similar | Blocks the common spellings that read one variable |
 | `permissions.deny` → `Bash(python -c:*)`, `Bash(node -e:*)` and similar | Blocks an inline interpreter, which reads the environment without naming the variable |
-| `PreToolUse` on `Read\|Bash` → `protect_secrets.py` | Blocks the secret-file reads, environment dumps and interpreter one-liners a literal deny pattern cannot name |
+| `PreToolUse` on `Read\|Bash` → `protect_paths.mjs` | Refuses an agent **read** of a secret file, and blocks the environment dumps, single-variable expansions and interpreter one-liners a literal deny pattern cannot name |
 | `gitleaks` (pre-commit) | Fails a commit that carries a key in any staged file |
 | `detect-private-key` (pre-commit) | Fails a commit that carries a private key |
 
-`tests/test_secret_paths.py` pins the deny rules and `tests/test_mcp_headers.py` pins the
-helper. Deleting one fails the suite.
+`tests/test_harness_hooks.py` pins the deny rules, the variable names the hook watches, and
+the wiring that decides which tool calls the guard ever sees; `tests/test_mcp_headers.py`
+pins the helper. Deleting one fails the suite.
+
+The `.env` rules are **not** in `harness.config.json`. `protect_paths.mjs` carries them as a
+built-in floor that no config can lower, because a guard whose config goes missing and
+quietly protects nothing is worse than no guard — the repo still reads as protected.
 
 Three limits are deliberate, and you should know all three.
 
