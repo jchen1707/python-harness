@@ -20,6 +20,7 @@ permissions:
 
 jobs:
   generate:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
       # The generated tree is published to `main`, so both refs have to be reachable.
