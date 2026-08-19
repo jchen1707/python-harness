@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   verify:
+    timeout-minutes: 15
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -46,6 +47,7 @@ jobs:
   # The fifth Definition of Done gate. Ubuntu only: testcontainers needs a Docker
   # daemon that runs Linux containers, which the Windows runners do not provide.
   integration:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
