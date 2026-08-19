@@ -1,32 +1,25 @@
-# Domain Docs
+# Domain Docs — this repo
 
-How the engineering skills should consume this repo's domain documentation when exploring the codebase.
+<!-- harness:agnostic -->
+**Shared doctrine lives in `.agents/vendor/harness/docs/agents/domain.md`** — what to read
+before exploring, the proceed-silently rule, the glossary-vocabulary rule and how to flag an
+ADR conflict. It is vendored from [`harness`](https://github.com/jchen1707/harness) and
+pinned by sha; read it first.
+<!-- /harness:agnostic -->
+<!-- harness:claude
+**Shared doctrine is provided by the `harness` plugin**, at
+`${CLAUDE_PLUGIN_ROOT}/docs/agents/domain.md` — what to read before exploring, the
+proceed-silently rule, the glossary-vocabulary rule and how to flag an ADR conflict. Read it
+first.
+/harness:claude -->
 
-## Before exploring, read these
-
-- **`docs/architecture.md`** — **the decision record for this repo.** Its "Choosing an
-  architecture & design patterns" section records the architectural style and design
-  patterns chosen per feature, and the rest is the authoritative standards reference
-  (`/arch` loads it). Read it before proposing structural change; treat its recorded
-  choices exactly as you would an ADR.
-- **`AGENTS.md`** — the always-loaded summary: approved stack, layering rules,
-  Definition of Done. Where it and a skill's generic advice disagree, `AGENTS.md` wins.
-- **`CONTEXT.md`** at the repo root — the domain glossary, if it exists.
-- **`docs/adr/`** — individual ADRs, if any exist. This repo has none yet: architectural
-  decisions have been recorded in `docs/architecture.md` instead. A per-decision file
-  under `docs/adr/` is fine for a decision too narrow to belong in the standards doc,
-  but don't migrate the existing record — keep `docs/architecture.md` authoritative.
-
-If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates them lazily when terms or decisions actually get resolved.
+This file records only what is true in **this** repo.
 
 ## File structure
-
-Single-context repo (this repo):
 
 ```
 /
 ├── AGENTS.md                  ← standards summary, always loaded
-├── CONTEXT.md                 ← domain glossary (not yet created)
 ├── docs/
 │   ├── architecture.md        ← standards + the architectural decision record
 │   ├── adr/                   ← optional per-decision files (none yet)
@@ -35,28 +28,22 @@ Single-context repo (this repo):
                                   each with its own AGENTS.md)
 ```
 
-Multi-context layout (a root `CONTEXT-MAP.md` pointing at per-context `CONTEXT.md` files)
-does not apply here — this is a single Python package, not a monorepo.
+A single Python package, not a monorepo — the multi-context `CONTEXT-MAP.md` layout does not
+apply.
 
-## Use the glossary's vocabulary
+`docs/architecture.md`'s "Choosing an architecture & design patterns" section is the
+per-feature decision record here.
 
-When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `CONTEXT.md`. Don't drift to synonyms the glossary explicitly avoids.
+## Vocabulary this repo has settled
 
-If the concept you need isn't in the glossary yet, that's a signal — either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `/domain-modeling`).
+- **"agent"/"subagent" means a dev-workflow subagent**, not an application-level LangGraph
+  agent. The application's own agents are the ones built in `src/app/ai/agents/`. Say which
+  you mean.
 
-Note the standing ambiguity this repo has already resolved: **"agent"/"subagent" in
-`AGENTS.md` and these docs means a Claude Code dev-workflow subagent**, not an
-application-level LangGraph agent. Application agents are the ones built in
-`src/app/ai/agents/`. Say which you mean.
+## The rule most likely to be contradicted
 
-## Flag ADR conflicts
+The layering rule — `api` → `services` → `ai` → `repositories` → `config`, no reverse
+dependencies — and the approved stack. Neither changes without an `AGENTS.md` edit first.
 
-If your output contradicts a decision recorded in `docs/architecture.md` (or an ADR under
-`docs/adr/`), surface it explicitly rather than silently overriding:
-
-> _Contradicts docs/architecture.md §"Choosing an architecture" (layered + repository) —
-> but worth reopening because…_
-
-The layering rule (`api` → `services` → `ai` → `repositories` → `config`, no reverse deps) and
-the approved stack are the two most likely to be contradicted by generic advice. Neither
-changes without a `AGENTS.md` edit first.
+> _Contradicts docs/architecture.md §"Choosing an architecture" (layered + repository) — but
+> worth reopening because…_

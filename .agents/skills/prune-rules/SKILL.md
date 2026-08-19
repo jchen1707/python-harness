@@ -20,7 +20,10 @@ all of them.
 | `src/app/ai/AGENTS.md` | Why AI is its own layer; rules covering all of it. |
 | `src/app/ai/*/AGENTS.md` | Retrieval, reranking, agents, evals. |
 | `tests/AGENTS.md` | Test conventions. |
-| `docs/agents/*.md` | Tracker and triage conventions. |
+| `docs/agents/*.md` | Tracker and triage conventions — the repo-specific half only. |
+<!-- harness:agnostic -->
+| `.agents/vendor/harness/**` | **Generated. Never prune it here** — edit it in `harness`. |
+<!-- /harness:agnostic -->
 | `.agents/agents/*.md` | Subagent definitions, also the `full-review` axes. |
 | `.agents/skills/*/SKILL.md` | Repo-owned skills — including this one. |
 

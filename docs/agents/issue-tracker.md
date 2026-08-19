@@ -1,131 +1,36 @@
-# Issue tracker: Linear
-
-Issues, specs and tickets for this repo live in **Linear**, reached over MCP. **Pull
-requests stay on GitHub** — Linear holds the work item, GitHub holds the diff.
-
-## Workspace and teams
-
-| | |
-| --- | --- |
-| Workspace | **Development** (`development-jchen`) |
-| Default team | **Backend**, key `BAC` — issue ids read `BAC-12` |
-| Other team | Frontend, key `FRO` |
-
-Create issues in **Backend** unless the work is plainly frontend. A personal API key is
-scoped to one workspace, so the key decides the workspace; there is no way to address
-another one with it.
-
-## Connecting
-
-Claude reads Linear from `.mcp.json`. Docker MCP Toolkit supplies that connection.
+# Issue tracker: Linear — this repo
 
 <!-- harness:agnostic -->
-Codex receives Linear from the sandbox runtime. Register the remote server once on the
-host:
-
-```sh
-sbx mcp add linear --url https://mcp.linear.app/mcp
-```
-
-Start every Codex sandbox with `--static-mcp linear`. This injects the authorized server
-into new sessions and new template-derived projects. Do not add the credential to this
-repository.
+**Shared doctrine lives in `.agents/vendor/harness/docs/agents/issue-tracker.md`** —
+connecting, tool discovery, the operation table, status sync, wayfinding, the AI-authorship
+disclaimer and the spec-correction procedure. It is vendored from
+[`harness`](https://github.com/jchen1707/harness) and pinned by sha; read it first.
 <!-- /harness:agnostic -->
+<!-- harness:claude
+**Shared doctrine is provided by the `harness` plugin**, at
+`${CLAUDE_PLUGIN_ROOT}/docs/agents/issue-tracker.md` — connecting, tool discovery, the
+operation table, status sync, wayfinding, the AI-authorship disclaimer and the
+spec-correction procedure. Read it first.
+/harness:claude -->
 
-- Check it with `/mcp`; it appears as **linear**.
-- MCP servers load at **session start**. Sandbox injection changes require a new session.
+This file records only what is true in **this** repo.
 
-## Discovering the tools
+## Workspace and team
 
-**List the tools before first use rather than assuming names.** Tools are currently
-prefixed `mcp__linear__`. The prefix follows the configured or injected server name. The
-surface changes between releases.
+|              | Value                                                        |
+| ------------ | ------------------------------------------------------------ |
+| Workspace    | **Development** (`development-jchen`)                        |
+| Default team | **Backend**, key `BAC` — issue ids read `BAC-12`             |
+| Sibling team | Frontend, key `FRO` — `frontend-harness` files there, not us |
 
-`/mcp` shows the connected servers and their tools. Match the operation you need from the
-table below to what is actually offered.
+Create issues in **Backend** unless the work is plainly frontend.
 
-## Conventions
-
-| Operation | What to call |
-| --- | --- |
-| **Create an issue** | the create-issue tool — needs `team`; set `title`, `description` (markdown), optional `labels`, `project` |
-| **Read an issue** | the get-issue tool, with the identifier (`BAC-123`) |
-| **List issues** | the list-issues tool — filter by `team`, `state`, `assignee`, `label` |
-| **Comment** | the create-comment tool, with the issue id and markdown `body` |
-| **Apply/remove labels** | the update-issue tool, setting the `labels` array |
-| **Change state** | the update-issue tool, with the target workflow state |
-| **Close** | move to the team's Done/Cancelled state — Linear has no separate close verb |
-
-Issue identifiers are `TEAM-NUMBER` (e.g. `BAC-4521`), not bare integers. A reference like
-`#42` in conversation is **not** a Linear id — ask which team it belongs to rather than
-guessing.
-
-## Labels vs workflow states
-
-Linear separates **workflow state** (Backlog / Todo / In Progress / Done — a single value
-that drives the board) from **labels** (many per issue). The five canonical triage roles in
-`triage-labels.md` are **labels**, not states. Applying `ready-for-agent` does not move the
-issue across the board; set the state explicitly when the role implies one.
-
-## When a skill says "publish to the issue tracker"
-
-Create a Linear issue in the default team. Put the spec in the issue `description` as
-markdown. If the skill produced a document longer than fits comfortably, put the summary
-and acceptance criteria in the description and link the full document.
-
-## When a skill says "fetch the relevant ticket"
-
-Get the issue by identifier, then read its comments for the discussion.
-
-## Wayfinding operations
-
-Used by `/wayfinder`. The **map** is one issue; **tickets** are its children.
-
-- **Map** — an issue labelled `wayfinder:map` holding the Notes / Decisions-so-far / Fog body.
-- **Child ticket** — a Linear **sub-issue** of the map (`parent` field), labelled
-  `wayfinder:<type>` (`research` / `prototype` / `grilling` / `task`).
-- **Blocking** — Linear has native issue relations: use the **blocks / blocked-by**
-  relation rather than a text convention. A ticket is unblocked when every blocker
-  reaches a completed state.
-- **Frontier query** — the map's sub-issues that are not Done, have no unresolved
-  blocked-by relation, and no assignee; first in map order wins.
-- **Claim** — assign the issue to the current user; this is the session's first write.
-- **Resolve** — comment the answer, move to Done, then append a pointer to the map's
-  Decisions-so-far.
-
-## AI-authored content carries a disclaimer
-
-When a session writes tracker content the user did not author — an answer generated in
-auto mode, a reply fabricated to unblock an interview skill — end that content with:
-
-> *This was generated by AI during \<phase\>.*
-
-The disclaimer travels with the AI-authored content, whichever skill produced it. The
-`triage` skill adds it on its own; the other skills rely on this rule.
-
-Verify provenance before a reply drives a state or label change. A reply that exists is
-not proof the reporter wrote it — an unattended session can generate the human side of
-an interview and post it. Treat a comment with the disclaimer above, or with an
-uncertain author, as machine output, not as reporter input.
-
-## Correcting a published spec
-
-An error in a published spec misleads every agent that reads it later, so fix it where
-it stands — a skill's "do not modify the parent issue" protects scope, not known-wrong
-facts. When a downstream phase finds a spec error:
-
-1. Patch only the wrong paragraph in the issue description.
-2. Mark the patch inline: *Corrected during \<phase\>, \<date\>: \<what changed\>.*
-3. Comment on the issue with the correction and the reason.
-4. Check every ticket already derived from the spec for the copied claim; patch those
-   the same way.
-5. Disclose the correction in the session report.
+Name branches `<type>/BAC-<num>-<slug>` (e.g. `feat/BAC-412-vector-store`). The Spec axis of
+a review resolves the ticket from that prefix, so a branch named with the wrong one silently
+loses the axis.
 
 ## Repo-specific notes
 
-- The **Standards** axis of `/code-review` reads `docs/architecture.md` (authoritative)
-  plus the summary in `AGENTS.md`. Those override the skill's generic smell baseline.
-- The **Spec** axis resolves the originating ticket from the Linear id in the branch name
-  or commit trailer. Name branches `<type>/<TEAM-NUM>-<slug>` (e.g.
-  `feat/BAC-412-vector-store`) so the link is mechanical.
+- The **Standards** axis of `/code-review` reads `docs/architecture.md` (authoritative) plus
+  the summary in `AGENTS.md`. Those override the skill's generic smell baseline.
 - Definition of Done lives in `AGENTS.md`; `/verify` runs those gates and prints evidence.

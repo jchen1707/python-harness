@@ -1,16 +1,18 @@
-# Adding a secret or an API key
+# Adding a secret or an API key — this repo
 
-This page covers **where a secret goes and how to put it there**. For the `Settings` field
-that reads it, see `src/app/core/AGENTS.md` → Configuration.
+<!-- harness:agnostic -->
+**Shared doctrine lives in `.agents/vendor/harness/docs/agents/secrets.md`** — why a pasted
+value is already burned, how to add one, and what to do when one leaks. It is vendored from
+[`harness`](https://github.com/jchen1707/harness) and pinned by sha; read it first.
+<!-- /harness:agnostic -->
+<!-- harness:claude
+**Shared doctrine is provided by the `harness` plugin**, at
+`${CLAUDE_PLUGIN_ROOT}/docs/agents/secrets.md` — why a pasted value is already burned, how to
+add one, and what to do when one leaks. Read it first.
+/harness:claude -->
 
-## The rule
-
-A secret is compromised when its value enters an agent transcript. The value is then in the
-context window, in the transcript file on disk, and in the request body. No later edit
-removes it. Rotation is the only remedy.
-
-Every practice below keeps the literal value out of the model's input. Keeping it out of
-git is a separate, already-solved problem.
+This page covers **where a secret goes in this repo and how to put it there**. For the
+`Settings` field that reads it, see `src/app/core/AGENTS.md` → Configuration.
 
 ## Where the value goes
 

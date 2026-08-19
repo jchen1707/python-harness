@@ -13,7 +13,8 @@
     ".claude/hooks/codex_session_learnings.py",
     "tests/test_codex_hooks.py",
     "tests/test_generate_main.py",
-    ".github/workflows/generate-main.yml"
+    ".github/workflows/generate-main.yml",
+    ".github/workflows/vendor-freshness.yml"
   ],
   "instructions": {
     "from": "AGENTS.md",
@@ -25,6 +26,12 @@
       "file": "pyproject.toml",
       "from": "\".agents/mcp_headers.py\" = [\"S603\", \"S607\"]\n\".claude/mcp_headers.py\" = [\"S603\", \"S607\"]\n",
       "to": "\".claude/mcp_headers.py\" = [\"S603\", \"S607\"]\n"
+    },
+    {
+      "note": "Layer A reaches this repo two ways, and never both at once. On v2 it is the vendored tree under .agents/vendor/harness, which the .agents drop removes here; on main it is the plugin, which nothing else in the tree would enable.",
+      "file": ".claude/settings.json",
+      "from": "  \"enabledPlugins\": {\n    \"mattpocock-skills@claude-plugins-official\": true\n  },\n",
+      "to": "  \"enabledPlugins\": {\n    \"harness@harness\": true,\n    \"mattpocock-skills@claude-plugins-official\": true\n  },\n"
     }
   ],
   "substitutions": [
@@ -34,7 +41,7 @@
       "to": ".claude/"
     },
     {
-      "note": "And as a path *segment* \u2014 `Path(...) / \".agents\" / \"hooks\"` never contains a slash.",
+      "note": "And as a path *segment* — `Path(...) / \".agents\" / \"hooks\"` never contains a slash.",
       "regex": "([\"'])\\.agents\\1",
       "to": "\\1.claude\\1"
     },
