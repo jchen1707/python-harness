@@ -26,6 +26,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -40,6 +41,12 @@ TEXT_SUFFIXES = frozenset(
         ".sh",
         ".js",
         ".mjs",
+        ".ts",
+        ".tsx",
+        ".mts",
+        ".cts",
+        ".css",
+        ".html",
         ".cfg",
         ".txt",
         ".example",
@@ -68,8 +75,44 @@ def is_text(path: Path) -> bool:
     return True
 
 
+def copy_tracked(source: Path, destination: Path) -> bool:
+    """Copy exactly the files git tracks. True when the source is a git checkout.
+
+    The tracked set is the right definition of "the branch": it is what a fresh clone
+    would contain, so a local build matches the one CI publishes. Copying the working
+    tree instead would sweep in whatever happens to be lying around unstaged — build
+    output, caches, and `.env`, which is precisely the file that must never reach a
+    branch this job force-pushes.
+
+    Returns False for a source that is not a checkout, so fixtures still build.
+    """
+    if not (source / ".git").exists():
+        return False
+    # `git` resolves from PATH, and every argument is either a literal or the path this
+    # script was handed, so there is no untrusted input to inject. An absolute executable
+    # path would not survive the Windows leg of the frontend harness's CI.
+    listing = subprocess.run(  # noqa: S603
+        ["git", "-C", str(source), "ls-files", "-z"],  # noqa: S607
+        capture_output=True,
+        check=True,
+    )
+    destination.mkdir(parents=True)
+    for name in listing.stdout.decode("utf-8").split("\0"):
+        if not name:
+            continue
+        origin = source / name
+        target = destination / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        # `follow_symlinks=False` recreates an adapter symlink as a symlink, which is
+        # what `materialise_symlinks` then has to find.
+        shutil.copy2(origin, target, follow_symlinks=False)
+    return True
+
+
 def copy_tree(source: Path, destination: Path) -> None:
     """Copy the working tree, minus the things no branch should carry."""
+    if copy_tracked(source, destination):
+        return
     ignore = shutil.ignore_patterns(
         ".git",
         "__pycache__",
@@ -115,6 +158,37 @@ def materialise_symlinks(root: Path, expected: dict[str, str]) -> None:
             shutil.copy2(resolved, link)
 
 
+def materialise_pointers(root: Path, expected: dict[str, str]) -> None:
+    """Replace each adapter *pointer file* with the canonical file it points at.
+
+    The frontend harness cannot use symlinks for its adapters: its CI runs on Windows as
+    well as Linux, and a checkout with `core.symlinks=false` turns every link into a text
+    file containing a path. So the adapter is an ordinary file that carries the Claude
+    frontmatter and a one-line body telling the agent to read the canonical file. On
+    `main` there is no canonical file to read, so the pointer has to become its target.
+
+    The canonical file repeats the adapter's frontmatter verbatim, which is what makes
+    this a whole-file copy rather than a splice.
+    """
+    for pointer_path, target in expected.items():
+        pointer = root / pointer_path
+        if pointer.is_symlink() or not pointer.is_file():
+            raise TransformError(
+                f"{pointer_path} is not a regular file — the manifest expects a pointer stub"
+            )
+        # A stub that no longer names its target is a stub somebody filled in by hand.
+        # Overwriting it would silently discard their edit, so stop instead.
+        if target not in pointer.read_text(encoding="utf-8"):
+            raise TransformError(
+                f"{pointer_path} does not reference {target!r} — either it was edited by "
+                f"hand, or the manifest is stale"
+            )
+        resolved = (pointer.parent / target).resolve()
+        if not resolved.is_file():
+            raise TransformError(f"{pointer_path} points at {target!r}, which does not exist")
+        shutil.copy2(resolved, pointer)
+
+
 # Harness-specific regions are marked in the source, in whatever comment syntax the file
 # uses. Two kinds, and they are not symmetrical:
 #
@@ -134,7 +208,11 @@ def materialise_symlinks(root: Path, expected: dict[str, str]) -> None:
 #       …Claude-specific prose…          # pattern = re.compile(CLAUDE_ONLY)
 #       /harness:claude -->              # /harness:claude
 #
-BLANK_RUN = re.compile(r"\n{4,}")
+# How much vertical space a removed region may leave behind, which is a property of the
+# language's formatter rather than of any repository. `ruff format` wants two blank lines
+# between top-level definitions; Prettier allows one, anywhere, and rewrites the rest.
+BLANK_RUN = re.compile(r"\n{3,}")
+BLANK_RUN_PYTHON = re.compile(r"\n{4,}")
 AGNOSTIC = re.compile(
     r"[ \t]*(?://|#|<!--)[ \t]*harness:agnostic[ \t]*(?:-->)?[ \t]*\n"
     r".*?"
@@ -194,11 +272,14 @@ def resolve_regions(root: Path) -> None:
         if updated == text:
             continue
         # Removing a region leaves the blank lines that surrounded it stacked against
-        # each other, and `ruff format` rejects the result. Two blank lines is the most
-        # any file type here uses — Python wants exactly that between top-level
-        # definitions — so anything beyond it collapses, and a trailing run goes entirely.
+        # each other, and the repository's formatter rejects the result. Collapse the run
+        # to what that file's formatter permits, and drop a trailing one entirely.
         # Applied only to files that actually held a region.
-        updated = BLANK_RUN.sub("\n\n\n", updated).rstrip("\n") + "\n"
+        if path.suffix == ".py":
+            updated = BLANK_RUN_PYTHON.sub("\n\n\n", updated)
+        else:
+            updated = BLANK_RUN.sub("\n\n", updated)
+        updated = updated.rstrip("\n") + "\n"
         path.write_text(updated, encoding="utf-8")
 
 
@@ -265,6 +346,7 @@ def generate(source: Path, destination: Path, manifest: dict) -> None:
         shutil.rmtree(destination)
     copy_tree(source, destination)
     materialise_symlinks(destination, manifest.get("symlinks", {}))
+    materialise_pointers(destination, manifest.get("pointers", {}))
     drop(destination, manifest.get("drop", []))
     resolve_regions(destination)
     apply_blocks(destination, manifest.get("blocks", []))
