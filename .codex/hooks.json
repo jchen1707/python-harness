@@ -1,26 +1,16 @@
 {
-  "description": "Codex adapter for the harness verification gate.",
+  "description": "Codex adapter for the shared harness hooks. Same four scripts Claude Code loads from the plugin, reached here by repo-relative path into the vendored copy.",
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write|apply_patch|mcp__.*(edit|write|create|apply).*",
+        "matcher": "Read|Edit|Write|Bash|apply_patch|mcp__.*(edit|write|create|apply|read).*",
         "hooks": [
           {
             "type": "command",
-            "command": "uv run python \"$(git rev-parse --show-toplevel)/.agents/hooks/protect_paths.py\"",
+            "command": "node \"$(git rev-parse --show-toplevel)/.agents/vendor/harness/hooks/protect_paths.mjs\"",
+            "commandWindows": "powershell -NoProfile -Command \"$root = git rev-parse --show-toplevel; node (Join-Path $root '.agents/vendor/harness/hooks/protect_paths.mjs')\"",
             "timeout": 30,
-            "statusMessage": "Checking protected paths…"
-          }
-        ]
-      },
-      {
-        "matcher": "Read|Bash|mcp__.*read.*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run python \"$(git rev-parse --show-toplevel)/.agents/hooks/protect_secrets.py\"",
-            "timeout": 30,
-            "statusMessage": "Checking secret boundaries…"
+            "statusMessage": "Checking protected paths"
           }
         ]
       }
@@ -31,9 +21,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run python \"$(git rev-parse --show-toplevel)/.agents/hooks/format_edited.py\"",
-            "timeout": 90,
-            "statusMessage": "Formatting…"
+            "command": "node \"$(git rev-parse --show-toplevel)/.agents/vendor/harness/hooks/format_edited.mjs\"",
+            "commandWindows": "powershell -NoProfile -Command \"$root = git rev-parse --show-toplevel; node (Join-Path $root '.agents/vendor/harness/hooks/format_edited.mjs')\"",
+            "timeout": 120,
+            "statusMessage": "Formatting edited files"
           }
         ]
       }
@@ -43,9 +34,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run python \"$(git rev-parse --show-toplevel)/.agents/hooks/verify.py\"",
+            "command": "node \"$(git rev-parse --show-toplevel)/.agents/vendor/harness/hooks/verify.mjs\"",
+            "commandWindows": "powershell -NoProfile -Command \"$root = git rev-parse --show-toplevel; node (Join-Path $root '.agents/vendor/harness/hooks/verify.mjs')\"",
             "timeout": 600,
-            "statusMessage": "Verifying Definition of Done…"
+            "statusMessage": "Verifying Definition of Done"
           }
         ]
       }
@@ -55,9 +47,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run python \"$(git rev-parse --show-toplevel)/.agents/hooks/codex_session_learnings.py\"",
+            "command": "node \"$(git rev-parse --show-toplevel)/.agents/vendor/harness/hooks/codex_session_learnings.mjs\"",
+            "commandWindows": "powershell -NoProfile -Command \"$root = git rev-parse --show-toplevel; node (Join-Path $root '.agents/vendor/harness/hooks/codex_session_learnings.mjs')\"",
             "timeout": 3,
-            "statusMessage": "Distilling session learnings…"
+            "statusMessage": "Distilling session learnings"
           }
         ]
       }

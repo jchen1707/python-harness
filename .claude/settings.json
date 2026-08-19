@@ -80,34 +80,16 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write|NotebookEdit|mcp__.*(edit|write|create|apply).*",
+        "matcher": "Read|Edit|Write|NotebookEdit|Bash|mcp__.*(edit|write|create|apply|read).*",
         "hooks": [
           {
             "type": "command",
-            "command": "uv",
+            "command": "node",
             "args": [
-              "run",
-              "python",
-              "${CLAUDE_PROJECT_DIR}/.agents/hooks/protect_paths.py"
+              "${CLAUDE_PROJECT_DIR}/.agents/vendor/harness/hooks/protect_paths.mjs"
             ],
             "timeout": 30,
-            "statusMessage": "Checking protected paths…"
-          }
-        ]
-      },
-      {
-        "matcher": "Read|Bash|mcp__.*read.*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv",
-            "args": [
-              "run",
-              "python",
-              "${CLAUDE_PROJECT_DIR}/.agents/hooks/protect_secrets.py"
-            ],
-            "timeout": 30,
-            "statusMessage": "Checking secret boundaries…"
+            "statusMessage": "Checking protected paths\u2026"
           }
         ]
       }
@@ -118,14 +100,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv",
+            "command": "node",
             "args": [
-              "run",
-              "python",
-              "${CLAUDE_PROJECT_DIR}/.agents/hooks/format_edited.py"
+              "${CLAUDE_PROJECT_DIR}/.agents/vendor/harness/hooks/format_edited.mjs"
             ],
-            "timeout": 90,
-            "statusMessage": "Formatting…"
+            "timeout": 120,
+            "statusMessage": "Formatting\u2026"
           }
         ]
       }
@@ -135,14 +115,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv",
+            "command": "node",
             "args": [
-              "run",
-              "python",
-              "${CLAUDE_PROJECT_DIR}/.agents/hooks/verify.py"
+              "${CLAUDE_PROJECT_DIR}/.agents/vendor/harness/hooks/verify.mjs"
             ],
             "timeout": 600,
-            "statusMessage": "Verifying Definition of Done…"
+            "statusMessage": "Verifying Definition of Done\u2026"
           }
         ]
       }
@@ -152,14 +130,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv",
+            "command": "node",
             "args": [
-              "run",
-              "python",
-              "${CLAUDE_PROJECT_DIR}/.agents/hooks/session_learnings.py"
+              "${CLAUDE_PROJECT_DIR}/.agents/vendor/harness/hooks/session_learnings.mjs"
             ],
             "timeout": 300,
-            "statusMessage": "Distilling session learnings…"
+            "statusMessage": "Distilling session learnings\u2026"
           }
         ]
       }
