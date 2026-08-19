@@ -81,7 +81,10 @@ function listFiles(directory, suffix) {
  */
 export function backlog(transcripts, notes) {
   const missing = listFiles(transcripts, '.jsonl').filter((path) => {
-    const id = path.split(/[\\/]/).at(-1).replace(/\.jsonl$/, '');
+    const id = path
+      .split(/[\\/]/)
+      .at(-1)
+      .replace(/\.jsonl$/, '');
     if (learnings.existingNote(notes, id)) return false;
     return !learnings.isDistillerTranscript(learnings.readRaw(path));
   });
@@ -109,7 +112,14 @@ export function distillerIds(root) {
   for (const project of projects) {
     for (const path of listFiles(join(root, project.name), '.jsonl')) {
       if (learnings.isDistillerTranscript(learnings.readRaw(path))) {
-        ids.add(learnings.shortId(path.split(/[\\/]/).at(-1).replace(/\.jsonl$/, '')));
+        ids.add(
+          learnings.shortId(
+            path
+              .split(/[\\/]/)
+              .at(-1)
+              .replace(/\.jsonl$/, ''),
+          ),
+        );
       }
     }
   }
@@ -172,15 +182,19 @@ function runAudit(directory, root, remove) {
     for (const note of echoes) process.stdout.write(`  ${note.path}\n`);
   }
   if (splits.length > 0) {
-    process.stdout.write(`distil_backlog: ${splits.length} session(s) holding more than one note:\n`);
+    process.stdout.write(
+      `distil_backlog: ${splits.length} session(s) holding more than one note:\n`,
+    );
     for (const [key, group] of splits) {
       process.stdout.write(`  ${key}: ${group.map((n) => n.path).join(', ')}\n`);
     }
-    process.stdout.write('  Merge these by hand. Each file distils a different part of one session.\n');
+    process.stdout.write(
+      '  Merge these by hand. Each file distils a different part of one session.\n',
+    );
   }
 
   if (!remove) {
-    process.stdout.write('Re-run with --audit --run to delete the distiller\'s own notes.\n');
+    process.stdout.write("Re-run with --audit --run to delete the distiller's own notes.\n");
     return 0;
   }
 
@@ -242,7 +256,10 @@ function main(argv) {
   if (args.audit) return runAudit(directory, projectsRoot(), args.run);
 
   const cwd = process.cwd();
-  const candidates = backlog(transcriptsDir(cwd), learnings.readNotes(directory)).slice(0, args.limit);
+  const candidates = backlog(transcriptsDir(cwd), learnings.readNotes(directory)).slice(
+    0,
+    args.limit,
+  );
   if (candidates.length === 0) {
     process.stdout.write('distil_backlog: no undistilled transcripts found\n');
     return 0;
@@ -259,7 +276,10 @@ function main(argv) {
 
   let wrote = 0;
   for (const path of candidates) {
-    const sessionId = path.split(/[\\/]/).at(-1).replace(/\.jsonl$/, '');
+    const sessionId = path
+      .split(/[\\/]/)
+      .at(-1)
+      .replace(/\.jsonl$/, '');
     const { target, outcome } = learnings.distilTranscript({
       transcriptPath: path,
       sessionId,

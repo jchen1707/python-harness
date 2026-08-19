@@ -198,7 +198,13 @@ const HOOK_DEFAULTS = {
  */
 export function loadConfig(cwd) {
   const path = findConfig(cwd);
-  const empty = { found: false, root: cwd || process.cwd(), name: '', gates: [], hooks: { ...HOOK_DEFAULTS } };
+  const empty = {
+    found: false,
+    root: cwd || process.cwd(),
+    name: '',
+    gates: [],
+    hooks: { ...HOOK_DEFAULTS },
+  };
   if (!path) return empty;
 
   let parsed;

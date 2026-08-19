@@ -72,7 +72,7 @@ carries them as a built-in floor. A guard whose config goes missing and quietly 
 nothing is worse than no guard, because the repository still reads as protected.
 
 **A `why` is the whole message an agent receives.** `"regenerate with \`uv lock\`, never
-hand-edit"` ends the attempt; `"protected"` invites a retry with a different tool.
+hand-edit"`ends the attempt;`"protected"` invites a retry with a different tool.
 
 ## Adding a key
 

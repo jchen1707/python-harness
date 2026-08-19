@@ -72,7 +72,14 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import {
+  appendFileSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import process from 'node:process';
@@ -192,7 +199,11 @@ export function learningsDirectory(environment = process.env) {
 
 /** The session id as it appears in a note filename. */
 export function shortId(sessionId) {
-  return String(sessionId ?? '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 8) || 'session';
+  return (
+    String(sessionId ?? '')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .slice(0, 8) || 'session'
+  );
 }
 
 /**
@@ -224,7 +235,10 @@ export function gitContext(cwd) {
 function extractText(block) {
   if (typeof block === 'string') return block;
   if (block && typeof block === 'object') {
-    if (['text', 'input_text', 'output_text'].includes(block.type) && typeof block.text === 'string')
+    if (
+      ['text', 'input_text', 'output_text'].includes(block.type) &&
+      typeof block.text === 'string'
+    )
       return block.text;
     if (block.type === 'tool_use' && typeof block.name === 'string') return `[tool: ${block.name}]`;
   }
@@ -310,7 +324,10 @@ export function frontMatterValue(text, key) {
 
 /** The note with its front matter and heading removed, normalised for comparison. */
 export function noteBody(text) {
-  return vaultIndex.body(text).replace(/^\s*#[^\n]*\n/, '').trim();
+  return vaultIndex
+    .body(text)
+    .replace(/^\s*#[^\n]*\n/, '')
+    .trim();
 }
 
 /**
@@ -460,7 +477,10 @@ export function rebuildIndex(directory) {
     return '';
   }
   const rows = [];
-  for (const name of names.filter((n) => n.endsWith('.md') && n !== INDEX_NAME).sort().reverse()) {
+  for (const name of names
+    .filter((n) => n.endsWith('.md') && n !== INDEX_NAME)
+    .sort()
+    .reverse()) {
     let text;
     try {
       text = readFileSync(join(directory, name), 'utf8');
@@ -469,7 +489,12 @@ export function rebuildIndex(directory) {
     }
     const fields = vaultIndex.frontMatter(text);
     if (Object.keys(fields).length === 0) continue;
-    rows.push([fields.date ?? '', fields.project ?? '', fields.summary ?? '', name.replace(/\.md$/, '')]);
+    rows.push([
+      fields.date ?? '',
+      fields.project ?? '',
+      fields.summary ?? '',
+      name.replace(/\.md$/, ''),
+    ]);
   }
 
   const lines = [
@@ -529,7 +554,11 @@ export function distilTranscript({ transcriptPath, sessionId, cwd, directory }) 
   const notes = readNotes(directory);
   const project = basename(cwd) || 'session';
 
-  const { text: distilled, failure } = distil(transcript, gitContext(cwd), priorBody(notes, sessionId));
+  const { text: distilled, failure } = distil(
+    transcript,
+    gitContext(cwd),
+    priorBody(notes, sessionId),
+  );
   if (failure) return { target: '', outcome: `failed: ${failure}` };
   if (!distilled) return { target: '', outcome: 'no learnings: the session taught nothing' };
 
@@ -537,7 +566,12 @@ export function distilTranscript({ transcriptPath, sessionId, cwd, directory }) 
   const body = text.trim();
   const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
 
-  const { target, date, skip } = placeNote(notes, body, sessionId, notePath(directory, project, sessionId));
+  const { target, date, skip } = placeNote(
+    notes,
+    body,
+    sessionId,
+    notePath(directory, project, sessionId),
+  );
   if (skip) return { target: '', outcome: `skipped: ${skip}` };
 
   // A rewrite keeps the note's original date, so it holds its place in the vault, and records

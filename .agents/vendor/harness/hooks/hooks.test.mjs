@@ -24,7 +24,14 @@ import { dirname, join } from 'node:path';
 import { after, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { CONFIG_NAME, findConfig, globToRegExp, loadConfig, relativePath, toolPaths } from './lib.mjs';
+import {
+  CONFIG_NAME,
+  findConfig,
+  globToRegExp,
+  loadConfig,
+  relativePath,
+  toolPaths,
+} from './lib.mjs';
 import {
   ALLOWED_FLOOR,
   SECRET,
@@ -136,7 +143,13 @@ const CONFIGS = {
       ],
       secretVars: ['LINEAR_API_KEY', 'GH_TOKEN'],
       formatters: [
-        { match: ['.ts', '.tsx'], run: [['pnpm', 'exec', 'prettier', '--write'], ['pnpm', 'exec', 'eslint', '--fix']] },
+        {
+          match: ['.ts', '.tsx'],
+          run: [
+            ['pnpm', 'exec', 'prettier', '--write'],
+            ['pnpm', 'exec', 'eslint', '--fix'],
+          ],
+        },
         { match: ['.md', '.json', '.css'], run: [['pnpm', 'exec', 'prettier', '--write']] },
       ],
     },
@@ -181,7 +194,11 @@ describe('config discovery', () => {
 
   it('ignores a key of the wrong type instead of crashing the hook', () => {
     const root = scratch();
-    writeFileSync(join(root, CONFIG_NAME), '{"name":"x","gates":"nope","hooks":{"gatedPaths":7}}', 'utf8');
+    writeFileSync(
+      join(root, CONFIG_NAME),
+      '{"name":"x","gates":"nope","hooks":{"gatedPaths":7}}',
+      'utf8',
+    );
     const config = loadConfig(root);
     assert.equal(config.found, true);
     assert.deepEqual(config.gates, []);
@@ -272,7 +289,10 @@ for (const [label, config] of Object.entries(LOADED)) {
 
     it('refuses a write to every path this repo declared', () => {
       for (const { glob } of declared) {
-        const sample = glob.replaceAll('**/', 'src/').replaceAll('/**', '/file.txt').replaceAll('*', 'x');
+        const sample = glob
+          .replaceAll('**/', 'src/')
+          .replaceAll('/**', '/file.txt')
+          .replaceAll('*', 'x');
         assert.ok(
           blockReason(sample, 'Write', rules, allowed),
           `${glob} declared protected but ${sample} was allowed`,
@@ -283,7 +303,10 @@ for (const [label, config] of Object.entries(LOADED)) {
     it('leaves reads of the write-protected paths alone', () => {
       for (const { glob, scope } of declared) {
         if (scope === SECRET) continue;
-        const sample = glob.replaceAll('**/', 'src/').replaceAll('/**', '/file.txt').replaceAll('*', 'x');
+        const sample = glob
+          .replaceAll('**/', 'src/')
+          .replaceAll('/**', '/file.txt')
+          .replaceAll('*', 'x');
         assert.equal(blockReason(sample, 'Read', rules, allowed), null, `${sample} blocked a read`);
       }
     });
@@ -326,7 +349,13 @@ for (const [label, config] of Object.entries(LOADED)) {
 
     it('leaves ordinary shell commands alone', () => {
       const { secretVars } = config.hooks;
-      for (const command of ['git status', 'ls -la', 'cat README.md', 'pnpm test', 'uv run pytest']) {
+      for (const command of [
+        'git status',
+        'ls -la',
+        'cat README.md',
+        'pnpm test',
+        'uv run pytest',
+      ]) {
         assert.equal(commandReason(command, secretVars), null, `${command} was refused`);
       }
     });
@@ -388,7 +417,10 @@ for (const [label, config] of Object.entries(LOADED)) {
       const entry = CONFIGS[label].hooks.formatters[0];
       const path = `x${entry.match[0]}`;
       const commands = commandsFor(formatters, path);
-      assert.deepEqual(commands, entry.run.map((argv) => [...argv, path]));
+      assert.deepEqual(
+        commands,
+        entry.run.map((argv) => [...argv, path]),
+      );
     });
 
     it('runs nothing for an extension no entry claims', () => {
@@ -424,7 +456,10 @@ describe('Stop gate — mechanics', () => {
       asked = true;
       return { status: 0, stdout: '', stderr: '', error: null };
     };
-    assert.equal(gatedChangeWith(runner, { gatedPaths: [], gatedFiles: [], gatedExtensions: [] }), false);
+    assert.equal(
+      gatedChangeWith(runner, { gatedPaths: [], gatedFiles: [], gatedExtensions: [] }),
+      false,
+    );
     assert.equal(asked, false);
   });
 
@@ -481,11 +516,15 @@ describe('the wiring covers the surface each guard needs', () => {
     // names our config covers, not to re-implement the harness's matching rules.
     for (const tool of WRITE_TOOLS) {
       assert.ok(
-        matchers('PreToolUse', 'protect_paths.mjs').some((pattern) => new RegExp(pattern).test(tool)),
+        matchers('PreToolUse', 'protect_paths.mjs').some((pattern) =>
+          new RegExp(pattern).test(tool),
+        ),
         `the write guard does not cover ${tool}`,
       );
       assert.ok(
-        matchers('PostToolUse', 'format_edited.mjs').some((pattern) => new RegExp(pattern).test(tool)),
+        matchers('PostToolUse', 'format_edited.mjs').some((pattern) =>
+          new RegExp(pattern).test(tool),
+        ),
         `the formatter does not cover ${tool}`,
       );
     }
@@ -497,7 +536,9 @@ describe('the wiring covers the surface each guard needs', () => {
     // ignores reads" was the property being asserted.
     for (const tool of ['Read', 'Bash']) {
       assert.ok(
-        matchers('PreToolUse', 'protect_paths.mjs').some((pattern) => new RegExp(pattern).test(tool)),
+        matchers('PreToolUse', 'protect_paths.mjs').some((pattern) =>
+          new RegExp(pattern).test(tool),
+        ),
         `a secret can be reached through ${tool} without the guard seeing the call`,
       );
     }
@@ -514,7 +555,12 @@ describe('the wiring covers the surface each guard needs', () => {
 
   it('addresses every hook through the plugin root, which survives a worktree', () => {
     const commands = JSON.stringify(HOOKS_JSON.hooks);
-    for (const script of ['protect_paths.mjs', 'format_edited.mjs', 'verify.mjs', 'session_learnings.mjs']) {
+    for (const script of [
+      'protect_paths.mjs',
+      'format_edited.mjs',
+      'verify.mjs',
+      'session_learnings.mjs',
+    ]) {
       assert.ok(
         commands.includes(`\${CLAUDE_PLUGIN_ROOT}/hooks/${script}`),
         `${script} is not addressed through CLAUDE_PLUGIN_ROOT`,
@@ -532,7 +578,10 @@ describe('the wiring covers the surface each guard needs', () => {
 
 describe('session learnings — note identity', () => {
   it('derives the learnings directory from the Obsidian vault root', () => {
-    assert.equal(learningsDirectory({ OBSIDIAN_VAULT_DIRECTORY: '/v' }), join('/v', 'Project Learnings'));
+    assert.equal(
+      learningsDirectory({ OBSIDIAN_VAULT_DIRECTORY: '/v' }),
+      join('/v', 'Project Learnings'),
+    );
     assert.equal(learningsDirectory({}), '');
   });
 
@@ -569,7 +618,15 @@ describe('session learnings — note identity', () => {
   });
 
   it('rewrites the note this session already has, keeping its name and date', () => {
-    const notes = [{ path: 'a.md', key: shortId('mine'), session: 'mine', date: '2026-08-01 09:00', body: 'old' }];
+    const notes = [
+      {
+        path: 'a.md',
+        key: shortId('mine'),
+        session: 'mine',
+        date: '2026-08-01 09:00',
+        body: 'old',
+      },
+    ];
     const placed = placeNote(notes, 'new', 'mine', 'fallback.md');
     assert.equal(placed.target, 'a.md');
     assert.equal(placed.date, '2026-08-01 09:00');
@@ -577,12 +634,16 @@ describe('session learnings — note identity', () => {
   });
 
   it('writes nothing when the session ends again having learned nothing new', () => {
-    const notes = [{ path: 'a.md', key: shortId('mine'), session: 'mine', date: '1', body: 'same' }];
+    const notes = [
+      { path: 'a.md', key: shortId('mine'), session: 'mine', date: '1', body: 'same' },
+    ];
     assert.match(placeNote(notes, 'same', 'mine', 'fallback.md').skip, /^unchanged/);
   });
 
   it('writes nothing when another session already holds the same body', () => {
-    const notes = [{ path: 'a.md', key: shortId('other'), session: 'other', date: '1', body: 'same' }];
+    const notes = [
+      { path: 'a.md', key: shortId('other'), session: 'other', date: '1', body: 'same' },
+    ];
     assert.match(placeNote(notes, 'same', 'mine', 'fallback.md').skip, /^duplicate of/);
   });
 
@@ -608,7 +669,10 @@ describe('session learnings — note identity', () => {
     writeFileSync(join(directory, '_INDEX.md'), '# index\n', 'utf8');
     writeFileSync(join(directory, '_hook.log'), 'noise\n', 'utf8');
     writeFileSync(join(directory, '2026-08-01 repo abc12345.md'), '# repo\n\nlesson\n', 'utf8');
-    assert.deepEqual(readNotes(directory).map((n) => n.key), ['abc12345']);
+    assert.deepEqual(
+      readNotes(directory).map((n) => n.key),
+      ['abc12345'],
+    );
   });
 });
 
@@ -697,8 +761,16 @@ describe('second brain — one writer and one indexer', () => {
     const vault = scratch();
     mkdirSync(join(vault, 'Project Learnings'), { recursive: true });
     mkdirSync(join(vault, '.obsidian'), { recursive: true });
-    writeFileSync(join(vault, 'hand written.md'), 'A long enough line of ordinary prose here.\n', 'utf8');
-    writeFileSync(join(vault, 'Project Learnings', 'a.md'), '---\nsummary: s\n---\n\nbody\n', 'utf8');
+    writeFileSync(
+      join(vault, 'hand written.md'),
+      'A long enough line of ordinary prose here.\n',
+      'utf8',
+    );
+    writeFileSync(
+      join(vault, 'Project Learnings', 'a.md'),
+      '---\nsummary: s\n---\n\nbody\n',
+      'utf8',
+    );
     writeFileSync(join(vault, '.obsidian', 'workspace.md'), 'editor config\n', 'utf8');
     writeFileSync(join(vault, '_VAULT_INDEX.md'), 'generated\n', 'utf8');
 
@@ -708,12 +780,17 @@ describe('second brain — one writer and one indexer', () => {
 
   it('describes a note with no front matter from its first line of real prose', () => {
     assert.equal(
-      describeNote('# Heading\n\n- bullet\n\nA long enough line of ordinary prose to describe it.\n'),
+      describeNote(
+        '# Heading\n\n- bullet\n\nA long enough line of ordinary prose to describe it.\n',
+      ),
       'A long enough line of ordinary prose to describe it.',
     );
   });
 
   it('falls back to the outline for a note that is only bullets', () => {
-    assert.equal(describeNote('# Title\n\n- one thing\n- another thing\n'), 'Title · one thing · another thing');
+    assert.equal(
+      describeNote('# Title\n\n- one thing\n- another thing\n'),
+      'Title · one thing · another thing',
+    );
   });
 });
