@@ -20,7 +20,7 @@ all of them.
 | `src/app/ai/CLAUDE.md` | Why AI is its own layer; rules covering all of it. |
 | `src/app/ai/*/CLAUDE.md` | Retrieval, reranking, agents, evals. |
 | `tests/CLAUDE.md` | Test conventions. |
-| `docs/agents/*.md` | Tracker and triage conventions. |
+| `docs/agents/*.md` | Tracker and triage conventions — the repo-specific half only. |
 | `.claude/agents/*.md` | Subagent definitions, also the `full-review` axes. |
 | `.claude/skills/*/SKILL.md` | Repo-owned skills — including this one. |
 

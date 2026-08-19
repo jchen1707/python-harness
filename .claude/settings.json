@@ -70,6 +70,7 @@
     ]
   },
   "enabledPlugins": {
+    "harness@harness": true,
     "mattpocock-skills@claude-plugins-official": true
   },
   "plansDirectory": ".claude/plans",

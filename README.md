@@ -20,8 +20,12 @@ Postgres + pgvector).
   capability directory.
 - `.claude/` — the Claude Code adapter: settings, hooks, slash commands, and symlinks to
   the canonical `.claude/` capability directories.
-- `docs/agents/` — how agents work with this repo: `issue-tracker.md` (Linear conventions),
-  `triage-labels.md` (canonical triage roles → real label strings), `domain.md`.
+- `docs/agents/` — how agents work with **this** repo: `issue-tracker.md` (the team and
+  branch prefix), `triage-labels.md`, `domain.md`, `secrets.md`. Each states only what is
+  true here and points at the shared doctrine.
+- The stack-neutral half of the harness arrives as the `harness` plugin, resolved outside
+  the repo through `${CLAUDE_PLUGIN_ROOT}` — so it is present in every worktree, which a
+  submodule would not be.
 - `.out-of-scope/` — rejected feature requests, read by `/triage` to avoid re-litigating a
   decision that was already made.
 - `.github/workflows/ci.yml` — CI gates (ruff, format, mypy, pytest; not the integration
