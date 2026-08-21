@@ -56,6 +56,12 @@ Keep the layering invariant below unless a feature justifies a documented except
   Keep each filter pure where possible.
   Test each filter separately.
 
+Chunking uses fixed-size word windows inside each page.
+This choice deviates from the structure-first rule in `src/app/ai/retrieval/AGENTS.md`.
+Fixed windows can split sentences.
+The 25-word overlap reduces this boundary loss.
+The approved proof of concept accepts this quality cost for deterministic chunks.
+
 The expected load is approximately 150 chunks and 30 users.
 The Voyage ingest rate limit is the main constraint.
 
