@@ -1,0 +1,52 @@
+# Agentic review in CI, on demand. Add the `agent-review` label to a PR to trigger one
+# review pass on the Spec and Standards axes; remove and re-add the label to re-run.
+# Label-gated on purpose: this is billed model spend, so it must be a deliberate act,
+# never the default for every push.
+#
+# Needs the `ANTHROPIC_API_KEY` repository secret (Settings -> Secrets and variables ->
+# Actions). Without it the job fails at the action step; that is the correct loud failure.
+name: Agent review
+
+on:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  review:
+    timeout-minutes: 20
+    if: github.event.label.name == 'agent-review'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The reviewers diff against main, so the merge-base must exist locally.
+          fetch-depth: 0
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review pull request #${{ github.event.pull_request.number }} on two axes and
+            post the findings as one PR comment.
+
+            Each reviewer is two halves. The shared frame is layer A; the checklist under
+            docs/agents/subagents/ is this repository's. Read both, in that order — a frame
+            with no checklist reviews on general advice and reports a confident clean.
+
+            1. Standards: apply .agents/vendor/harness/agents/standards-reviewer.md plus
+               docs/agents/subagents/standards-reviewer.md to the diff against the
+               merge-base with main.
+            2. Spec: resolve the Linear ticket id from the branch name
+               (`<type>/BAC-<num>-<slug>`). If it resolves, apply
+               .agents/vendor/harness/agents/spec-checker.md against the PR description's
+               stated intent — that frame carries its whole review and needs no checklist.
+               If no ticket resolves, state that and skip this axis.
+
+            Report defects only, ranked most severe first, each with file:line and a
+            one-sentence failure scenario. Do not push fixes. If both axes are clean, say
+            so in one line.
+          claude_args: |
+            --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),Bash(git merge-base:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)"
