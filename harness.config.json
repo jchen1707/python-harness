@@ -112,6 +112,10 @@
       {
         "glob": ".agents/vendor/**",
         "why": "layer A is generated and pinned by sha; edit it in the harness repo and re-sync"
+      },
+      {
+        "glob": ".factory/**",
+        "why": "the factory's own run scaffolding; kept out of every product diff by the global gitignore"
       }
     ],
     "secretVars": [
@@ -151,5 +155,8 @@
       "agent": "async-reviewer"
     },
     "styleEnforcedBy": "ruff or mypy"
-  }
+  },
+  "tests": [
+    "tests"
+  ]
 }
