@@ -256,11 +256,14 @@ for another reason.
 
 ## Stack
 
-Fixed in `pyproject.toml` (`app` extra) — read it there. What the file doesn't explain:
+`pyproject.toml` fixes application libraries in the `app` extra.
+It fixes development tools in the `dev` group. What the file does not explain:
 
 - **Voyage AI** for embeddings because Anthropic has no embeddings API.
 - **Postgres + pgvector** over a dedicated vector DB — one datastore, one backup story.
 - **LangGraph** for agent orchestration in `ai/agents/`.
+- **pypdf** for reading uploaded PDFs in the request path.
+- **fpdf2** for writing the mock corpus PDFs in development only.
 - Introducing an alternative to any of these means updating `docs/architecture.md` first.
 
 ## Issue tracker
