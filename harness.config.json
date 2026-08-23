@@ -74,6 +74,12 @@
         "-m",
         "integration"
       ],
+      "requires": [
+        "uv",
+        "run",
+        "python",
+        "scripts/integration_env_probe.py"
+      ],
       "when": "the change touches a repository, a migration, or anything reaching Postgres or pgvector",
       "caveat": "needs Docker and the app extra. Without them it errors rather than passing, but it is also excluded from the default run \u2014 so a change with no integration coverage looks identical to one with it."
     }
