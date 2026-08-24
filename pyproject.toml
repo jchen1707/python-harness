@@ -80,7 +80,7 @@ ignore_missing_imports = true
 # Dot-directories are skipped during mypy's own recursive discovery, so anything under
 # one has to be named. `.claude/mcp_headers.py` is the only Python left there: the
 # hooks were the other, and they are layer A now.
-files = ["src", "tests", ".claude/mcp_headers.py"]
+files = ["src", "tests", "scripts", ".claude/mcp_headers.py"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

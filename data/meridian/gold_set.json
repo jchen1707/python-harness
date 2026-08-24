@@ -1,0 +1,104 @@
+{
+  "queries": [
+    {
+      "id": "gold-01",
+      "query": "How long can a customer use the email link after asking to reset their password?",
+      "expected_document_id": "external-sign-in"
+    },
+    {
+      "id": "gold-02",
+      "query": "What should I suggest when SSO keeps bouncing the user between pages after login?",
+      "expected_document_id": "external-sign-in"
+    },
+    {
+      "id": "gold-03",
+      "query": "How should a user move their authenticator to a new phone before removing the old one?",
+      "expected_document_id": "external-profile-security"
+    },
+    {
+      "id": "gold-04",
+      "query": "Can the finance contact change the company address on an invoice that already closed?",
+      "expected_document_id": "external-billing"
+    },
+    {
+      "id": "gold-05",
+      "query": "What happens to the workspace if a renewal card keeps declining?",
+      "expected_document_id": "external-billing"
+    },
+    {
+      "id": "gold-06",
+      "query": "Why will the billing page not let an owner lower the number of seats?",
+      "expected_document_id": "external-plans-seats"
+    },
+    {
+      "id": "gold-07",
+      "query": "Which member role can build dashboards without controlling organization billing?",
+      "expected_document_id": "external-plans-seats"
+    },
+    {
+      "id": "gold-08",
+      "query": "Does API capacity return continuously, or does the limit reset on each clock minute?",
+      "expected_document_id": "external-quotas"
+    },
+    {
+      "id": "gold-09",
+      "query": "What text encoding and date format should a customer expect in a dashboard CSV file?",
+      "expected_document_id": "external-exports"
+    },
+    {
+      "id": "gold-10",
+      "query": "When does a monthly report set for the thirty-first run in February?",
+      "expected_document_id": "external-schedules"
+    },
+    {
+      "id": "gold-11",
+      "query": "Where should a customer store a service token after Meridian displays it one time?",
+      "expected_document_id": "external-api-auth"
+    },
+    {
+      "id": "gold-12",
+      "query": "What sequence should a customer follow to replace an API credential without downtime?",
+      "expected_document_id": "external-api-auth"
+    },
+    {
+      "id": "gold-13",
+      "query": "Why did the API reject a reused idempotency key after the request body changed?",
+      "expected_document_id": "external-api-errors"
+    },
+    {
+      "id": "gold-14",
+      "query": "Will Meridian send a webhook event again when the receiver times out?",
+      "expected_document_id": "external-webhooks"
+    },
+    {
+      "id": "gold-15",
+      "query": "How can an integration replace its webhook signing secret without dropping deliveries?",
+      "expected_document_id": "external-webhooks"
+    },
+    {
+      "id": "gold-16",
+      "query": "Who must approve returning a card payment worth more than five hundred dollars?",
+      "expected_document_id": "internal-refunds"
+    },
+    {
+      "id": "gold-17",
+      "query": "What is our verified recovery path when someone has no authenticator or backup codes?",
+      "expected_document_id": "internal-account-recovery"
+    },
+    {
+      "id": "gold-18",
+      "query": "What evidence and approvals do we need before temporarily doubling an account's API capacity?",
+      "expected_document_id": "internal-rate-overrides"
+    },
+    {
+      "id": "gold-19",
+      "query": "Can customers map a dashboard to their own branded domain name?",
+      "expected_document_id": null
+    },
+    {
+      "id": "gold-20",
+      "query": "Does Meridian provide a native connector that posts every alert into Slack?",
+      "expected_document_id": null
+    }
+  ]
+}
