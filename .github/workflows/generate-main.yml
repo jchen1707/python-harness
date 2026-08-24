@@ -24,8 +24,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # The generated tree is published to `main`, so both refs have to be reachable.
+      # The push at the end force-pushes `main`, and when the regenerated tree
+      # includes changed files under .github/workflows/ the default GITHUB_TOKEN
+      # is rejected — "refusing to allow a GitHub App to create or update workflow
+      # ... without workflows permission". That permission is an OAuth *scope*
+      # the GITHUB_TOKEN deliberately cannot hold (so workflows can't elevate
+      # themselves), so the push has to authenticate as a PAT carrying the
+      # `workflow` scope, stored here as the WORKFLOW_PAT secret. The token is
+      # used only for this checkout; every git operation that follows — including
+      # the force-push — reuses it.
       - uses: actions/checkout@v4
         with:
+          token: ${{ secrets.WORKFLOW_PAT }}
           fetch-depth: 0
 
       - name: Install uv
