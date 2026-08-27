@@ -1,8 +1,7 @@
 # Architectural standards — python-harness
 
-**Cross-cutting rules and approved feature decisions only.** Every rule here holds in every
-directory. Feature decisions document narrow exceptions without changing the general rules.
-Rules that apply to one layer live in that layer's `AGENTS.md`, next to the code they govern.
+**Cross-cutting rules only.** Everything here holds in every directory. Rules that apply
+to one layer live in that layer's `AGENTS.md`, next to the code they govern.
 
 This file exists because nested `AGENTS.md` files are **path-scoped**: an agent working in
 `api/` does not load `repositories/AGENTS.md`. An invariant that spans layers must live
@@ -43,31 +42,6 @@ backend web, RAG and agent work. Consider these alternatives per feature:
 
 Record the design patterns you apply, grouped as creational, structural and behavioural.
 Keep the layering invariant below unless a feature justifies a documented exception.
-
-## Feature decisions
-
-### BAC-2 support document retrieval
-
-- **Creational:** The app factory wires each concrete dependency to its protocol.
-- **Structural:** The feature uses the repository pattern and the repository's layered
-  architecture.
-- **Behavioural:** PDF ingestion uses pipe and filter.
-  The filters run in this order: extract, chunk, embed, and store.
-  Keep each filter pure where possible.
-  Test each filter separately.
-
-The expected load is approximately 150 chunks and 30 users.
-The Voyage ingest rate limit is the main constraint.
-
-The proof of concept uses dense vector search only.
-This choice deviates from the hybrid search rule in `src/app/ai/retrieval/AGENTS.md`.
-Dense search reduces recall for identifiers, error codes, and rare words.
-The team accepts this cost to deliver the proof of concept in one week.
-
-The proof of concept uses structured logs without Prometheus RED metrics.
-This choice deviates from the metrics rule in `src/app/core/AGENTS.md`.
-The approved stack does not include `prometheus-client`.
-The team defers that dependency to deliver the proof of concept in one week.
 
 ## 1. Layering
 
@@ -167,10 +141,6 @@ The app is async-first. These rules stay here because they cross layers.
 The `[project.optional-dependencies].app` table in `pyproject.toml` approves application
 libraries.
 The `[dependency-groups].dev` table approves development tools.
-
-`pypdf` reads uploaded PDFs in the request path, so it belongs in the `app` extra.
-`fpdf2` lays out the mock corpus PDFs, so it belongs in the development group.
-A PDF reader does not replace the document layout features in the development writer.
 
 A new framework or library outside that set requires an update to this file **and** to
 `AGENTS.md` first. Do not run `uv add` to introduce an alternative. Edit `pyproject.toml`,
