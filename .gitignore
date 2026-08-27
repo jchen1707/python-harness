@@ -22,9 +22,6 @@ env/
 .coverage.*
 htmlcov/
 
-# Reproducible Meridian PDF output
-/artifacts/meridian-corpus/
-
 # Env / secrets — NEVER commit
 .env
 .env.*
