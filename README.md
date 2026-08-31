@@ -392,6 +392,7 @@ alias) and broadened to cover any agent-read document. Use the new name.
 
 ## Agentic setup
 
+<!-- harness:agnostic -->
 | Path | What |
 | --- | --- |
 | `.agents/agents/` | This repo's own subagents: `async-reviewer` (the ninth review axis) and `test-writer` (worktree-isolated, and here rather than in layer A because it writes, so its tool grant names a runner) |
@@ -399,8 +400,18 @@ alias) and broadened to cover any agent-read document. Use the new name.
 | `docs/agents/subagents/` | This repo's half of each shared frame: what "in this repo's terms" means. A frame with no checklist reviews on general advice and reports a confident clean |
 | `harness.config.json` | Everything layer A needs to know about this repo: the gates, the dev server, the ninth axis, which tools already own style |
 | `.agents/skills/` | Harness-neutral repo skills. Claude Code loads them through `.claude/skills`. Other harnesses can load this directory directly or install it into their skill search path. |
-| `.agents/hooks/` | `protect_paths` (block protected edits), `format_edited` (auto-format), `verify` (Stop gate on the Definition of Done), `session_learnings` (SessionEnd: distils lessons to the second brain), `vault_index` (rebuilds the vault's Markdown indexes) |
+| `.agents/vendor/harness/hooks/` | `protect_paths` (block protected edits), `format_edited` (auto-format), `verify` (Stop gate on the Definition of Done), `session_learnings` (SessionEnd: distils lessons to the second brain), `vault_index` (rebuilds the vault's Markdown indexes) |
 | `.agents/vendor/harness/workflows/` | `full-review.js` — nine reviewers fanned out, one ranked report fanned in. Each axis is assembled from its shared frame plus this repo's checklist, so the workflow and the standalone subagent cannot drift |
+<!-- /harness:agnostic -->
+<!-- harness:claude
+| Path | What |
+| --- | --- |
+| `.claude/agents/` | This repo's own subagents: `async-reviewer` (the ninth review axis) and `test-writer` (worktree-isolated, and here rather than in layer A because it writes, so its tool grant names a runner) |
+| `harness` plugin | Provides the shared review frames, hooks, and `full-review.js` workflow outside this checkout. |
+| `docs/agents/subagents/` | This repo's half of each shared frame: what "in this repo's terms" means. A frame with no checklist reviews on general advice and reports a confident clean |
+| `harness.config.json` | Everything layer A needs to know about this repo: the gates, the dev server, the ninth axis, which tools already own style |
+| `.claude/skills/` | This repo's adapter skills, including `delivery` and `preflight`. |
+/harness:claude -->
 
 Issues live in **Linear**. Workspace **Development**, default team **Backend** (`BAC`).
 <!-- harness:agnostic -->
