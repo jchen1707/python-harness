@@ -147,7 +147,7 @@ same OS user variable reaches every other clone on the machine. Mirror these rul
 
 The read rules name each `.env` variant instead of globbing `.env.*`. A glob would also
 deny `.env.example`, which is committed and holds no values. Add a new variant to both
-`.claude/settings.json` and `tests/test_secret_paths.py` when you start using one.
+`.claude/settings.json` and `tests/test_harness_hooks.py` when you start using one.
 
 ## Working near a secret
 
