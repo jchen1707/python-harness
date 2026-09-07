@@ -59,11 +59,15 @@ ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]
+"scaffolds/templates/*/tests/*.py" = ["S101"]
 # The MCP headers helper shells out to the platform credential store (`powershell`,
 # `security`, `secret-tool`) through a fixed argv list, never user input, so the
 # subprocess rules that exist to catch injection have nothing to catch here.
 ".agents/mcp_headers.py" = ["S603", "S607"]
 ".claude/mcp_headers.py" = ["S603", "S607"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
 
 [tool.ruff.format]
 docstring-code-format = true
