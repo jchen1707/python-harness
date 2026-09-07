@@ -1,0 +1,324 @@
+{
+  "schemaVersion": 1,
+  "manifest": {
+    "path": "pyproject.toml",
+    "format": "toml",
+    "body": {
+      "project": {
+        "name": "__PROJECT__",
+        "version": "0.1.0",
+        "requires-python": ">=3.12",
+        "dependencies": []
+      },
+      "build-system": {
+        "requires": [
+          "hatchling"
+        ],
+        "build-backend": "hatchling.build"
+      },
+      "dependency-groups": {
+        "dev": [
+          "ruff==0.16.4",
+          "mypy>=1.11",
+          "pytest>=8.3"
+        ]
+      },
+      "tool": {
+        "hatch": {
+          "build": {
+            "targets": {
+              "wheel": {
+                "packages": [
+                  "src/app"
+                ]
+              }
+            }
+          }
+        },
+        "ruff": {
+          "line-length": 100
+        },
+        "mypy": {
+          "files": [
+            "src",
+            "tests"
+          ],
+          "strict": true
+        },
+        "pytest": {
+          "ini_options": {
+            "testpaths": [
+              "tests"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "config": {
+    "install": [
+      "uv",
+      "sync"
+    ],
+    "gates": [
+      {
+        "name": "lint",
+        "kind": "lint",
+        "run": [
+          "uv",
+          "run",
+          "ruff",
+          "check",
+          "."
+        ]
+      },
+      {
+        "name": "format",
+        "kind": "format",
+        "run": [
+          "uv",
+          "run",
+          "ruff",
+          "format",
+          "--check",
+          "."
+        ]
+      },
+      {
+        "name": "types",
+        "kind": "types",
+        "run": [
+          "uv",
+          "run",
+          "mypy"
+        ]
+      },
+      {
+        "name": "test",
+        "kind": "test",
+        "run": [
+          "uv",
+          "run",
+          "pytest"
+        ]
+      }
+    ],
+    "tests": [
+      "tests/**"
+    ],
+    "hooks": {
+      "gatedPaths": [
+        "src",
+        "tests"
+      ],
+      "gatedFiles": [
+        "pyproject.toml",
+        "harness.config.json",
+        ".claude/settings.json"
+      ],
+      "gatedExtensions": [
+        ".py",
+        ".json",
+        ".toml"
+      ],
+      "protected": [
+        {
+          "glob": "uv.lock",
+          "why": "Regenerate with uv lock; do not edit the lockfile directly."
+        },
+        {
+          "glob": "**/vendor/**",
+          "why": "Layer A is generated and pinned. Change its source and re-sync."
+        },
+        {
+          "glob": "**/migrations/**",
+          "why": "A human approves and applies schema migrations."
+        },
+        {
+          "glob": "**/generated/**",
+          "why": "Change the generator and regenerate this output."
+        },
+        {
+          "glob": "dist/**",
+          "why": "Build output is generated."
+        },
+        {
+          "glob": ".factory/**",
+          "why": "The factory owns its run scaffolding."
+        }
+      ]
+    },
+    "delivery": {
+      "default": "core",
+      "requirements": {
+        "lint": {
+          "kind": "engineering",
+          "gate": "lint",
+          "description": "Pass the declared lint gate.",
+          "deferrableIn": [
+            "prototype"
+          ]
+        },
+        "format": {
+          "kind": "engineering",
+          "gate": "format",
+          "description": "Pass the declared format gate.",
+          "deferrableIn": [
+            "prototype"
+          ]
+        },
+        "types": {
+          "kind": "engineering",
+          "gate": "types",
+          "description": "Pass the declared types gate.",
+          "deferrableIn": [
+            "prototype"
+          ]
+        },
+        "test": {
+          "kind": "engineering",
+          "gate": "test",
+          "description": "Pass the declared test gate.",
+          "deferrableIn": [
+            "prototype"
+          ]
+        }
+      },
+      "profiles": {
+        "prototype": {
+          "required": [
+            "lint",
+            "format",
+            "types",
+            "test"
+          ],
+          "deferrals": []
+        },
+        "core": {
+          "required": [
+            "lint",
+            "format",
+            "types",
+            "test"
+          ],
+          "deferrals": []
+        },
+        "hardening": {
+          "required": [
+            "lint",
+            "format",
+            "types",
+            "test"
+          ],
+          "deferrals": []
+        }
+      }
+    },
+    "review": {
+      "checklistDir": "docs/agents/subagents",
+      "styleEnforcedBy": "ruff or mypy"
+    }
+  },
+  "presets": {
+    "minimal": [
+      "python"
+    ],
+    "fastapi": [
+      "fastapi"
+    ]
+  },
+  "components": {
+    "python": {
+      "template": "templates/python",
+      "guidance": "Keep domain behavior independent of frameworks."
+    },
+    "fastapi": {
+      "requires": [
+        "python"
+      ],
+      "template": "templates/fastapi",
+      "manifest": {
+        "project": {
+          "dependencies": [
+            "fastapi>=0.115",
+            "uvicorn>=0.30"
+          ]
+        },
+        "dependency-groups": {
+          "dev": [
+            "httpx2"
+          ]
+        }
+      },
+      "config": {
+        "dev": {
+          "run": [
+            "uv",
+            "run",
+            "uvicorn",
+            "app.main:app",
+            "--reload"
+          ],
+          "url": "http://127.0.0.1:8000",
+          "readyCheck": "GET /health returns status ok"
+        }
+      },
+      "guidance": "Validate HTTP input at the boundary. Keep business rules outside routes."
+    },
+    "postgres": {
+      "requires": [
+        "python"
+      ],
+      "manifest": {
+        "project": {
+          "dependencies": [
+            "psycopg[binary]>=3.2"
+          ]
+        }
+      },
+      "guidance": "Apply schema migrations only after operator approval. Use a separate database per test run."
+    },
+    "rag": {
+      "requires": [
+        "postgres"
+      ],
+      "manifest": {
+        "project": {
+          "dependencies": [
+            "voyageai>=0.2",
+            "pgvector>=0.3",
+            "numpy>=1.26"
+          ]
+        }
+      },
+      "guidance": "Keep retrieval evaluation data separate from production data. Configure embedding providers."
+    },
+    "agents": {
+      "requires": [
+        "python"
+      ],
+      "manifest": {
+        "project": {
+          "dependencies": [
+            "langgraph>=0.2",
+            "langchain-anthropic>=0.3"
+          ]
+        }
+      },
+      "guidance": "Bound agent retries and spend. Keep provider credentials on the server."
+    },
+    "openai": {
+      "requires": [
+        "python"
+      ],
+      "manifest": {
+        "project": {
+          "dependencies": [
+            "openai>=1.0"
+          ]
+        }
+      },
+      "guidance": "Configure the provider model and credential on the server. Test with offline fakes."
+    }
+  }
+}

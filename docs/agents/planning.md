@@ -6,6 +6,11 @@ checkpoint, the deviations rule. Read them first.
 
 This file records only what is true in **this** repo.
 
+Planning is optional when an approved spec and ticket settle the slice.
+Apply the shared ticket-readiness contract before implementation.
+Record design decisions in the approved spec, ticket, or optional plan.
+Use a short execution brief for missing technical details. Return missing product decisions to the human.
+
 ## What a design has to state explicitly
 
 `/plan` step 4 requires all of these before sign-off. A plan missing one hands terminal 2 a

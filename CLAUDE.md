@@ -44,6 +44,11 @@ spec. Add `/plan` on top only when the ticket is large or ambiguous, when the sp
 decisions don't reach into that slice, or when the implementing terminal can't reach the
 tracker — not by default.
 
+Apply the shared ticket-readiness contract before implementation. Check acceptance criteria,
+testing seams, dependencies, and current authority. Complete tickets proceed directly.
+Return missing product decisions to the human. Record missing technical details in a short execution brief.
+Keep TDD vertical: prove one failing test before implementing each behavior.
+
 **Verify the verb and the version before a spec, plan or ticket names a library.**
 Confirm the library supports the operation the design asks of it (read vs write, parse
 vs render). Confirm the API against the version locked in `pyproject.toml` / `uv.lock`,
@@ -255,6 +260,11 @@ This applies to new writing. Existing documents are rewritten only when they are
 for another reason.
 
 ## Stack
+
+New projects can select the `minimal` or `fastapi` preset from `scaffolds/components.json`.
+Postgres, RAG, agent orchestration, and provider SDKs are explicit components.
+See `scaffolds/README.md` for composition and validation commands.
+These selections apply to generated projects. This repository retains its approved application stack.
 
 `pyproject.toml` fixes application libraries in the `app` extra.
 It fixes development tools in the `dev` group. What the file does not explain:
