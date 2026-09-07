@@ -138,6 +138,12 @@ The app is async-first. These rules stay here because they cross layers.
 
 ## 8. Dependency policy
 
+`scaffolds/components.json` declares selections for newly generated projects.
+Its `minimal` preset installs Python tooling. Its `fastapi` preset adds the HTTP framework.
+Postgres, RAG, agents, and OpenAI are optional components.
+The generated guidance and manifest govern each new project's selected stack.
+An existing project retains its architecture and dependencies until an explicit migration.
+
 The `[project.optional-dependencies].app` table in `pyproject.toml` approves application
 libraries.
 The `[dependency-groups].dev` table approves development tools.

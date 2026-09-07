@@ -401,3 +401,35 @@ def test_the_secret_variables_the_hook_watches_match_the_ones_denied() -> None:
     denied = json.dumps(SETTINGS["permissions"]["deny"])
     for name in HOOK_CONFIG["secretVars"]:
         assert name in denied, f"{name} is watched by the hook but absent from permissions.deny"
+
+
+@pytest.mark.parametrize("preset", ["minimal", "fastapi"])
+def test_each_scaffold_preset_supplies_resolvable_review_inputs(preset: str) -> None:
+    """A generated project must supply each shared frame's language-specific checklist."""
+    root = PROJECT / "scaffolds"
+    catalog = json.loads((root / "components.json").read_text(encoding="utf-8"))
+    pending = list(catalog["presets"][preset])
+    selected: set[str] = set()
+    templates: list[Path] = []
+    while pending:
+        name = pending.pop()
+        if name in selected:
+            continue
+        selected.add(name)
+        component = catalog["components"][name]
+        pending.extend(component.get("requires", []))
+        if "template" in component:
+            template = root / component["template"]
+            assert template.resolve().is_relative_to(root.resolve())
+            assert not template.is_symlink()
+            templates.append(template)
+
+    shared = HOOKS_DIR.parent
+    axes = json.loads((shared / "workflows/review-axes.json").read_text(encoding="utf-8"))
+    assert axes
+    checklist_dir = catalog["config"]["review"]["checklistDir"]
+    for axis in axes:
+        filename = axis["agent"] + ".md"
+        assert (shared / "agents" / filename).is_file()
+        checklists = [template / checklist_dir / filename for template in templates]
+        assert any(path.is_file() and path.read_text().strip() for path in checklists), filename
