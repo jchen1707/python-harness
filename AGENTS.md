@@ -360,6 +360,15 @@ When compacting, preserve the list of modified files and the commands needed to 
 
 ### Second brain
 
+`SessionStart` reads a bounded project index through the vendored `learning_recall.mjs` hook.
+`UserPromptSubmit` retrieves relevant notes for the current task. Before planning or debugging, use `/search-second-brain <topic>` to retrieve
+relevant notes and cite the notes that inform the task. Expand to other projects when
+relevant. Missing configuration or unavailable retrieval is not an empty result.
+
+Both session-end adapters launch capture in a detached process. Session completion does
+not wait for distillation. An interrupted session can require explicit recovery; inspect
+outcomes before processing it again. Do not run bulk backlog recovery automatically.
+
 A layer above memory, in the user's own notes rather than the agent's:
 
 - **Write** — `session_learnings.mjs` (SessionEnd) distils the session's mistakes and their

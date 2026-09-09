@@ -282,7 +282,9 @@ def test_the_formatter_is_not_run_on_a_read(config: dict[str, Any], tool: str) -
 
 
 @pytest.mark.parametrize("config", [SETTINGS, CODEX], ids=["claude", "codex"])
-@pytest.mark.parametrize("event", ["PreToolUse", "PostToolUse", "Stop", "SessionEnd"])
+@pytest.mark.parametrize(
+    "event", ["PreToolUse", "PostToolUse", "Stop", "SessionEnd", "SessionStart", "UserPromptSubmit"]
+)
 def test_every_lifecycle_event_is_still_wired(config: dict[str, Any], event: str) -> None:
     """The tests above pass vacuously if a guard is deleted: `any([])` is False, so the
     read-only assertion holds and the coverage assertion is the only thing left to fail.
@@ -299,16 +301,24 @@ def test_every_hook_points_into_the_vendored_layer_a(config: dict[str, Any]) -> 
         assert f"vendor/harness/hooks/{script}" in wiring, f"{script} is not wired"
 
 
-def test_codex_distils_outside_its_three_second_budget() -> None:
+@pytest.mark.parametrize("config", [SETTINGS, CODEX], ids=["claude", "codex"])
+def test_session_end_distils_outside_its_three_second_budget(config: dict[str, Any]) -> None:
     """`claude -p` takes minutes; Codex gives SessionEnd three seconds.
 
     Running the distiller inline there means it is killed every time, and a killed
     distiller looks exactly like a session that taught nothing. The adapter forwards to a
     detached child instead.
     """
-    stanza = json.dumps(CODEX["hooks"]["SessionEnd"])
+    stanza = json.dumps(config["hooks"]["SessionEnd"])
+    assert ("--claude" in stanza) == (config is SETTINGS)
     assert "codex_session_learnings.mjs" in stanza
     assert 'session_learnings.mjs"' not in stanza.replace("codex_session_learnings.mjs", "")
+
+
+@pytest.mark.parametrize("config", [SETTINGS, CODEX], ids=["claude", "codex"])
+@pytest.mark.parametrize("event", ["SessionStart", "UserPromptSubmit"])
+def test_learning_recall_is_wired(config: dict[str, Any], event: str) -> None:
+    assert "vendor/harness/hooks/learning_recall.mjs" in json.dumps(config["hooks"][event])
 
 
 def test_codex_carries_a_windows_variant_for_every_hook() -> None:

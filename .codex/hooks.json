@@ -1,5 +1,5 @@
 {
-  "description": "Codex adapter for the shared harness hooks. Same four scripts Claude Code loads from the plugin, reached here by repo-relative path into the vendored copy.",
+  "description": "Codex adapters for the shared harness hooks, loaded from the vendored layer A.",
   "hooks": {
     "PreToolUse": [
       {
@@ -51,6 +51,32 @@
             "commandWindows": "powershell -NoProfile -Command \"$root = git rev-parse --show-toplevel; node (Join-Path $root '.agents/vendor/harness/hooks/codex_session_learnings.mjs')\"",
             "timeout": 3,
             "statusMessage": "Distilling session learnings"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/.agents/vendor/harness/hooks/learning_recall.mjs\"",
+            "commandWindows": "powershell -NoProfile -Command \"$root = git rev-parse --show-toplevel; node (Join-Path $root '.agents/vendor/harness/hooks/learning_recall.mjs')\"",
+            "timeout": 3,
+            "statusMessage": "Recalling relevant learnings"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/.agents/vendor/harness/hooks/learning_recall.mjs\"",
+            "commandWindows": "powershell -NoProfile -Command \"$root = git rev-parse --show-toplevel; node (Join-Path $root '.agents/vendor/harness/hooks/learning_recall.mjs')\"",
+            "timeout": 3,
+            "statusMessage": "Recalling relevant learnings"
           }
         ]
       }
