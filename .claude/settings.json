@@ -132,10 +132,41 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PROJECT_DIR}/.agents/vendor/harness/hooks/session_learnings.mjs"
+              "${CLAUDE_PROJECT_DIR}/.agents/vendor/harness/hooks/codex_session_learnings.mjs",
+              "--claude"
             ],
-            "timeout": 300,
+            "timeout": 3,
             "statusMessage": "Distilling session learnings\u2026"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.agents/vendor/harness/hooks/learning_recall.mjs"
+            ],
+            "timeout": 3,
+            "statusMessage": "Recalling relevant learnings"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.agents/vendor/harness/hooks/learning_recall.mjs"
+            ],
+            "timeout": 3,
+            "statusMessage": "Recalling relevant learnings"
           }
         ]
       }

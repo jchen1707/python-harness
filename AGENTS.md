@@ -89,7 +89,7 @@ repo: every path they act on is declared under `hooks` in `harness.config.json`.
 | `protect_paths.mjs` (PreToolUse) | Refuses a **write** to `migrations/`, `generated/`, `uv.lock` and the vendored tree; refuses a **read** of `.env` and `.env.*`; refuses the shell commands that reach a secret without naming a file |
 | `format_edited.mjs` (PostToolUse) | Runs `ruff format` then `ruff check --fix --unfixable F401` on each edited `.py` |
 | `verify.mjs` (Stop) | Blocks the turn while the gates fail — **only** when the turn changed `.py` or `.mjs` under a gated path, or changed a file that defines the gates |
-| `session_learnings.mjs` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain, and rebuilds both vault indexes. Off unless `OBSIDIAN_VAULT_DIRECTORY` is set |
+| `session_learnings.mjs` (SessionEnd) | Distils the session's mistakes-and-fixes into a note in the second brain, and rebuilds both vault indexes. Requires a configured vault process environment |
 
 They are JavaScript because a plugin ships one `hooks/` directory and one language had to
 win. This repo already ran `full-review.js` with no `package.json` and no `.nvmrc`, so it
@@ -360,6 +360,15 @@ When compacting, preserve the list of modified files and the commands needed to 
 
 ### Second brain
 
+`SessionStart` reads a bounded project index through the vendored `learning_recall.mjs` hook.
+`UserPromptSubmit` retrieves relevant notes for the current task. Before planning or debugging, use `/search-second-brain <topic>` to retrieve
+relevant notes and cite the notes that inform the task. Expand to other projects when
+relevant. Missing configuration or unavailable retrieval is not an empty result.
+
+Both session-end adapters launch capture in a detached process. Session completion does
+not wait for distillation. An interrupted session can require explicit recovery; inspect
+outcomes before processing it again. Do not run bulk backlog recovery automatically.
+
 A layer above memory, in the user's own notes rather than the agent's:
 
 - **Write** — `session_learnings.mjs` (SessionEnd) distils the session's mistakes and their
@@ -375,12 +384,11 @@ A layer above memory, in the user's own notes rather than the agent's:
   from the clock turned one session into several near-identical notes. The rewrite is not
   lossy: the distiller reads only the last `MAX_TRANSCRIPT_CHARS` of a session, so the
   earlier note goes back into the prompt and its learnings carry forward.
-- **The distiller must not read itself.** `distil()` shells out to `claude -p`, and that
-  child session writes a transcript holding the prompt *and* the finished note. Distilling
-  it returns that note again under a second session id. Two guards: the child runs in
-  `DISTILLER_HOME`, outside every repo, so new child transcripts land where nothing scans;
-  and `isDistillerTranscript` recognises the ones already on disk, including the ones the
-  two predecessor implementations wrote before the guard was one.
+- **The distiller must not read itself.** Capture selects the originating runtime unless
+  `LEARNINGS_DISTILLER` overrides it. Model children run outside the project with recursion
+  guards; Codex uses an ephemeral read-only session. The shared
+  [learning contract](.agents/vendor/harness/docs/agents/learnings.md) owns the backend
+  and recovery details.
 - **Audit** — fixing a writer removes nothing it already wrote, so
   `distil_backlog.mjs --audit` reads the vault and reports the notes both bugs left there.
   `--audit --run` deletes the notes written from the distiller's own transcript, which are
@@ -402,7 +410,8 @@ An Obsidian `.base` file is a **query evaluated by Obsidian's UI**, so reading o
 the query, never any notes. Bases are for the human; the Markdown indexes are for the
 agent. Do not use `LLM.base` for retrieval.
 
-Set `OBSIDIAN_VAULT_DIRECTORY` in **user** settings, never in this repo's committed
+Set `OBSIDIAN_VAULT_DIRECTORY` in the runtime **process environment**
+(`OBSIDIAN_VAULT_DIR` is accepted only when the canonical variable is absent), never in this repo's committed
 `.claude/settings.json`. A clone must not inherit a path to somebody else's vault.
 The hooks derive the learnings directory as `<vault>/Project Learnings`.
 
