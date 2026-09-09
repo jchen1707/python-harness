@@ -74,7 +74,7 @@ def test_the_shared_hook_suite_passes_against_this_checkout() -> None:
     )
     assert result.returncode == 0, (
         "the shared hook suite fails against this checkout:\n"
-        + "\n".join((result.stdout + result.stderr).strip().splitlines()[-30:])
+        + (result.stdout + result.stderr).strip()
     )
 
 
