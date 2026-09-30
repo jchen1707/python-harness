@@ -41,8 +41,8 @@
     {
       "note": "Layer A reaches this repo two ways, and never both at once. On v2 it is the vendored tree under .agents/vendor/harness, which the .agents drop removes here; on main it is the plugin, which nothing else in the tree would enable.",
       "file": ".claude/settings.json",
-      "from": "  \"enabledPlugins\": {\n    \"mattpocock-skills@claude-plugins-official\": true\n  },\n",
-      "to": "  \"enabledPlugins\": {\n    \"harness@harness\": true,\n    \"mattpocock-skills@claude-plugins-official\": true\n  },\n"
+      "from": "  \"enabledPlugins\": {\n    \"mattpocock-skills@claude-plugins-official\": true,\n    \"pstack@pstack-claude\": true\n  },\n  \"extraKnownMarketplaces\": {\n    \"pstack-claude\": {\n      \"source\": {\n        \"source\": \"github\",\n        \"repo\": \"michael-denyer/pstack-claude\"\n      }\n    }\n  },\n",
+      "to": "  \"enabledPlugins\": {\n    \"harness@harness\": true,\n    \"mattpocock-skills@claude-plugins-official\": true,\n    \"pstack@pstack-claude\": true\n  },\n  \"extraKnownMarketplaces\": {\n    \"pstack-claude\": {\n      \"source\": {\n        \"source\": \"github\",\n        \"repo\": \"michael-denyer/pstack-claude\"\n      }\n    }\n  },\n"
     },
     {
       "note": "The hooks reach this repo two ways, and never both at once. On v2 they are the vendored .mjs files, wired here by repo-relative path; on main the plugin's own hooks.json supplies them from ${CLAUDE_PLUGIN_ROOT}, and the .agents drop has already removed everything this stanza points at. Leaving it would wire hooks to files that do not exist -- which does not error loudly, it just stops enforcing. Removed as a block rather than by a JSON-aware rule because the generator is one file in three repositories and a new operator would have to be written into all three; a block that goes stale fails the build, which is the same guarantee for none of that cost.",
