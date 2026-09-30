@@ -35,10 +35,5 @@ implementation cannot disagree with itself, so both repos run it and the lag is 
 `distil_backlog.mjs` is the recovery path for sessions that never fired `SessionEnd`, and it
 is shared for the same reason: it writes notes through the same code the hook does.
 
-**This is a known asymmetry, not a bug to fix locally.** Adding a second indexer to the other
-repo is one artifact with two writers, and it was tried: the pair re-diverged on a header line
-inside a single fix cycle. The asymmetry closes when the writer and the indexer move into
-layer A — phase 6 — not before.
-
 Never write `_VAULT_INDEX.md` or `_INDEX.md` by hand. They are generated, and a hand edit is
 overwritten by the next session that ends here.
