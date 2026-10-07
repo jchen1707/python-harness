@@ -80,6 +80,12 @@
         "source": "github",
         "repo": "michael-denyer/pstack-claude"
       }
+    },
+    "harness": {
+      "source": {
+        "source": "github",
+        "repo": "jchen1707/harness"
+      }
     }
   },
   "plansDirectory": ".claude/plans",
