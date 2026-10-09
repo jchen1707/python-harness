@@ -305,9 +305,8 @@ model-switching seam, so you can plan with one model and build with another.
 
 ## Capabilities
 
-Repo-owned skills live in `.claude/skills/`. Claude Code sees the same files through the
-`.claude/skills` adapter. The shared commands and skills come from layer A instead —
-vendored under `.claude/vendor/harness/` here, and from the `harness` plugin on `main`.
+Repo-owned skills live in `.claude/skills/`. The enabled `harness` plugin supplies the
+shared commands and skills as layer A.
 
 | Slash | Does |
 | --- | --- |
