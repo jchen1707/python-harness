@@ -10,16 +10,14 @@ Target workload: backend web development, RAG applications, and AI agent orchest
 Postgres + pgvector).
 
 ## What's here
-- `CLAUDE.md` — the source of truth for every coding harness. Each `CLAUDE.md` is a thin
-  compatibility pointer to the adjacent `CLAUDE.md`.
+- `CLAUDE.md` — the source of truth for every coding harness. Nested `CLAUDE.md` files
+  define the conventions for their paths.
 - `docs/architecture.md` — **cross-cutting** standards only: layering, protocols, types,
   scaling, extensibility, concurrency, containers, dependency policy (load with `/arch`).
 - `pyproject.toml` — tool config (ruff, mypy, pytest) + the approved app stack as the
   opt-in `app` extra (no runtime deps by default).
-- `.claude/` — portable skills, agent prompts, and workflows. This is the canonical
-  capability directory.
-- `.claude/` — the Claude Code adapter: settings, hooks, slash commands, and symlinks to
-  the canonical `.claude/` capability directories.
+- `.claude/` — Claude Code settings, agents, MCP support, and templates for this
+  checkout.
 - `docs/agents/` — how agents work with **this** repo: `issue-tracker.md` (the team and
   branch prefix), `triage-labels.md`, `domain.md`, `secrets.md`. Each states only what is
   true here and points at the shared doctrine.
